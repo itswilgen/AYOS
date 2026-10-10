@@ -1,0 +1,3 @@
+import { ArrowRight } from 'lucide-react'
+import Button from '../ui/Button'
+export default function FinalCta() { return <section className="final-cta"><div className="container final-cta-inner"><span className="eyebrow">Let’s get it sorted</span><h2>Something needs fixing?<br /><em>AYOS can help.</em></h2><p>Find a local service provider or create an account to get started.</p><div><Button href="/signup">Find a service <ArrowRight size={17} /></Button><Button href="/signup" variant="text">Create an account <ArrowRight size={16} /></Button></div></div><span className="final-cta-mark" aria-hidden="true">AY</span></section> }
