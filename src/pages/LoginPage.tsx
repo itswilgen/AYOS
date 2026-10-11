@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
 import FormField from '../components/auth/FormField'
+import GoogleAuthButton from '../components/auth/GoogleAuthButton'
 import PasswordField from '../components/auth/PasswordField'
 import Button from '../components/ui/Button'
 import { ApiError, authRequest } from '../lib/api/client'
@@ -23,6 +24,15 @@ export default function LoginPage() {
   const { user, loading: authLoading, refreshUser } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const googleError = searchParams.get('google_error')
+  const googleMessage = googleError === 'cancelled'
+    ? 'Google sign-in was cancelled. You can try again or sign in with your email.'
+    : googleError === 'account'
+      ? 'This Google account could not be matched safely. Sign in with your AYOS email and password.'
+      : googleError
+        ? 'Google sign-in could not be completed. Please try again.'
+        : ''
 
   if (authLoading) return <div className="route-loading" role="status">Checking your AYOS session…</div>
   if (user) return <Navigate to={user.email_verified ? '/account' : '/verify-email'} replace />
@@ -54,7 +64,11 @@ export default function LoginPage() {
       }
       const user = await refreshUser()
       const destination = (location.state as { from?: string } | null)?.from || '/account'
-      navigate(user && !user.email_verified ? '/verify-email' : destination, { replace: true })
+      navigate(user && !user.email_verified
+        ? '/verify-email'
+        : user && !user.address_complete
+          ? '/account/address'
+          : destination, { replace: true })
     } catch (error) {
       const serverFields = fieldsFrom(error)
       if (Object.keys(serverFields).length) setErrors(serverFields)
@@ -67,6 +81,7 @@ export default function LoginPage() {
   return <div className="auth-form-shell login-shell">
     <span className="auth-kicker">Welcome back</span><h1>Good to see you again.</h1>
     <p className="auth-intro">Sign in to pick up where you left off. Your account stays yours on every device.</p>
+    {googleMessage && <p className="form-notice" role="alert">{googleMessage}</p>}
     <form onSubmit={submit} noValidate>
       <FormField label="Email address" name="email" type="email" autoComplete="username" inputMode="email" placeholder="you@example.com" hint="Use the email address you registered with." startAdornment={<Mail size={18} />} error={errors.email} />
       <PasswordField label="Password" name="password" autoComplete="current-password" placeholder="Enter your password" hint="If you’ve forgotten it, we’ll help you reset it." startAdornment={<LockKeyhole size={18} />} error={errors.password} />
@@ -74,6 +89,7 @@ export default function LoginPage() {
       {notice && <p className="form-notice" role="alert">{notice}</p>}
       <Button type="submit" className="form-submit" disabled={busy} aria-busy={busy}>{busy ? 'Signing you in…' : 'Sign in'} {!busy && <ArrowRight size={17} />}</Button>
     </form>
+    <GoogleAuthButton />
     <p className="auth-switch">New to AYOS? <Link to="/signup">Create an account</Link></p>
     <div className="auth-security-note login-security-note"><ShieldCheck size={16} aria-hidden="true" /><p>Your sign-in is protected with a secure AYOS session. We never save your password in your browser.</p></div>
   </div>

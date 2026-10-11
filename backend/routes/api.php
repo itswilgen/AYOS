@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountAddressController;
 use App\Http\Controllers\Api\AccountSecurityController;
 use App\Http\Controllers\Api\VerificationController;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ Route::get('/user', function (Request $request) {
         'email' => $user->email,
         'mobile_number' => $user->mobile_number,
         'email_verified' => $user->hasVerifiedEmail(),
+        'address_complete' => $user->hasCompleteAddress(),
         'customer_capability' => true,
         'mfa_enabled' => $user->hasEnabledTwoFactorAuthentication(),
     ]);
@@ -25,6 +27,11 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
     Route::delete('/account/sessions/others', [AccountSecurityController::class, 'revokeOtherSessions']);
     Route::delete('/account/sessions/{id}', [AccountSecurityController::class, 'revokeSession']);
     Route::put('/account/password', [AccountSecurityController::class, 'updatePassword']);
+});
+
+Route::middleware(['auth:sanctum', 'verified'])->prefix('account')->group(function (): void {
+    Route::get('/address', [AccountAddressController::class, 'show']);
+    Route::put('/address', [AccountAddressController::class, 'update']);
 });
 
 Route::middleware(['auth:sanctum', 'admin', 'admin.mfa'])->prefix('admin')->group(function (): void {

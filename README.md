@@ -20,6 +20,8 @@ docker compose up --build
 
 Open the frontend at `http://localhost:5180`. The API is available at `http://localhost:8010`; PostgreSQL is published on `localhost:5440` if you want to connect with a local database client. Local verification and password reset emails are captured by Mailpit at `http://localhost:8025`; they are not delivered to external inboxes. To deliver mail through a real SMTP provider, set `MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME`, `MAIL_USERNAME`, `MAIL_PASSWORD`, and `MAIL_FROM_ADDRESS` in the ignored root `.env`, then recreate the backend with `docker compose up -d --force-recreate backend`. Never commit provider credentials. Set `FRONTEND_URL` in the root `.env` if your local Vite app uses another port. Laravel creates `backend/.env` and its application key on first start when they do not exist. To stop the services, press `Ctrl+C` and run `docker compose down`. To remove the database and all persisted local data, run `docker compose down -v`.
 
+The address setup uses manual address entry and can be updated later from the account page.
+
 Set `AYOS_DOCKER_DB_PASSWORD` in the shell or root `.env` to override the local default. Do not use the development Compose configuration or its default password for production.
 
 Run the backend feature suite inside the PHP container with its isolated test settings:
@@ -66,6 +68,7 @@ For production, use HTTPS, set `SESSION_SECURE_COOKIE=true`, use a shared parent
 | `/forgot-password`, `/reset-password` | Password recovery |
 | `/verify-email`, `/mfa/challenge` | Email confirmation and TOTP challenge |
 | `/account`, `/account/security` | Protected account and security settings |
+| `/account/address` | Verified-account address setup and editing |
 | `/terms`, `/privacy` | Legal-document preview routes |
 
 Signup creates one universal account; it does not ask for customer/provider role. Users must verify their email before marketplace access. Provider applications and marketplace workflows are outside this phase.

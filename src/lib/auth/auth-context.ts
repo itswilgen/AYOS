@@ -6,6 +6,7 @@ export type AuthUser = {
   email: string
   mobile_number: string
   email_verified: boolean
+  address_complete: boolean
   customer_capability: true
   mfa_enabled: boolean
 }

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import FormField from '../components/auth/FormField'
+import GoogleAuthButton from '../components/auth/GoogleAuthButton'
 import PasswordField from '../components/auth/PasswordField'
 import Button from '../components/ui/Button'
 import { ApiError, authRequest } from '../lib/api/client'
@@ -76,6 +77,7 @@ export default function SignupPage() {
       {notice && <p className="form-notice" role="alert">{notice}</p>}
       <Button type="submit" className="form-submit" disabled={busy || authLoading} aria-busy={busy}>{busy ? 'Creating your account…' : 'Create account'} {!busy && <ArrowRight size={17} />}</Button>
     </form>
+    <GoogleAuthButton />
     <p className="auth-switch">Already have an account? <Link to="/login">Sign in</Link></p>
     <div className="auth-security-note"><span aria-hidden="true">●</span> You’ll verify your email before using AYOS services.</div>
   </div>

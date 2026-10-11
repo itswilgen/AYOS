@@ -30,6 +30,16 @@ class User extends Authenticatable implements MustVerifyEmail
             'terms_accepted_at' => 'datetime',
             'is_admin' => 'boolean',
             'password' => 'hashed',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
+    }
+
+    public function hasCompleteAddress(): bool
+    {
+        return filled($this->address_line)
+            && filled($this->barangay)
+            && filled($this->city)
+            && filled($this->province);
     }
 }

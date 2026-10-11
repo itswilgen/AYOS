@@ -18,7 +18,11 @@ export default function MfaChallengePage() {
     try {
       await authRequest('/two-factor-challenge', { method: 'POST', body: JSON.stringify(recovery ? { recovery_code: code } : { code }) })
       const user = await refreshUser()
-      navigate(user && !user.email_verified ? '/verify-email' : '/account', { replace: true })
+      navigate(user && !user.email_verified
+        ? '/verify-email'
+        : user && !user.address_complete
+          ? '/account/address'
+          : '/account', { replace: true })
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'That code didn’t work. Check it and try again.') }
     finally { setBusy(false) }
   }
