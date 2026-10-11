@@ -27,7 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
+            fn (Request $request) => $request->is('api/*')
+                || $request->is('login')
+                || $request->is('register')
+                || $request->expectsJson(),
         );
         $exceptions->render(function (InvalidSignatureException $exception, Request $request) {
             if ($request->is('email/verify/*')) {

@@ -18,6 +18,12 @@ services:
       timeout: 3s
       retries: 20
 
+  mailpit:
+    image: axllent/mailpit:v1.27.4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8025:8025"
+
   backend:
     build:
       context: ./backend
@@ -27,7 +33,7 @@ services:
       APP_ENV: local
       APP_DEBUG: "true"
       APP_URL: http://localhost:8010
-      FRONTEND_URL: http://localhost:5180
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5180}
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -40,11 +46,18 @@ services:
       SESSION_DOMAIN:
       SESSION_SECURE_COOKIE: "false"
       SESSION_SAME_SITE: lax
-      SANCTUM_STATEFUL_DOMAINS: localhost:5180,127.0.0.1:5180,localhost:8010,127.0.0.1:8010
-      CORS_ALLOWED_ORIGINS: http://localhost:5180
+      SANCTUM_STATEFUL_DOMAINS: localhost:5180,127.0.0.1:5180,localhost:5218,127.0.0.1:5218,localhost:8010,127.0.0.1:8010
+      CORS_ALLOWED_ORIGINS: http://localhost:5180,http://localhost:5218
       CACHE_STORE: database
       QUEUE_CONNECTION: database
-      MAIL_MAILER: log
+      MAIL_MAILER: ${MAIL_MAILER:-smtp}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_SCHEME: ${MAIL_SCHEME:-smtp}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@ayos.test}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-AYOS}
     ports:
       - "127.0.0.1:8010:8000"
     volumes:
@@ -53,6 +66,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   frontend:
     build:
@@ -60,8 +75,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      VITE_BACKEND_URL: http://localhost:8010
-      VITE_API_BASE_URL: http://localhost:8010/api
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:8010}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8010/api}
     ports:
       - "127.0.0.1:5180:5173"
     volumes:

@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
 import FormField from '../components/auth/FormField'
 import PasswordField from '../components/auth/PasswordField'
@@ -20,9 +20,12 @@ export default function LoginPage() {
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [remember, setRemember] = useState(true)
-  const { refreshUser } = useAuth()
+  const { user, loading: authLoading, refreshUser } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  if (authLoading) return <div className="route-loading" role="status">Checking your AYOS session…</div>
+  if (user) return <Navigate to={user.email_verified ? '/account' : '/verify-email'} replace />
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

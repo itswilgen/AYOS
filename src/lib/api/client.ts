@@ -79,8 +79,16 @@ async function request<TResponse>(
     response.status === 204
       ? undefined
       : await response.json().catch(() => undefined);
-  if (!response.ok)
-    throw new ApiError(messageFrom(payload), response.status, payload);
+  if (!response.ok) {
+    const isServerError = response.status >= 500;
+    throw new ApiError(
+      isServerError
+        ? "We couldn’t complete that request. Please try again."
+        : messageFrom(payload),
+      response.status,
+      isServerError ? undefined : payload,
+    );
+  }
   return payload as TResponse;
 }
 

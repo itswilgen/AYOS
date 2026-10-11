@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import FormField from '../components/auth/FormField'
 import PasswordField from '../components/auth/PasswordField'
@@ -20,8 +20,11 @@ export default function SignupPage() {
   const [notice, setNotice] = useState('')
   const [accepted, setAccepted] = useState(false)
   const [busy, setBusy] = useState(false)
-  const { refreshUser } = useAuth()
+  const { user, loading: authLoading, refreshUser } = useAuth()
   const navigate = useNavigate()
+  if (authLoading) return <div className="route-loading" role="status">Checking your AYOS session…</div>
+  if (user) return <Navigate to={user.email_verified ? '/account' : '/verify-email'} replace />
+
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setNotice('')
@@ -71,7 +74,7 @@ export default function SignupPage() {
       <PasswordField label="Confirm password" name="confirm" autoComplete="new-password" placeholder="Enter your password again" error={errors.confirm} />
       <div className="terms-row"><label className="check-label"><input id="terms" type="checkbox" checked={accepted} aria-invalid={Boolean(errors.terms)} aria-describedby={errors.terms ? 'terms-error' : undefined} onChange={e => setAccepted(e.target.checked)} /><span>I agree to AYOS’s <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.</span></label>{errors.terms && <p id="terms-error" className="field-error" role="alert">{errors.terms}</p>}</div>
       {notice && <p className="form-notice" role="alert">{notice}</p>}
-      <Button type="submit" className="form-submit" disabled={busy} aria-busy={busy}>{busy ? 'Creating your account…' : 'Create account'} {!busy && <ArrowRight size={17} />}</Button>
+      <Button type="submit" className="form-submit" disabled={busy || authLoading} aria-busy={busy}>{busy ? 'Creating your account…' : 'Create account'} {!busy && <ArrowRight size={17} />}</Button>
     </form>
     <p className="auth-switch">Already have an account? <Link to="/login">Sign in</Link></p>
     <div className="auth-security-note"><span aria-hidden="true">●</span> You’ll verify your email before using AYOS services.</div>
