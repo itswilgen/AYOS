@@ -20,6 +20,11 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
+h1,
+h2,
+h3 {
+  text-transform: uppercase;
+}
 body,
 button,
 input {
@@ -77,44 +82,17 @@ button {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
   min-height: 44px;
-  color: var(--ayos-ink);
-  font: 800 1.63rem/1 var(--font-display);
-  letter-spacing: -0.09em;
 }
-.brand-mark {
-  width: 27px;
-  height: 27px;
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--ayos-sky);
-  border-radius: 8px;
-  transform: rotate(-8deg);
-}
-.brand-mark span {
-  position: relative;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--ayos-orange);
-  border-radius: 50%;
-}
-.brand-mark span:after {
-  content: "";
-  position: absolute;
-  width: 6px;
-  height: 2px;
-  right: -5px;
-  bottom: -2px;
-  background: var(--ayos-orange);
-  transform: rotate(45deg);
-  border-radius: 3px;
+.brand-logo {
+  display: block;
+  width: 132px;
+  max-height: 44px;
+  object-fit: contain;
+  object-position: left center;
 }
 .brand-light {
   color: white;
-}
-.brand-light .brand-mark {
-  border-color: #a3dcf3;
 }
 .button {
   display: inline-flex;
@@ -197,14 +175,6 @@ button {
 .site-header.is-hero:not(.is-scrolled) .desktop-nav a,
 .site-header.is-hero:not(.is-scrolled) .nav-login {
   color: white;
-}
-.site-header.is-hero:not(.is-scrolled) .brand-mark {
-  border-color: #c2ecfb;
-}
-.site-header.is-hero:not(.is-scrolled) .brand-mark span,
-.site-header.is-hero:not(.is-scrolled) .brand-mark span:after {
-  border-color: #ffb27f;
-  background-color: #ffb27f;
 }
 .site-header.is-hero:not(.is-scrolled) .desktop-nav a:after {
   background: #ffb27f;
@@ -316,10 +286,13 @@ button {
 }
 .hero h1 {
   margin: 24px 0 20px;
-  font: 700 clamp(3rem, 5vw, 4.25rem)/1.08 var(--font-display);
-  letter-spacing: -0.065em;
+  font: 700 clamp(3.8rem, 6.6vw, 5.8rem)/.99 var(--font-display);
+  letter-spacing: -0.01em;
 }
 .hero h1 span {
+  display: block;
+  font-size: .68em;
+  white-space: nowrap;
   color: #a9e7ff;
 }
 .hero-copy {
@@ -441,7 +414,7 @@ button {
   max-width: 440px;
   margin: 9px 0 6px;
   font: 700 clamp(1.7rem, 2.65vw, 2.25rem)/1.12 var(--font-display);
-  letter-spacing: -.045em;
+  letter-spacing: -.01em;
 }
 .hero-slide-caption p {
   max-width: 410px;
@@ -522,7 +495,7 @@ button {
 .final-cta h2 {
   margin: 13px 0 0;
   font: 700 clamp(2.1rem, 3.6vw, 3.1rem)/1.16 var(--font-display);
-  letter-spacing: -0.055em;
+  letter-spacing: -.015em;
 }
 .section-heading h2 span,
 .provider-copy h2 em,
@@ -717,7 +690,7 @@ button {
   background: var(--ayos-orange-bright);
   color: var(--ayos-ink);
   font: 700 1.12rem/1.25 var(--font-display);
-  letter-spacing: -.025em;
+  letter-spacing: 0;
 }
 .service-card-caption p {
   max-width: 36ch;
@@ -740,14 +713,16 @@ button {
   margin-bottom: 32px;
 }
 .steps-list {
-  max-width: 875px;
+  width: min(100%, 1080px);
+  margin-inline: auto;
 }
 .step-row {
   display: grid;
-  grid-template-columns: 54px 50px 1fr 24px;
+  grid-template-columns: 56px 48px minmax(0, 1fr) 280px 20px;
   gap: 20px;
   align-items: center;
-  min-height: 111px;
+  min-height: 145px;
+  padding-block: 15px;
   border-top: 1px solid #dce3e4;
 }
 .step-row:last-child {
@@ -755,10 +730,10 @@ button {
 }
 .step-number {
   align-self: start;
-  padding-top: 29px;
-  color: #626e76;
-  font: 600 0.78rem var(--font-display);
-  letter-spacing: 0.08em;
+  padding-top: 28px;
+  color: var(--ayos-orange);
+  font: 800 clamp(50px, 4vw, 56px)/0.85 var(--font-display);
+  letter-spacing: -0.06em;
 }
 .step-visual {
   height: 100%;
@@ -769,8 +744,11 @@ button {
 }
 .step-visual > span {
   z-index: 1;
+  flex: 0 0 auto;
+  align-self: flex-start;
   width: 40px;
   height: 40px;
+  aspect-ratio: 1;
   display: grid;
   place-items: center;
   border: 1px solid #c8dce2;
@@ -791,12 +769,31 @@ button {
 .step-content h3 {
   margin: 0;
   font: 700 1.03rem var(--font-display);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 .step-content p {
   margin: 6px 0 0;
   color: var(--ayos-body);
   font-size: 0.86rem;
+  line-height: 1.6;
+  max-width: 52ch;
+}
+.step-image {
+  display: block;
+  justify-self: center;
+  width: min(100%, 220px);
+  aspect-ratio: 1.56;
+  overflow: hidden;
+  border: 1px solid #c9e0eb;
+  border-radius: var(--radius-md);
+  background: #e8f3f8;
+  box-shadow: 0 8px 20px rgb(25 85 111 / 8%);
+}
+.step-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .step-arrow {
   color: #68757c;
@@ -815,7 +812,7 @@ button {
   bottom: -1.05em;
   color: rgb(255 255 255 / 3%);
   font: 800 clamp(14rem, 29vw, 27rem)/1 var(--font-display);
-  letter-spacing: -.13em;
+  letter-spacing: -.04em;
   pointer-events: none;
 }
 .trust-layout {
@@ -1032,6 +1029,7 @@ button {
   display: block;
   width: min(100%, 430px);
   height: clamp(350px, 34vw, 470px);
+  translate: clamp(72px, 7vw, 108px) 0;
   object-fit: contain;
   object-position: center bottom;
   filter: drop-shadow(0 18px 20px rgb(17 65 91 / 13%));
@@ -1126,7 +1124,7 @@ button {
   bottom: -0.46em;
   color: rgb(255 255 255 / 5%);
   font: 800 20rem/0.9 var(--font-display);
-  letter-spacing: -0.12em;
+  letter-spacing: -.04em;
   pointer-events: none;
 }
 
@@ -1155,6 +1153,7 @@ button {
 .footer-column h3 {
   margin: 1px 0 4px;
   color: #626e76;
+  font-family: var(--font-display);
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -1204,7 +1203,7 @@ button {
   bottom: -100px;
   color: rgb(22 130 189 / 7%);
   font: 800 clamp(15rem, 25vw, 24rem)/0.9 var(--font-display);
-  letter-spacing: -0.14em;
+  letter-spacing: -.05em;
   pointer-events: none;
 }
 .auth-story-copy {
@@ -1220,7 +1219,7 @@ button {
 .auth-story-copy h2 {
   margin: 23px 0 18px;
   font: 700 clamp(3rem, 4.5vw, 4.5rem)/1.04 var(--font-display);
-  letter-spacing: -0.075em;
+  letter-spacing: -.01em;
 }
 .auth-story-copy h2 em {
   color: var(--ayos-sky);
@@ -1258,7 +1257,7 @@ button {
 .auth-form-shell h1 {
   margin: 10px 0 7px;
   font: 700 clamp(1.8rem, 3vw, 2.35rem)/1.2 var(--font-display);
-  letter-spacing: -0.055em;
+  letter-spacing: -.01em;
 }
 .auth-intro {
   margin: 0 0 27px;
@@ -1481,7 +1480,7 @@ button {
     width: 51%;
   }
   .hero h1 {
-    font-size: clamp(2.8rem, 5.6vw, 4rem);
+    font-size: clamp(3.4rem, 7vw, 4.9rem);
   }
   .footer-main {
     gap: 24px;
@@ -1529,6 +1528,15 @@ button {
     background: rgb(255 255 255 / 85%);
     color: var(--ayos-ink);
     cursor: pointer;
+  }
+  .step-row {
+    grid-template-columns: 56px 42px minmax(0, 1fr) 240px 16px;
+    gap: 12px;
+    min-height: 130px;
+  }
+  .step-image {
+    width: min(100%, 190px);
+    aspect-ratio: 1.5;
   }
   .mobile-nav-layer {
     position: fixed;
@@ -1666,7 +1674,7 @@ button {
     gap: 5%;
   }
   .hero h1 {
-    font-size: clamp(2.55rem, 6vw, 3.7rem);
+    font-size: clamp(3rem, 8vw, 4.5rem);
   }
   .hero-copy > p {
     font-size: 0.98rem;
@@ -1723,6 +1731,9 @@ button {
   .provider-layout {
     grid-template-columns: 0.55fr 1fr;
     gap: 7%;
+  }
+  .provider-mascot {
+    translate: clamp(36px, 5vw, 54px) 0;
   }
   .provider-copy ul {
     gap: 12px 21px;
@@ -1788,7 +1799,7 @@ button {
   }
   .hero h1 {
     margin: 19px 0 13px;
-    font-size: clamp(2.6rem, 11vw, 3.7rem);
+    font-size: clamp(3.3rem, 14vw, 4.8rem);
     line-height: 1.06;
   }
   .hero-copy > p {
@@ -1934,12 +1945,30 @@ button {
     font-size: 0.72rem;
   }
   .step-row {
-    grid-template-columns: 34px 42px 1fr 16px;
+    grid-template-columns: 52px 36px minmax(0, 1fr) 16px;
     gap: 10px;
-    min-height: 105px;
+    min-height: 0;
+    padding-block: 18px;
   }
   .step-number {
-    font-size: 0.68rem;
+    padding-top: 6px;
+  }
+  .step-visual {
+    grid-row: 1 / 3;
+    padding-top: 6px;
+  }
+  .step-content {
+    grid-column: 3 / 5;
+    align-self: start;
+  }
+  .step-image {
+    grid-column: 3 / 5;
+    justify-self: center;
+    width: min(100%, 220px);
+    margin-top: 2px;
+  }
+  .step-number {
+    font-size: 50px;
   }
   .step-visual > span {
     width: 36px;
@@ -1953,7 +1982,7 @@ button {
     line-height: 1.55;
   }
   .step-arrow {
-    width: 16px;
+    display: none;
   }
   .trust-section {
     padding: 72px 0 48px;
@@ -2025,6 +2054,7 @@ button {
   .provider-mascot {
     width: min(100%, 340px);
     height: 330px;
+    translate: 0 0;
   }
   .provider-copy > p {
     font-size: 0.9rem;
@@ -2103,12 +2133,8 @@ button {
     width: min(100%, 430px);
     margin-bottom: 50px;
   }
-  .auth-mobile-brand .brand {
-    font-size: 1.47rem;
-  }
-  .auth-mobile-brand .brand-mark {
-    width: 24px;
-    height: 24px;
+  .auth-mobile-brand .brand-logo {
+    width: 120px;
   }
   .auth-form-shell {
     width: min(100%, 430px);
@@ -2161,7 +2187,7 @@ button {
     padding-left: 4px;
   }
   .hero h1 {
-    font-size: 2.45rem;
+    font-size: 3.2rem;
   }
   .auth-panel {
     padding-inline: 18px;
