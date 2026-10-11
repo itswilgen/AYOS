@@ -194,7 +194,7 @@ export default function SignupPage() {
           label="Password"
           name="password"
           autoComplete="new-password"
-          placeholder="At least 12 characters"
+          placeholder="At least 12 characters, including one special character"
           error={errors.password}
         />
 
