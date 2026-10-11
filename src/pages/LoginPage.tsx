@@ -53,7 +53,8 @@ export default function LoginPage() {
     if (!password) next.password = 'Enter your password to continue.'
     if (!captchaToken) next.captcha = 'Please complete the CAPTCHA verification.'
 
-    if (Object.keys(next).length) {
+    if (Object.keys(next).length) 
+    {
       setErrors(next)
       if (next.captcha) document.getElementById('login-captcha')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       else document.getElementById(Object.keys(next)[0])?.focus()
@@ -67,7 +68,8 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password, remember, captcha_token: captchaToken }),
       })
 
-      if (result?.two_factor) {
+      if (result?.two_factor) 
+      {
         navigate('/mfa/challenge', { replace: true })
         return
       }
