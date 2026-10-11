@@ -1,70 +1,103 @@
-# AYOS — MVP Phase 1
+# AYOS MVP — Phase 1 + Phase 2
 
-A responsive public marketplace landing experience and authentication UI for AYOS. The repository started empty; this app is built with React, TypeScript, Vite, Tailwind CSS, React Router, GSAP, and Lucide React.
+AYOS is a Philippine community service marketplace for finding trusted local help. This repository now contains the public React experience and a Laravel-backed account and security foundation.
+
+## Stack
+
+- Frontend: React, TypeScript, Vite, Tailwind CSS, React Router, GSAP, Lucide
+- Backend: Laravel 13, PostgreSQL, Sanctum SPA sessions, Fortify
+- Session authentication uses secure cookies and CSRF protection. No access tokens or credentials are stored in browser storage.
 
 ## Run locally
 
+### Docker (recommended)
+
+Docker Compose starts the React/Vite frontend, Laravel API, and PostgreSQL 17 database. It keeps the database and dependency directories in named volumes, runs migrations when the API starts, and binds published ports to localhost. The database password below is for local development only.
+
 ```sh
-npm install
+docker compose up --build
+```
+
+Open the frontend at `http://localhost:5180`. The API is available at `http://localhost:8010`; PostgreSQL is published on `localhost:5440` if you want to connect with a local database client. Laravel creates `backend/.env` and its application key on first start when they do not exist. To stop the services, press `Ctrl+C` and run `docker compose down`. To remove the database and all persisted local data, run `docker compose down -v`.
+
+Set `AYOS_DOCKER_DB_PASSWORD` in the shell or root `.env` to override the local default. Do not use the development Compose configuration or its default password for production.
+
+Run the backend feature suite inside the PHP container with its isolated test settings:
+
+```sh
+docker compose exec -T backend sh -c 'APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: SESSION_DRIVER=array CACHE_STORE=array MAIL_MAILER=array QUEUE_CONNECTION=sync SANCTUM_STATEFUL_DOMAINS=localhost:5173,127.0.0.1:5173,localhost:8000,127.0.0.1:8000 php artisan test'
+```
+
+### Backend
+
+Create a PostgreSQL database named `ayos`, then configure the backend:
+
+```sh
+cd backend
 cp .env.example .env
+composer install
+php artisan key:generate
+php artisan migrate
+php artisan serve --host=localhost --port=8000
+```
+
+Set the PostgreSQL username/password and matching frontend origin in `backend/.env`. For local development the Vite origin is `http://localhost:5173`. Configure a real mail transport before sending verification or password reset messages outside local development; the default mail driver logs them.
+
+### Frontend
+
+In another terminal:
+
+```sh
+cp .env.example .env
+npm install
 npm run dev
 ```
 
-`VITE_API_BASE_URL` defaults to `/api`. No authentication request is sent in this phase. The login and signup forms validate in the browser and explain that account creation is not connected. The form data is neither stored nor transmitted.
+Set `VITE_BACKEND_URL` and `VITE_API_BASE_URL` to the Laravel origin and `/api` endpoint. They default to `http://localhost:8000` and `http://localhost:8000/api`.
+
+For production, use HTTPS, set `SESSION_SECURE_COOKIE=true`, use a shared parent `SESSION_DOMAIN` for the SPA and API hostnames, configure the exact `CORS_ALLOWED_ORIGINS`, and set `SANCTUM_STATEFUL_DOMAINS` to the frontend hostnames. Keep `APP_DEBUG=false` and use a production mail provider.
 
 ## Routes
 
-- `/` — AYOS landing page
-- `/login` — Login UI
-- `/signup` — Universal account creation UI; there is no customer/provider role choice
-- `/terms` and `/privacy` — Launch preview notices; publish reviewed legal documents before enabling registration
-- Unknown paths return to `/`
+| Route | Purpose |
+| --- | --- |
+| `/` | Public AYOS landing page |
+| `/login`, `/signup` | Login and universal account creation |
+| `/forgot-password`, `/reset-password` | Password recovery |
+| `/verify-email`, `/mfa/challenge` | Email confirmation and TOTP challenge |
+| `/account`, `/account/security` | Protected account and security settings |
+| `/terms`, `/privacy` | Legal-document preview routes |
 
-## Design system
+Signup creates one universal account; it does not ask for customer/provider role. Users must verify their email before marketplace access. Provider applications and marketplace workflows are outside this phase.
 
-Design tokens live in `src/styles/tokens.css`, with responsive styles and reusable utility behavior in `src/styles/global.css`.
+## Auth and security architecture
 
-- **Primary:** AYOS sky `#1682bd`; deep sky `#126c9e`; soft sky surface `#e8f3f8`
-- **Accent:** Accessible orange `#c84f19` for primary action text contrast; brighter orange `#ee7a38` is available for small decorative highlights
-- **Landing color composition:** Sky blue leads the full-width hero, trust band, and final CTA. Layered cyan-to-deep-sky gradients are named tokens; pale blue surfaces carry the service and location sections. Orange stays focused on actions and small highlights.
-- **Neutrals:** near-black ink `#18232b`, body `#56636c`, warm white canvas `#f8f9f8`, white surfaces
-- **Typography:** Manrope for display headings; DM Sans for body, forms, and navigation. Both load with system sans fallbacks.
-- **Spacing:** 4px base with 8px rhythm; named tokens run from 4px through 96px
-- **Surfaces:** 5px, 10px, and 16px radii; low, soft shadows only where a control needs separation
-- **Controls:** 48px CTA height, clear focus ring, disabled treatment, inline field hints/errors, native checkbox, and password visibility toggle
-- **Status:** red inline validation, blue informational state, green trust affordance; text accompanies color
+- `src/lib/api/client.ts` is the only frontend HTTP boundary. It obtains Laravel’s Sanctum CSRF cookie, sends `X-XSRF-TOKEN`, includes credentials, and parses Laravel validation errors.
+- `src/lib/auth` owns current-user state and refresh; `RequireAuth` protects account routes. No fake auth, localStorage tokens, or password persistence are used.
+- Fortify handles registration, login/logout, email verification notifications, reset links, password reset, and TOTP enrollment/challenges/recovery codes.
+- The user model has no customer/provider role selector. `is_admin` is never mass assignable or exposed to the browser.
+- PostgreSQL `sessions` stores revocable login sessions. The security page supports per-device sign-out and password changes revoke other sessions.
+- `security_audits` records login success/failure, logout, verification, password resets/changes, MFA changes, session revocations, and blocked admin access. It excludes passwords, recovery codes, and MFA secrets.
+- `php artisan ayos:admin-create email@example.ph` promotes an existing verified account after an interactive confirmation. Admin API access requires confirmed authenticator MFA.
+- Login, registration, password reset, verification resend, and MFA challenge routes are rate limited. Password reset responses do not disclose whether the email is registered.
+- Laravel endpoints include `POST /register`, `POST /login`, `POST /logout`, `GET /api/user`, `POST /forgot-password`, `POST /reset-password`, session endpoints under `/api/account/sessions`, and the admin access gate at `/api/admin/access-check`.
 
-Orange remains a controlled action accent. The hero uses authentic home-service photography with a blue tonal frame and restrained location marker. Service discovery uses nine generated, optimized WebP photos in a portrait-card carousel, with four cards visible on wide screens and chevron controls for browsing the rest. On mobile, the active card is centered while neighboring cards peek in with a subtle scale and fade. Each card has a category icon, name, and short bottom caption.
+## Phase 1 design foundation
 
-## Motion
+- Primary AYOS sky blue, controlled orange accent, near-black ink, and pale blue surfaces live in `src/styles/tokens.css`.
+- Manrope display headings and DM Sans interface text carry through landing and auth pages.
+- `src/components` contains focused landing, navigation, common, auth, and UI components. `src/layouts` shares public/auth shells.
+- `src/animations` contains scoped GSAP motion with reduced-motion support and cleanup.
 
-`src/animations/usePageMotion.ts` owns the GSAP entrance and reveal choreography. The hero copy, photo crop, location marker, and image index enter in a short sequence; service, process, trust, location, provider, and final CTA groups reveal with a restrained stagger as they enter view through ScrollTrigger. The service carousel glides continuously at a restrained pace on wide screens and advances every seven seconds on smaller desktop/tablet layouts and every three seconds on mobile while visible. It pauses while hovered, focused, or in use, and has a manual pause control. Auto-advance is disabled for reduced-motion users. The blue hero ring has a slow ambient pulse, and CTA arrows shift slightly on hover. Motion uses opacity and transforms. Timelines and triggers are scoped to `gsap.context()` and reverted on unmount; CSS also disables the ambient animation, smooth scrolling, and transitions for reduced-motion users.
+## Verification
 
-## Component architecture
+```sh
+cd backend && php artisan test
+cd .. && npm run lint && npm run build
+```
 
-- `src/pages` contains route-level landing, login, signup, and legal preview pages.
-- `src/layouts` provides the public shell and a shared auth split layout.
-- `src/components/landing` splits the marketplace story into focused hero, discovery, flow, trust, location, provider, and final CTA sections.
-- `src/components/navigation` provides the desktop nav and mobile side drawer with backdrop dismissal, Escape handling, focus trapping, focus restoration, and body scroll locking.
-- `src/components/auth` provides labeled fields, inline descriptions/errors, and an accessible show/hide password control.
-- `src/components/ui/Button.tsx` supports link/button, variant, disabled, and loading states.
-- `src/styles` centralizes the design tokens, responsive breakpoints, and global component styles.
-- `src/App.tsx` lazy-loads each route; the landing page and its GSAP code are kept in a separate chunk from auth pages.
-
-## Laravel readiness
-
-`src/lib/api/client.ts` is the single typed request boundary. It reads the base URL from `VITE_API_BASE_URL`, sends same-origin credentials for Laravel Sanctum sessions, parses Laravel-style error messages into `ApiError`, and documents the planned `/register`, `/login`, `/logout`, and `/user` routes. Add Sanctum CSRF-cookie acquisition and typed endpoint functions in Phase 2. There are no tokens, passwords, fake JWTs, or credentials in browser storage.
-
-## Phase 1 checks
-
-- `npm run build` — passed (TypeScript project build and optimized Vite production build).
-- Production entry bundle — 86 KB gzipped; the lazy landing/GSAP chunk is 50 KB gzipped.
-- Responsive browser review — landing at 375, 390, 430, 768, 1024, 1280, 1440, and 1600 viewport settings; signup/login at phone width; hero and navigation visually reviewed on desktop and mobile. Hero decoration is clipped within its region to prevent horizontal scrolling.
-- Navigation — desktop anchors and login/signup routes are present; mobile menu opens/closes, exposes its expanded state, and closes on Escape.
-- Forms — blank signup produces inline errors for all required fields; controls have labels, autocomplete hints, keyboard focus styles, and password visibility controls. Submitting valid-looking data reports that auth is not connected and does not send or save it.
-- Accessibility — semantic landmarks/headings, skip link on public pages, descriptive image text, labels and associated error IDs, visible focus, keyboard-operated menu, and reduced-motion support are included. The reduced-motion path is implemented in GSAP and CSS but wasn’t emulated as an OS preference during this browser pass. A formal WCAG audit and assistive-technology session remain appropriate before launch.
-- Browser runtime — no obvious console errors during the route review. Authentication error/loading behavior is represented in reusable UI states; there is no backend to exercise server failures or an actual request spinner.
+Feature tests cover universal registration and terms acceptance, safe login/current-user output, generic password reset responses, and the admin MFA gate. Responsive and keyboard checks should be repeated in the target deployment environment.
 
 ## Before launch
 
-Replace the legal preview notices with reviewed Terms and Privacy documents, connect the Laravel Sanctum auth endpoints, then verify the full authentication lifecycle and production deployment configuration.
+Replace the Terms and Privacy preview notices with reviewed policy documents, configure PostgreSQL and production mail, use HTTPS and shared-domain Sanctum cookies, and complete a production browser/accessibility review. No provider onboarding, booking, payments, reviews, or admin dashboard is part of this phase.
