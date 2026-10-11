@@ -30,7 +30,8 @@ class VerifyRecaptcha
                     'remoteip' => $request->ip(),
                 ]);
 
-            if (! $response->successful() || ! $response->json('success')) {
+            if (! $response->successful() || ! $response->json('success')) 
+            {
                 throw ValidationException::withMessages([
                     'captcha' => 'CAPTCHA verification failed. Please try again.',
                 ]);
