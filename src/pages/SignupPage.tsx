@@ -273,18 +273,23 @@ export default function SignupPage() {
           </p>
         )}
 
-        <Button
+       <Button
           type="submit"
           className="form-submit"
-          disabled={busy || authLoading}
-          aria-busy={busy}
-        >
+          disabled={busy || authLoading || !captchaToken || !accepted}
+          aria-busy={busy}>
           {busy ? 'Creating your account…' : 'Create account'}
           {!busy && <ArrowRight size={17} />}
         </Button>
       </form>
 
-      <GoogleAuthButton />
+      <GoogleAuthButton captchaVerified={Boolean(captchaToken)} />
+
+      {!captchaToken && (
+      <p className="captcha-hint">
+        Complete the CAPTCHA above to enable account creation and Google sign-in.
+      </p>
+    )}
 
       <p className="auth-switch">
         Already have an account? <Link to="/login">Sign in</Link>
