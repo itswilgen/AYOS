@@ -2413,3 +2413,18 @@ button {
   .address-review-terms{padding:13px;font-size:.75rem}
 }
 @media(min-width:601px) and (max-width:850px){.address-setup{padding:26px}}
+
+/**
+  DISABLED BUTTON STYLE IF CAPTCHA NOT CLICK IN LOGIN PAGE
+*/
+.form-submit:disabled,
+.google-auth-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.captcha-hint {
+  margin-top: 8px;
+  font-size: 0.875rem;
+  color: #6b7280;
+}

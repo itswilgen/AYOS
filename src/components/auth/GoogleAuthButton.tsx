@@ -1,7 +1,21 @@
 import { backendUrl } from '../../lib/api/client'
 
-export default function GoogleAuthButton() {
+interface GoogleAuthButtonProps {
+  captchaVerified: boolean
+}
+
+export default function GoogleAuthButton({
+  captchaVerified,
+}: GoogleAuthButtonProps) {
   const beginGoogleSignIn = () => {
+    if (!captchaVerified) {
+      document
+        .getElementById('login-captcha')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      return
+    }
+
     window.location.assign(backendUrl('/auth/google/redirect'))
   }
 
@@ -10,11 +24,20 @@ export default function GoogleAuthButton() {
       <div className="social-auth-divider" aria-hidden="true">
         <span>or continue with</span>
       </div>
+
       <button
         className="google-auth-button"
+        id="google-btn"
         type="button"
         onClick={beginGoogleSignIn}
+        disabled={!captchaVerified}
+        aria-disabled={!captchaVerified}
         aria-label="Continue with Google"
+        title={
+          captchaVerified
+            ? 'Continue with Google'
+            : 'Complete the CAPTCHA first'
+        }
       >
         <svg
           className="google-auth-mark"
@@ -38,8 +61,9 @@ export default function GoogleAuthButton() {
             d="M24 11.9c3 0 5.7 1 7.8 3.1l5.8-5.8C34.1 5.9 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"
           />
         </svg>
+
         Continue with Google
       </button>
     </>
-  );
+  )
 }

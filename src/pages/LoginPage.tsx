@@ -138,12 +138,21 @@ export default function LoginPage() {
 
         {notice && <p className="form-notice" role="alert">{notice}</p>}
 
-        <Button type="submit" className="form-submit" disabled={busy} aria-busy={busy}>
+       <Button type="submit" className="form-submit"
+          disabled={busy || !captchaToken}
+          aria-busy={busy}
+        >
           {busy ? 'Signing you in…' : 'Sign in'} {!busy && <ArrowRight size={17} />}
         </Button>
+
+        {!captchaToken && (
+          <p className="captcha-hint">
+            Complete the CAPTCHA above to enable sign in options.
+          </p>
+        )}
       </form>
 
-      <GoogleAuthButton />
+      <GoogleAuthButton captchaVerified={Boolean(captchaToken)} />
       <p className="auth-switch">New to AYOS? <Link to="/signup">Create an account</Link></p>
       <div className="auth-security-note login-security-note">
         <ShieldCheck size={16} aria-hidden="true" />
