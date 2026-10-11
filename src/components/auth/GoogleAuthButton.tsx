@@ -40,9 +40,6 @@ export default function GoogleAuthButton() {
         </svg>
         Continue with Google
       </button>
-      <p className="social-auth-hint">
-        Secure sign-in with your Google account.
-      </p>
     </>
   );
 }

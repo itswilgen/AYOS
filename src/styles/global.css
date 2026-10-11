@@ -2388,7 +2388,6 @@ button {
 .social-auth-divider::before,.social-auth-divider::after{height:1px;flex:1;background:#e1e9ed;content:""}
 .google-auth-button{display:flex;width:100%;min-height:48px;align-items:center;justify-content:center;gap:11px;padding:0 16px;border:1px solid #cfdae0;border-radius:9px;background:#fff;color:#27343b;font:650 .83rem/1 var(--font-body);box-shadow:0 1px 2px rgb(17 44 57 / 4%);transition:border-color var(--duration-fast),background var(--duration-fast),box-shadow var(--duration-fast),transform var(--duration-fast)}
 .google-auth-mark{width:19px;height:19px;flex:0 0 auto}
-.social-auth-hint{margin:8px 0 0;color:#7b8991;font-size:.66rem;line-height:1.45;text-align:center}
 @media(prefers-reduced-motion:no-preference){.google-auth-button:not(:disabled):hover{transform:translateY(-1px);border-color:#aebdc5;box-shadow:0 5px 15px rgb(17 44 57 / 8%)}}
 .google-profile-summary{display:grid;gap:5px;margin:0 0 20px;padding:15px 16px;border:1px solid #dce8ed;border-radius:10px;background:#f7fbfd}
 .google-profile-summary span{color:#2478a6;font-size:.63rem;font-weight:750;letter-spacing:.1em}

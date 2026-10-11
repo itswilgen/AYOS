@@ -83,8 +83,8 @@ export default function LoginPage() {
     <p className="auth-intro">Sign in to pick up where you left off. Your account stays yours on every device.</p>
     {googleMessage && <p className="form-notice" role="alert">{googleMessage}</p>}
     <form onSubmit={submit} noValidate>
-      <FormField label="Email address" name="email" type="email" autoComplete="username" inputMode="email" placeholder="you@example.com" hint="Use the email address you registered with." startAdornment={<Mail size={18} />} error={errors.email} />
-      <PasswordField label="Password" name="password" autoComplete="current-password" placeholder="Enter your password" hint="If you’ve forgotten it, we’ll help you reset it." startAdornment={<LockKeyhole size={18} />} error={errors.password} />
+      <FormField label="Email address" name="email" type="email" autoComplete="username" inputMode="email" placeholder="you@example.com" startAdornment={<Mail size={18} />} error={errors.email} />
+      <PasswordField label="Password" name="password" autoComplete="current-password" placeholder="Enter your password" startAdornment={<LockKeyhole size={18} />} error={errors.password} />
       <div className="form-options"><label className="check-label"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /> <span>Remember me</span></label><Link className="quiet-link" to="/forgot-password">Forgot password?</Link></div>
       {notice && <p className="form-notice" role="alert">{notice}</p>}
       <Button type="submit" className="form-submit" disabled={busy} aria-busy={busy}>{busy ? 'Signing you in…' : 'Sign in'} {!busy && <ArrowRight size={17} />}</Button>

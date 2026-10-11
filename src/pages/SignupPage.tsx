@@ -69,9 +69,9 @@ export default function SignupPage() {
     <p className="auth-intro">One account to find help and take part in your community. You can apply to offer services later.</p>
     <form onSubmit={submit} noValidate>
       <FormField label="Full name" name="name" type="text" autoComplete="name" placeholder="Your full name" error={errors.name} />
-      <FormField label="Email address" name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" hint="We’ll send a link to verify this address." error={errors.email} />
-      <FormField label="Mobile number" name="mobile" type="tel" autoComplete="tel" inputMode="tel" placeholder="+63 9XX XXX XXXX" hint="Use the number where we can reach you." error={errors.mobile} />
-      <PasswordField label="Password" name="password" autoComplete="new-password" placeholder="At least 12 characters" hint="Longer passphrases are easier to remember and harder to guess." error={errors.password} />
+      <FormField label="Email address" name="email" type="email" autoComplete="email" inputMode="email" placeholder="you@example.com" error={errors.email} />
+      <FormField label="Mobile number" name="mobile" type="tel" autoComplete="tel" inputMode="tel" placeholder="+63 9XX XXX XXXX" error={errors.mobile} />
+      <PasswordField label="Password" name="password" autoComplete="new-password" placeholder="At least 12 characters" error={errors.password} />
       <PasswordField label="Confirm password" name="confirm" autoComplete="new-password" placeholder="Enter your password again" error={errors.confirm} />
       <div className="terms-row"><label className="check-label"><input id="terms" type="checkbox" checked={accepted} aria-invalid={Boolean(errors.terms)} aria-describedby={errors.terms ? 'terms-error' : undefined} onChange={e => setAccepted(e.target.checked)} /><span>I agree to AYOS’s <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.</span></label>{errors.terms && <p id="terms-error" className="field-error" role="alert">{errors.terms}</p>}</div>
       {notice && <p className="form-notice" role="alert">{notice}</p>}
