@@ -58,6 +58,7 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@ayos.test}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-AYOS}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
     ports:
       - "127.0.0.1:8010:8000"
     volumes:
