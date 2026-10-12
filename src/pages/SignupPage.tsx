@@ -63,7 +63,7 @@ export default function SignupPage() {
   {
     return (
       <Navigate
-        to={user.email_verified ? '/account' : '/verify-email'}
+        to={user.email_verified ? '/home' : '/verify-email'}
         replace
       />
     )

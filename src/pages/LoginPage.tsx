@@ -38,7 +38,7 @@ export default function LoginPage() {
       : googleError ? 'Google sign-in could not be completed. Please try again.' : ''
 
   if (authLoading) return <div className="route-loading" role="status">Checking your AYOS session…</div>
-  if (user) return <Navigate to={user.email_verified ? '/account' : '/verify-email'} replace />
+  if (user) return <Navigate to={user.email_verified ? '/home' : '/verify-email'} replace />
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -76,12 +76,10 @@ export default function LoginPage() {
       }
 
       const signedInUser = await refreshUser()
-      const destination = (location.state as { from?: string } | null)?.from || '/account'
+      const destination = (location.state as { from?: string } | null)?.from || '/home'
 
       navigate(
-        signedInUser && !signedInUser.email_verified ? '/verify-email'
-          : signedInUser && !signedInUser.address_complete ? '/account/address'
-          : destination,
+        signedInUser && !signedInUser.email_verified ? '/verify-email' : destination,
         { replace: true },
       )
     } catch (error) {

@@ -33,11 +33,7 @@ export default function VerifyEmailPage() {
         setMessage('We couldn’t confirm your email yet. Open the latest verification link, then try again.')
         return
       }
-      if (!current.address_complete) {
-        navigate('/account/address', { replace: true })
-        return
-      }
-      navigate('/account', { replace: true })
+      navigate('/home', { replace: true })
     })
     return () => { active = false }
   }, [navigate, params, refreshUser])
@@ -66,6 +62,6 @@ export default function VerifyEmailPage() {
     <div className="verify-email-mark"><MailCheck size={26} aria-hidden="true" /></div>
     {message && <p className="form-notice" role="status">{message}</p>}
     {user && !user.email_verified && <><Button className="form-submit" type="button" disabled={busy || cooldown > 0} onClick={resend}>{busy ? 'Sending…' : cooldown ? `Resend available in ${cooldown}s` : 'Resend verification email'}</Button><button className="quiet-link verify-signout" type="button" onClick={() => void logout()}>Sign out</button></>}
-    <p className="auth-switch">{params.get('verified') === '1' ? <>Ready to continue? <Link to="/login" state={{ from: '/account/address' }}>Sign in</Link></> : <>Need a different account? <Link to="/login">Sign in</Link></>}</p>
+    <p className="auth-switch">{params.get('verified') === '1' ? <>Ready to continue? <Link to="/login" state={{ from: '/home' }}>Sign in</Link></> : <>Need a different account? <Link to="/login">Sign in</Link></>}</p>
   </div>
 }

@@ -50,7 +50,7 @@ export default function GoogleCompletePage() {
         body: JSON.stringify({ mobile_number: mobile, terms_accepted: accepted }),
       })
       await refreshUser()
-      navigate('/account/address', { replace: true })
+      navigate('/home', { replace: true })
     } catch (error) {
       const errors = error instanceof ApiError && typeof error.details === 'object' && error.details !== null && 'errors' in error.details
         ? error.details.errors
