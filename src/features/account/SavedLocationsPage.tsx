@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, MapPin, Pencil, Plus, Star, Trash2 } from 'lucide-react'
 import { ApiError } from '../../lib/api/client'
 import Button from '../../components/ui/Button'
@@ -28,6 +28,7 @@ function errorDetails(error: unknown): string {
 }
 
 export default function SavedLocationsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [locations, setLocations] = useState<ServiceLocationSummary[]>([])
   const [regions, setRegions] = useState<LocationOption[]>([])
   const [provinces, setProvinces] = useState<LocationOption[]>([])
@@ -96,6 +97,22 @@ export default function SavedLocationsPage() {
     void locationsService.getBarangays(form.city_municipality_code).then((items) => { if (active) setBarangays(items) }).catch(() => { if (active) setFieldError('Couldn’t load barangays for that city.') }).finally(() => { if (active) setOptionsLoading(false) })
     return () => { active = false }
   }, [form.city_municipality_code])
+
+  useEffect(() => {
+    if (loading || searchParams.get('add') !== '1') return
+    setFormOpen(true)
+    setEditingId(null)
+    setForm({ ...emptyForm, is_default: locations.length === 0 })
+    setProvinces([]); setCities([]); setBarangays([]); setOptionsLoading(false)
+    setFieldError('')
+    setSuccess('')
+    window.requestAnimationFrame(() => document.getElementById('location-form-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.delete('add')
+      return next
+    }, { replace: true })
+  }, [loading, locations.length, searchParams, setSearchParams])
 
   const beginAdd = () => {
     setFormOpen(true)
@@ -180,9 +197,8 @@ export default function SavedLocationsPage() {
   return <div className="app-page account-page">
     <Link className="account-back-link" to="/home"><ArrowLeft size={16} aria-hidden="true" /> Back to AYOS home</Link>
     <div className="account-page-heading"><div><span className="home-eyebrow">MAKE LOCAL SEARCH EASIER</span><h1>Saved locations</h1><p>Save the service areas you use most. Your exact address stays private.</p></div><span className="account-page-avatar"><MapPin size={27} aria-hidden="true" /></span></div>
-    <div className="account-page-grid">
-      <nav className="account-nav-rail" aria-label="Account settings"><Link to="/account/profile">Personal details</Link><Link className="is-current" to="/account/locations">Saved locations</Link><Link to="/account/security">Sign-in &amp; security</Link></nav>
-      <section className="account-panel" aria-labelledby="saved-locations-title">
+    <section className="account-panel" aria-labelledby={formOpen ? 'location-form-title' : 'saved-locations-title'}>
+      {!formOpen && <>
         <div className="account-panel-heading"><div><h2 id="saved-locations-title">Your locations</h2><p>Choose where you’d like to find service.</p></div><Button type="button" onClick={beginAdd}><Plus size={17} aria-hidden="true" /> Add location</Button></div>
         {error && <p className="app-form-alert" role="alert">{error}<button type="button" onClick={() => { setLoading(true); setError(''); void loadPage() }}>Try again</button></p>}
         {success && <p className="app-form-success" role="status"><Check size={16} aria-hidden="true" /> {success}</p>}
@@ -198,10 +214,11 @@ export default function SavedLocationsPage() {
             </div>
           </li>
         })}</ul>}
+      </>}
         {formOpen && <form className="location-editor" onSubmit={saveLocation} aria-labelledby="location-form-title">
           <div className="location-editor-heading"><div><span className="home-eyebrow">LOCATION DETAILS</span><h3 id="location-form-title">{editingId ? 'Edit location' : 'Add a location'}</h3></div>{editingId !== null && <button type="button" onClick={cancelEdit}>Cancel</button>}</div>
           {fieldError && <p className="app-form-alert" role="alert">{fieldError}</p>}
-          <label className="app-form-field" htmlFor="location-label"><span>Location name</span><input id="location-label" required maxLength={80} value={form.label} onChange={(event) => setField('label', event.target.value)} placeholder="Home, Office, Family home" /></label>
+          <label className="app-form-field" htmlFor="location-label"><span>Location name</span><input id="location-label" required maxLength={80} autoFocus={editingId === null} value={form.label} onChange={(event) => setField('label', event.target.value)} placeholder="Home, Office, Family home" /></label>
           <label className="app-form-field" htmlFor="location-address"><span>House number, street and unit</span><textarea id="location-address" required maxLength={1000} rows={2} autoComplete="street-address" value={form.address_line} onChange={(event) => setField('address_line', event.target.value)} placeholder="e.g. 26 Jesus Street, Unit 2" /></label>
           <div className="location-editor-grid">
             <label className="app-form-field" htmlFor="location-region"><span>Region</span><select id="location-region" required value={form.region_code} onChange={(event) => { setOptionsLoading(true); setProvinces([]); setCities([]); setBarangays([]); setForm((current) => ({ ...current, region_code: event.target.value, province_code: null, city_municipality_code: '', barangay_code: '' })) }}><option value="">Choose a region</option>{regions.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}</select></label>
@@ -214,7 +231,6 @@ export default function SavedLocationsPage() {
           <label className="location-default-toggle"><input type="checkbox" checked={form.is_default} onChange={(event) => setField('is_default', event.target.checked)} /><span>Set as my default service location</span></label>
           <div className="location-editor-actions"><Button type="button" variant="secondary" onClick={cancelEdit}>Cancel</Button><Button type="submit" disabled={saving || optionsLoading} aria-busy={saving}>{saving ? 'Saving…' : editingId ? 'Save changes' : 'Save location'} {!saving && <ArrowRight size={16} aria-hidden="true" />}</Button></div>
         </form>}
-      </section>
-    </div>
+    </section>
   </div>
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, MapPin, Search, Wrench } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { ArrowRight, Search, Wrench } from 'lucide-react'
 import { findServiceCategories } from '../../../services/home.service'
 import type { ServiceCategory, ServiceLocationSummary } from '../../../types/marketplace'
 
@@ -12,12 +12,7 @@ type Props = {
 export default function HomeSearch({ categories, locations }: Props) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
-  const [locationOverride, setLocationOverride] = useState('')
   const [open, setOpen] = useState(false)
-
-  const selectedLocationId = locations.some((location) => String(location.id) === locationOverride)
-    ? locationOverride
-    : String((locations.find((item) => item.is_default) ?? locations[0])?.id ?? '')
 
   const suggestions = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase()
@@ -25,7 +20,7 @@ export default function HomeSearch({ categories, locations }: Props) {
     return findServiceCategories(categories, normalized).slice(0, 5)
   }, [categories, query])
 
-  const selectedLocation = locations.find((location) => String(location.id) === selectedLocationId)
+  const selectedLocation = locations.find((location) => location.is_default) ?? locations[0]
   const locationLabel = selectedLocation
     ? `${selectedLocation.city_municipality.name}, ${selectedLocation.province?.name ?? selectedLocation.region.name}`
     : ''
@@ -33,8 +28,12 @@ export default function HomeSearch({ categories, locations }: Props) {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const search = query.trim()
-    if (!search || !selectedLocation) return
-    const params = new URLSearchParams({ service: search, location: locationLabel, locationId: String(selectedLocation.id) })
+    if (!search) return
+    const params = new URLSearchParams({ service: search })
+    if (selectedLocation) {
+      params.set('location', locationLabel)
+      params.set('locationId', String(selectedLocation.id))
+    }
     navigate(`/services/search?${params.toString()}`)
     setOpen(false)
   }
@@ -80,24 +79,10 @@ export default function HomeSearch({ categories, locations }: Props) {
               </li>)}
             </ul>}
           </div>
-          {locations.length > 0 ? <div className="home-search-location">
-            <MapPin size={19} aria-hidden="true" />
-            <label className="sr-only" htmlFor="search-location">Choose a service location</label>
-            <select id="search-location" value={selectedLocationId} onChange={(event) => setLocationOverride(event.target.value)}>
-              {locations.map((location) => <option value={location.id} key={location.id}>
-                {location.label} · {location.city_municipality.name}
-              </option>)}
-            </select>
-          </div> : <Link className="home-search-location home-search-location-empty" to="/account/locations"><MapPin size={19} aria-hidden="true" /><span>Add a service location</span><ArrowRight size={16} aria-hidden="true" /></Link>}
-          <button className="home-search-submit" type="submit" disabled={!query.trim() || !selectedLocation}>
-            <Search size={18} aria-hidden="true" /><span>Search services</span><ArrowRight size={17} aria-hidden="true" />
+          <button className="home-search-submit" type="submit" disabled={!query.trim()}>
+            <Search size={21} aria-hidden="true" /><span className="sr-only">Search services</span>
           </button>
         </form>
-        <div className="home-search-footer">
-          <span>Popular:</span>
-          {['Aircon', 'Electrical', 'Plumbing'].map((term) => <button key={term} type="button" onClick={() => { setQuery(term); document.getElementById('service-search-input')?.focus() }}>{term}</button>)}
-          {locations.length > 0 && <Link to="/account/locations">Change location</Link>}
-        </div>
       </div>
     </div>
   </section>

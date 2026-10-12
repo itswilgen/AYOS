@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { Bell, ChevronDown, CircleUserRound, LogOut, MapPin, Search, Settings2, ShieldCheck, UserRound, X } from 'lucide-react'
+import { Bell, ChevronDown, CircleUserRound, LogOut, MapPin, Settings2, UserRound, X } from 'lucide-react'
 import Brand from '../common/Brand'
 import { useAuth } from '../../lib/auth/useAuth'
 import { notificationsService } from '../../services/home.service'
@@ -74,7 +74,6 @@ export default function AuthenticatedHeader() {
         }}>My requests</Link>
       </nav>
       <div className="app-header-actions">
-        <Link className="app-search-shortcut" to="/home#service-search" aria-label="Find a service"><Search size={18} /><span>Find a service</span></Link>
         <div className="app-popover-anchor" ref={noticeRef}>
           <button className="app-icon-button" type="button" aria-label="Notifications" aria-expanded={noticeOpen} aria-controls="notification-popover" onClick={() => { setNoticeOpen((open) => !open); setProfileOpen(false) }}>
             <Bell size={19} aria-hidden="true" />
@@ -93,8 +92,7 @@ export default function AuthenticatedHeader() {
             <div className="app-profile-summary"><span className="app-avatar app-avatar-large" aria-hidden="true">{initials}</span><div><strong>{displayName}</strong><span>{user?.email}</span></div></div>
             <nav aria-label="Account menu links">
               <Link to="/account/profile" onClick={() => setProfileOpen(false)}><UserRound size={17} /> View profile</Link>
-              <Link to="/account/locations" onClick={() => setProfileOpen(false)}><MapPin size={17} /> Saved locations</Link>
-              <Link to="/account/security" onClick={() => setProfileOpen(false)}><ShieldCheck size={17} /> Sign-in &amp; security</Link>
+              <Link to="/account/locations?add=1" onClick={() => setProfileOpen(false)}><MapPin size={17} /> My addresses</Link>
               <Link to="/provider/apply" onClick={() => setProfileOpen(false)}><Settings2 size={17} /> Become a provider</Link>
             </nav>
             {signOutError && <p className="app-popover-error" role="alert">{signOutError}</p>}

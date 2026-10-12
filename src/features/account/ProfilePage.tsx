@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowRight, Check, CircleUserRound, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Check, CircleUserRound } from 'lucide-react'
 import { ApiError } from '../../lib/api/client'
 import { profileService } from '../../services/profile.service'
 import { useAuth } from '../../lib/auth/useAuth'
@@ -71,13 +70,7 @@ export default function ProfilePage() {
 
   return <div className="app-page account-page">
     <div className="account-page-heading"><div><span className="home-eyebrow">YOUR AYOS ACCOUNT</span><h1>Personal details</h1><p>Keep your contact information up to date.</p></div><span className="account-page-avatar"><CircleUserRound size={29} aria-hidden="true" /></span></div>
-    <div className="account-page-grid">
-      <nav className="account-nav-rail" aria-label="Account settings">
-        <Link className="is-current" to="/account/profile">Personal details</Link>
-        <Link to="/account/locations">Saved locations</Link>
-        <Link to="/account/security">Sign-in &amp; security</Link>
-      </nav>
-      <section className="account-panel" aria-labelledby="profile-form-title">
+    <section className="account-panel" aria-labelledby="profile-form-title">
         <div className="account-panel-heading"><div><h2 id="profile-form-title">Profile information</h2><p>These details are connected to your AYOS account.</p></div></div>
         {error && <p className="app-form-alert" role="alert">{error}<button type="button" onClick={() => { setLoading(true); setError(''); void loadProfile() }}>Try again</button></p>}
         {success && <p className="app-form-success" role="status"><Check size={16} aria-hidden="true" /> {success}</p>}
@@ -88,8 +81,6 @@ export default function ProfilePage() {
           <label className="app-form-field" htmlFor="profile-mobile"><span>Mobile number</span><input id="profile-mobile" type="tel" value={profile.mobile_number} readOnly /></label>
           <div className="account-form-actions"><button className="button button-primary" type="submit" disabled={saving || !name.trim()}>{saving ? 'Saving changes…' : 'Save changes'} {!saving && <ArrowRight size={16} aria-hidden="true" />}</button><span>Account contact details are managed securely.</span></div>
         </form>}
-      </section>
-    </div>
-    <p className="account-page-security-note"><ShieldCheck size={17} aria-hidden="true" /> Keep your sign-in details safe. <Link to="/account/security">Review security settings <ArrowRight size={15} aria-hidden="true" /></Link></p>
+    </section>
   </div>
 }
