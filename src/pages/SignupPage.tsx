@@ -49,7 +49,8 @@ export default function SignupPage() {
   const { user, loading: authLoading, refreshUser } = useAuth()
   const navigate = useNavigate()
 
-  if (authLoading) {
+  if (authLoading) 
+  {
     return (
       <div className="route-loading" role="status">
         Checking your AYOS session…
@@ -57,7 +58,8 @@ export default function SignupPage() {
     )
   }
 
-  if (user) {
+  if (user) 
+  {
     return (
       <Navigate
         to={user.email_verified ? '/account' : '/verify-email'}
@@ -94,13 +96,15 @@ export default function SignupPage() {
 
     if (!captchaToken) { next.captcha = 'Please complete the CAPTCHA verification.' }
 
-    if (Object.keys(next).length) {
+    if (Object.keys(next).length) 
+    {
       setErrors(next)
 
       requestAnimationFrame(() => {
         const firstError = Object.keys(next)[0]
 
-        if (firstError === 'captcha') {
+        if (firstError === 'captcha') 
+        {
           document.getElementById('signup-captcha')?.focus()
         } else {
           document.getElementById(firstError)?.focus()
@@ -131,7 +135,8 @@ export default function SignupPage() {
     } catch (error) {
       const serverFields = fieldsFrom(error)
 
-      if (Object.keys(serverFields).length) {
+      if (Object.keys(serverFields).length) 
+      {
         setErrors(serverFields)
       } else {
         setNotice(
