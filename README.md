@@ -8,54 +8,39 @@ AYOS is a Philippine community service marketplace for finding trusted local hel
 - Backend: Laravel 13, PostgreSQL, Sanctum SPA sessions, Fortify
 - Session authentication uses secure cookies and CSRF protection. No access tokens or credentials are stored in browser storage.
 
-## Run locally
+## Development setup (Docker)
 
-### Docker (recommended)
+Use Docker Compose as the project’s development environment. This keeps Node, PHP, PostgreSQL, and their dependencies consistent across team devices. Do not start a separate host Vite or Laravel server while using this setup.
 
-Docker Compose starts the React/Vite frontend, Laravel API, and PostgreSQL 17 database. It keeps the database and dependency directories in named volumes, runs migrations when the API starts, and binds published ports to localhost. The database password below is for local development only.
-
-```sh
-docker compose up --build
-```
-
-Open the frontend at `http://localhost:5180`. The API is available at `http://localhost:8010`; PostgreSQL is published on `localhost:5440` if you want to connect with a local database client. Local verification and password reset emails are captured by Mailpit at `http://localhost:8025`; they are not delivered to external inboxes. To deliver mail through a real SMTP provider, set `MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME`, `MAIL_USERNAME`, `MAIL_PASSWORD`, and `MAIL_FROM_ADDRESS` in the ignored root `.env`, then recreate the backend with `docker compose up -d --force-recreate backend`. Never commit provider credentials. Set `FRONTEND_URL` in the root `.env` if your local Vite app uses another port. Laravel creates `backend/.env` and its application key on first start when they do not exist. To stop the services, press `Ctrl+C` and run `docker compose down`. To remove the database and all persisted local data, run `docker compose down -v`.
-
-The address setup uses manual address entry and can be updated later from the account page.
-
-Set `AYOS_DOCKER_DB_PASSWORD` in the shell or root `.env` to override the local default. Do not use the development Compose configuration or its default password for production.
-
-Run the backend feature suite inside the PHP container with its isolated test settings:
-
-```sh
-docker compose exec -T backend sh -c 'APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: SESSION_DRIVER=array CACHE_STORE=array MAIL_MAILER=array QUEUE_CONNECTION=sync SANCTUM_STATEFUL_DOMAINS=localhost:5173,127.0.0.1:5173,localhost:8000,127.0.0.1:8000 php artisan test'
-```
-
-### Backend
-
-Create a PostgreSQL database named `ayos`, then configure the backend:
-
-```sh
-cd backend
-cp .env.example .env
-composer install
-php artisan key:generate
-php artisan migrate
-php artisan serve --host=localhost --port=8000
-```
-
-Set the PostgreSQL username/password and matching frontend origin in `backend/.env`. For local development the Vite origin is `http://localhost:5173`. Configure a real mail transport before sending verification or password reset messages outside local development; the default mail driver logs them.
-
-### Frontend
-
-In another terminal:
+On a new clone, create local environment files once:
 
 ```sh
 cp .env.example .env
-npm install
-npm run dev
+cp backend/.env.example backend/.env
 ```
 
-Set `VITE_BACKEND_URL` and `VITE_API_BASE_URL` to the Laravel origin and `/api` endpoint. They default to `http://localhost:8000` and `http://localhost:8000/api`.
+Add development credentials to the local files when using CAPTCHA or Google sign-in. Put `VITE_RECAPTCHA_SITE_KEY` in the root `.env`; put `RECAPTCHA_SECRET_KEY`, `GOOGLE_CLIENT_ID`, and `GOOGLE_CLIENT_SECRET` in `backend/.env`. The backend generates an `APP_KEY` on first start. Keep both `.env` files private and preserve them between pulls.
+
+Start or update all services with:
+
+```sh
+docker compose up --build -d
+docker compose ps
+```
+
+Use `http://localhost:5180` for the frontend, `http://localhost:8010` for the API, `localhost:5440` for PostgreSQL clients, and `http://localhost:8025` for Mailpit. Mailpit captures verification and password-reset emails locally.
+
+After pulling changes from `main`, rebuild and start the services with `docker compose up --build -d`. The frontend and backend check their lockfiles against their persistent dependency volumes and sync dependencies when needed. To follow service logs, run `docker compose logs -f frontend backend`.
+
+To stop containers while keeping the local database and generated app key, run `docker compose down`. `docker compose down -v` deletes the database volume and is only for intentionally resetting local data. Keep each developer’s `APP_KEY` with their own database; importing encrypted database data from another device requires the key that encrypted it.
+
+Compose uses a local development database password by default. Do not use the development Compose configuration or its default password for production.
+
+Run the backend feature suite inside Docker with its isolated test settings:
+
+```sh
+docker compose exec -T backend sh -c 'APP_ENV=testing DB_CONNECTION=sqlite DB_DATABASE=:memory: SESSION_DRIVER=array CACHE_STORE=array MAIL_MAILER=array QUEUE_CONNECTION=sync SANCTUM_STATEFUL_DOMAINS=localhost:5180,127.0.0.1:5180,localhost:8010,127.0.0.1:8010 php artisan test'
+```
 
 For production, use HTTPS, set `SESSION_SECURE_COOKIE=true`, use a shared parent `SESSION_DOMAIN` for the SPA and API hostnames, configure the exact `CORS_ALLOWED_ORIGINS`, and set `SANCTUM_STATEFUL_DOMAINS` to the frontend hostnames. Keep `APP_DEBUG=false` and use a production mail provider.
 
@@ -104,3 +89,23 @@ Feature tests cover universal registration and terms acceptance, safe login/curr
 ## Before launch
 
 Replace the Terms and Privacy preview notices with reviewed policy documents, configure PostgreSQL and production mail, use HTTPS and shared-domain Sanctum cookies, and complete a production browser/accessibility review. No provider onboarding, booking, payments, reviews, or admin dashboard is part of this phase.
+
+## Updating after a pull
+
+```sh
+git switch main
+git pull --ff-only origin main
+docker compose up --build -d
+docker compose ps
+```
+
+## First setup on a new device
+
+```sh
+cp .env.example .env
+cp backend/.env.example backend/.env
+docker compose up --build -d
+docker compose ps
+```
+
+Do this once per device. Keep `.env` and `backend/.env` on that device; Git ignores them. Add that device’s CAPTCHA and Google OAuth credentials to the indicated local files if those features are needed.

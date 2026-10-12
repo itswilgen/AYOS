@@ -3,6 +3,19 @@ set -eu
 
 cd /var/www/html
 
+composer_lock_hash="$(sha256sum composer.lock | awk '{ print $1 }')"
+installed_lock_hash=""
+if [ -f vendor/.ayos-composer-lock-hash ]; then
+    installed_lock_hash="$(cat vendor/.ayos-composer-lock-hash)"
+fi
+
+if [ "$composer_lock_hash" != "$installed_lock_hash" ] || [ ! -f vendor/autoload.php ]; then
+    echo "Backend dependencies changed; syncing vendor from composer.lock."
+    composer install --no-interaction --prefer-dist --no-progress --no-scripts
+    composer dump-autoload --no-interaction --optimize
+    printf '%s\n' "$composer_lock_hash" > vendor/.ayos-composer-lock-hash
+fi
+
 if [ ! -f .env ]; then
     cp .env.example .env
 fi

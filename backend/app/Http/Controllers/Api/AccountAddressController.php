@@ -16,7 +16,12 @@ class AccountAddressController extends Controller
 
     public function update(SaveAccountAddressRequest $request): JsonResponse
     {
-        $request->user()->forceFill($request->validated())->save();
+        $values = $request->safe()->only(['address_line', 'barangay', 'city', 'province', 'postal_code', 'latitude', 'longitude']);
+        if ($request->boolean('terms_accepted')) {
+            $values['terms_accepted_at'] = $request->user()->terms_accepted_at ?? now();
+        }
+
+        $request->user()->forceFill($values)->save();
 
         return response()->json([
             'message' => 'Your address has been saved.',
@@ -30,7 +35,7 @@ class AccountAddressController extends Controller
         $user = $request->user();
 
         return [
-            'address_line' => $user->address_line,
+            'address_line' => $user->legacyAddressLine(),
             'barangay' => $user->barangay,
             'city' => $user->city,
             'province' => $user->province,

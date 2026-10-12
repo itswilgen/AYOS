@@ -39,6 +39,7 @@ function fieldsFrom(error: unknown): Record<string, string> {
 }
 
 export default function SignupPage() {
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim()
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [notice, setNotice] = useState('')
   const [accepted, setAccepted] = useState(false)
@@ -236,34 +237,41 @@ export default function SignupPage() {
 
         {/* Google reCAPTCHA */}
         <div className="signup-captcha" id="signup-captcha" tabIndex={-1}>
-          <ReCAPTCHA
-            ref={captchaRef}
-            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-            onChange={(token) => {
-              setCaptchaToken(token)
+          {recaptchaSiteKey ? (
+            <ReCAPTCHA
+              ref={captchaRef}
+              sitekey={recaptchaSiteKey}
+              onChange={(token) => {
+                setCaptchaToken(token)
 
-              if (token) {
-                setErrors((previous) => {
-                  const { captcha: _captcha, ...remaining } = previous
-                  return remaining
-                })
-              }
-            }}
-            onExpired={() => {
-              setCaptchaToken(null)
-              setErrors((previous) => ({
-                ...previous,
-                captcha: 'CAPTCHA expired. Please verify again.',
-              }))
-            }}
-            onErrored={() => {
-              setCaptchaToken(null)
-              setErrors((previous) => ({
-                ...previous,
-                captcha: 'CAPTCHA failed to load. Please try again.',
-              }))
-            }}
-          />
+                if (token) {
+                  setErrors((previous) => {
+                    const remaining = { ...previous }
+                    delete remaining.captcha
+                    return remaining
+                  })
+                }
+              }}
+              onExpired={() => {
+                setCaptchaToken(null)
+                setErrors((previous) => ({
+                  ...previous,
+                  captcha: 'CAPTCHA expired. Please verify again.',
+                }))
+              }}
+              onErrored={() => {
+                setCaptchaToken(null)
+                setErrors((previous) => ({
+                  ...previous,
+                  captcha: 'CAPTCHA failed to load. Please try again.',
+                }))
+              }}
+            />
+          ) : (
+            <p className="field-error" role="alert">
+              Account verification is not configured. Add the reCAPTCHA site key to the frontend environment and restart Vite.
+            </p>
+          )}
 
           {errors.captcha && (
             <p className="field-error" role="alert">
@@ -292,7 +300,9 @@ export default function SignupPage() {
 
       {!captchaToken && (
       <p className="captcha-hint">
-        Complete the CAPTCHA above to enable account creation and Google sign-in.
+          {recaptchaSiteKey
+            ? 'Complete the CAPTCHA above to enable account creation and Google sign-in.'
+            : 'Account creation is unavailable until CAPTCHA verification is configured.'}
       </p>
     )}
 

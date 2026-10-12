@@ -18,6 +18,7 @@ function fieldsFrom(error: unknown): Record<string, string> {
 }
 
 export default function LoginPage() {
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim()
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const captchaRef = useRef<ReCAPTCHA>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -116,23 +117,29 @@ export default function LoginPage() {
         </div>
 
         <div id="login-captcha" className="login-captcha">
-          <ReCAPTCHA
-            ref={captchaRef}
-            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-            onChange={token => {
-              setCaptchaToken(token)
-              setErrors(previous => {
-                const updated = { ...previous }
-                delete updated.captcha
-                return updated
-              })
-            }}
-            onExpired={() => setCaptchaToken(null)}
-            onErrored={() => {
-              setCaptchaToken(null)
-              setErrors(previous => ({ ...previous, captcha: 'CAPTCHA failed to load. Please try again.' }))
-            }}
-          />
+          {recaptchaSiteKey ? (
+            <ReCAPTCHA
+              ref={captchaRef}
+              sitekey={recaptchaSiteKey}
+              onChange={token => {
+                setCaptchaToken(token)
+                setErrors(previous => {
+                  const updated = { ...previous }
+                  delete updated.captcha
+                  return updated
+                })
+              }}
+              onExpired={() => setCaptchaToken(null)}
+              onErrored={() => {
+                setCaptchaToken(null)
+                setErrors(previous => ({ ...previous, captcha: 'CAPTCHA failed to load. Please try again.' }))
+              }}
+            />
+          ) : (
+            <p className="field-error" role="alert">
+              Sign-in verification is not configured. Add the reCAPTCHA site key to the frontend environment and restart Vite.
+            </p>
+          )}
           {errors.captcha && <p className="field-error" role="alert">{errors.captcha}</p>}
         </div>
 
@@ -147,7 +154,9 @@ export default function LoginPage() {
 
         {!captchaToken && (
           <p className="captcha-hint">
-            Complete the CAPTCHA above to enable sign in options.
+            {recaptchaSiteKey
+              ? 'Complete the CAPTCHA above to enable sign-in options.'
+              : 'Sign-in is unavailable until CAPTCHA verification is configured.'}
           </p>
         )}
       </form>

@@ -8,6 +8,7 @@ import Button from '../components/ui/Button'
 import { authRequest } from '../lib/api/client'
 
 export default function ForgotPasswordPage() {
+  const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY?.trim()
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -87,22 +88,28 @@ export default function ForgotPasswordPage() {
         />
 
         <div className="signup-captcha" id="forgot-password-captcha">
-          <ReCAPTCHA
-            ref={captchaRef}
-            sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-            onChange={(token) => {
-              setCaptchaToken(token)
-              setError('')
-            }}
-            onExpired={() => {
-              setCaptchaToken(null)
-              setError('CAPTCHA expired. Please verify again.')
-            }}
-            onErrored={() => {
-              setCaptchaToken(null)
-              setError('CAPTCHA failed to load. Please try again.')
-            }}
-          />
+          {recaptchaSiteKey ? (
+            <ReCAPTCHA
+              ref={captchaRef}
+              sitekey={recaptchaSiteKey}
+              onChange={(token) => {
+                setCaptchaToken(token)
+                setError('')
+              }}
+              onExpired={() => {
+                setCaptchaToken(null)
+                setError('CAPTCHA expired. Please verify again.')
+              }}
+              onErrored={() => {
+                setCaptchaToken(null)
+                setError('CAPTCHA failed to load. Please try again.')
+              }}
+            />
+          ) : (
+            <p className="field-error" role="alert">
+              Password reset verification is not configured. Add the reCAPTCHA site key to the frontend environment and restart Vite.
+            </p>
+          )}
         </div>
 
         {error && (
@@ -120,7 +127,7 @@ export default function ForgotPasswordPage() {
         <Button
           className="form-submit"
           type="submit"
-          disabled={busy}
+          disabled={busy || !captchaToken}
           aria-busy={busy}
         >
           {busy ? 'Sending…' : 'Send reset link'}

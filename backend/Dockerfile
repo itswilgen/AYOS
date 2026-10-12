@@ -25,7 +25,8 @@ COPY --from=composer-bin /usr/bin/composer /usr/local/bin/composer
 WORKDIR /var/www/html
 
 COPY composer.json composer.lock ./
-RUN composer install --no-interaction --prefer-dist --no-progress --no-scripts
+RUN composer install --no-interaction --prefer-dist --no-progress --no-scripts \
+    && sha256sum composer.lock | awk '{ print $1 }' > vendor/.ayos-composer-lock-hash
 
 COPY . .
 RUN composer dump-autoload --no-interaction --optimize

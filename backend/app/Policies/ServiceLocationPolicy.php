@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Policies;
+
+use App\Models\ServiceLocation;
+use App\Models\User;
+
+class ServiceLocationPolicy
+{
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function viewAny(User $user): bool
+    {
+        return true;
+    }
+
+    /**
+     * Determine whether the user can view the model.
+     */
+    public function view(User $user, ServiceLocation $serviceLocation): bool
+    {
+        return $user->id === $serviceLocation->user_id;
+    }
+
+    /**
+     * Determine whether the user can create models.
+     */
+    public function create(User $user): bool
+    {
+        return true;
+    }
+
+    /**
+     * Determine whether the user can update the model.
+     */
+    public function update(User $user, ServiceLocation $serviceLocation): bool
+    {
+        return $user->id === $serviceLocation->user_id;
+    }
+
+    /**
+     * Determine whether the user can delete the model.
+     */
+    public function delete(User $user, ServiceLocation $serviceLocation): bool
+    {
+        return $user->id === $serviceLocation->user_id;
+    }
+
+    /**
+     * Determine whether the user can restore the model.
+     */
+    public function restore(User $user, ServiceLocation $serviceLocation): bool
+    {
+        return $user->id === $serviceLocation->user_id;
+    }
+
+    /**
+     * Determine whether the user can permanently delete the model.
+     */
+    public function forceDelete(User $user, ServiceLocation $serviceLocation): bool
+    {
+        return false;
+    }
+}

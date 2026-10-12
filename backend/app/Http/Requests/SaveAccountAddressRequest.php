@@ -29,6 +29,7 @@ class SaveAccountAddressRequest extends FormRequest
             'postal_code' => ['nullable', 'string', 'max:16'],
             'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
+            'terms_accepted' => ['sometimes', 'accepted'],
         ];
     }
 }
