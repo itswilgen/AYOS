@@ -634,6 +634,8 @@ button {
   height: 100%;
   display: block;
   object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
   transition: transform 650ms var(--ease-standard);
 }
 .service-card:hover > img {

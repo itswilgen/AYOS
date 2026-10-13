@@ -230,7 +230,7 @@ export default function ServicesSection() {
             const isClone = position >= services.length
             const titleId = `service-title-${index}`
             return <article className={`service-card ${tone}${activeIndex === index ? ' is-active' : ''}${isClone ? ' service-card-clone' : ''}`} key={`${name}-${isClone ? 'clone' : 'original'}`} aria-hidden={isClone} aria-labelledby={isClone ? undefined : titleId}>
-              <img src={image} alt={isClone ? '' : alt} width="960" height="720" loading="lazy" decoding="async" />
+              <img src={image} alt={isClone ? '' : alt} width="960" height="720" loading="lazy" decoding="async" draggable={false} />
               <span className="service-card-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
               <span className="service-card-icon" aria-hidden="true"><Icon size={20} strokeWidth={1.8} /></span>
               <div className="service-card-caption">
