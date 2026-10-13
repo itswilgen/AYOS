@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, MapPin } from 'lucide-react'
 import HomeSearch from './components/HomeSearch'
 import ServiceCategories from './components/ServiceCategories'
+import ProviderShowcase from './components/ProviderShowcase'
 import { useAuth } from '../../lib/auth/useAuth'
 import { locationsService } from '../../services/locations.service'
 import { servicesService } from '../../services/home.service'
@@ -55,5 +56,6 @@ export default function HomePage() {
       <HomeSearch categories={categories} locations={locations} />
       {loading ? <div className="home-categories-loading" role="status">Loading services…</div> : categories.length ? <ServiceCategories categories={categories} /> : <section className="home-section-error"><h2>Services are temporarily unavailable</h2><p>We couldn’t load service categories just now.</p><button type="button" onClick={() => { setLoading(true); void loadHome() }}>Try again</button></section>}
     </div>
+    {!loading && categories.length > 0 && <ProviderShowcase />}
   </div>
 }
