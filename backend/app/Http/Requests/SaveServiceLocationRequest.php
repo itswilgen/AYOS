@@ -60,7 +60,7 @@ class SaveServiceLocationRequest extends FormRequest
                 $validator->errors()->add('province_code', 'Choose a province within the selected region.');
             }
 
-            if (! $city || $city->region_code !== $regionCode || $city->province_code !== $provinceCode) {
+            if (! $city || $city->region_code !== $regionCode || ($provinceCode && $city->province_code !== $provinceCode)) {
                 $validator->errors()->add('city_municipality_code', 'Choose a city or municipality within the selected area.');
             }
 

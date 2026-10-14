@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -50,9 +52,10 @@ class AuthenticationTest extends TestCase
 
     public function test_login_uses_a_session_and_user_endpoint_returns_safe_account_fields(): void
     {
+        Http::fake(['www.google.com/recaptcha/api/siteverify' => Http::response(['success' => true])]);
         $user = User::factory()->create(['email' => 'maya@example.test', 'password' => 'a-long-passphrase-for-ayos']);
 
-        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos'])
+        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos', 'captcha_token' => 'valid-test-token'])
             ->assertSuccessful();
 
         $this->withHeader('Origin', 'http://localhost:5173')->getJson('/api/user')->assertOk()->assertJsonPath('email', $user->email)->assertJsonPath('email_verified', true)
@@ -65,9 +68,10 @@ class AuthenticationTest extends TestCase
 
     public function test_invalid_login_errors_do_not_reveal_whether_email_exists(): void
     {
+        Http::fake(['www.google.com/recaptcha/api/siteverify' => Http::response(['success' => true])]);
         User::factory()->create(['email' => 'known@example.test']);
-        $known = $this->postJson('/login', ['email' => 'known@example.test', 'password' => 'wrong-password']);
-        $unknown = $this->postJson('/login', ['email' => 'unknown@example.test', 'password' => 'wrong-password']);
+        $known = $this->postJson('/login', ['email' => 'known@example.test', 'password' => 'wrong-password', 'captcha_token' => 'valid-test-token']);
+        $unknown = $this->postJson('/login', ['email' => 'unknown@example.test', 'password' => 'wrong-password', 'captcha_token' => 'valid-test-token']);
 
         $known->assertUnprocessable()->assertJsonPath('message', $unknown->json('message'));
     }
@@ -106,20 +110,16 @@ class AuthenticationTest extends TestCase
         ])->assertUnprocessable();
     }
 
-    public function test_admin_api_requires_admin_and_confirmed_mfa(): void
+    public function test_admin_api_requires_admin_and_verified_email_but_not_mfa(): void
     {
         $admin = User::factory()->create();
+        $admin->roles()->attach(Role::query()->where('slug', 'super_admin')->value('id'), ['created_at' => now()]);
         $admin->forceFill(['is_admin' => true])->save();
 
-        $this->actingAs($admin)->getJson('/api/admin/access-check')->assertForbidden();
-        $this->assertDatabaseHas('security_audits', ['user_id' => $admin->id, 'event_type' => 'ADMIN_MFA_REQUIRED']);
-
-        $admin->forceFill([
-            'two_factor_secret' => encrypt(str_repeat('a', 32)),
-            'two_factor_recovery_codes' => encrypt('[]'),
-            'two_factor_confirmed_at' => now(),
-        ])->save();
         $this->actingAs($admin)->getJson('/api/admin/access-check')->assertOk()->assertJsonPath('access', 'allowed');
+
+        $admin->forceFill(['email_verified_at' => null])->save();
+        $this->actingAs($admin)->getJson('/api/admin/access-check')->assertForbidden();
     }
 
     public function test_registration_is_rate_limited_by_ip(): void
@@ -262,6 +262,7 @@ class AuthenticationTest extends TestCase
 
     public function test_totp_setup_requires_confirmation_and_login_challenge(): void
     {
+        Http::fake(['www.google.com/recaptcha/api/siteverify' => Http::response(['success' => true])]);
         $user = User::factory()->create(['email' => 'mfa@example.test', 'password' => 'a-long-passphrase-for-ayos']);
         $this->actingAs($user)->postJson('/user/confirm-password', ['password' => 'a-long-passphrase-for-ayos'])->assertCreated();
         $this->postJson('/user/two-factor-authentication')->assertOk();
@@ -275,7 +276,7 @@ class AuthenticationTest extends TestCase
         Cache::forget('fortify.2fa_codes.'.md5($code));
         $this->postJson('/logout')->assertNoContent();
 
-        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos'])
+        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos', 'captcha_token' => 'valid-test-token'])
             ->assertOk()->assertJsonPath('two_factor', true);
         $challenge = $google2fa->getCurrentOtp(decrypt($user->fresh()->two_factor_secret));
         $this->postJson('/two-factor-challenge', ['code' => $challenge])->assertNoContent();
@@ -284,6 +285,7 @@ class AuthenticationTest extends TestCase
 
     public function test_recovery_codes_are_single_use_and_audited(): void
     {
+        Http::fake(['www.google.com/recaptcha/api/siteverify' => Http::response(['success' => true])]);
         $user = User::factory()->create(['email' => 'recovery@example.test', 'password' => 'a-long-passphrase-for-ayos']);
         $this->actingAs($user)->postJson('/user/confirm-password', ['password' => 'a-long-passphrase-for-ayos'])->assertCreated();
         $this->postJson('/user/two-factor-authentication')->assertOk();
@@ -294,13 +296,13 @@ class AuthenticationTest extends TestCase
         $recoveryCode = $user->fresh()->recoveryCodes()[0];
         $this->postJson('/logout')->assertNoContent();
 
-        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos'])->assertJsonPath('two_factor', true);
+        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos', 'captcha_token' => 'valid-test-token'])->assertJsonPath('two_factor', true);
         $this->postJson('/two-factor-challenge', ['recovery_code' => $recoveryCode])->assertNoContent();
         $this->assertNotContains($recoveryCode, $user->fresh()->recoveryCodes());
         $this->assertDatabaseHas('security_audits', ['user_id' => $user->id, 'event_type' => 'MFA_RECOVERY_CODE_USED']);
         $this->postJson('/logout')->assertNoContent();
 
-        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos'])->assertJsonPath('two_factor', true);
+        $this->postJson('/login', ['email' => $user->email, 'password' => 'a-long-passphrase-for-ayos', 'captcha_token' => 'valid-test-token'])->assertJsonPath('two_factor', true);
         $this->postJson('/two-factor-challenge', ['recovery_code' => $recoveryCode])->assertUnprocessable();
     }
 

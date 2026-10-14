@@ -13,12 +13,13 @@ export default function AuthenticatedHeader() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationSummary[]>([])
+  const [noticeError, setNoticeError] = useState('')
   const [signOutError, setSignOutError] = useState('')
   const profileRef = useRef<HTMLDivElement>(null)
   const noticeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    void notificationsService.getNotifications().then(setNotifications)
+    void notificationsService.getNotifications().then(setNotifications).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -65,23 +66,18 @@ export default function AuthenticatedHeader() {
             document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }
         }}>Services</Link>
-        <Link className={location.pathname === '/home' && location.hash === '#requests' ? 'active' : ''} to="/home#requests" onClick={(event) => {
-          if (location.pathname === '/home') {
-            event.preventDefault()
-            navigate('/home#requests')
-            document.getElementById('requests')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }
-        }}>My requests</Link>
+        <NavLink to="/my-requests">My requests</NavLink>
       </nav>
       <div className="app-header-actions">
         <div className="app-popover-anchor" ref={noticeRef}>
-          <button className="app-icon-button" type="button" aria-label="Notifications" aria-expanded={noticeOpen} aria-controls="notification-popover" onClick={() => { setNoticeOpen((open) => !open); setProfileOpen(false) }}>
+          <button className="app-icon-button" type="button" aria-label="Notifications" aria-expanded={noticeOpen} aria-controls="notification-popover" onClick={() => { setNoticeOpen((open) => !open); setProfileOpen(false); void notificationsService.getNotifications().then(setNotifications).catch(() => {}) }}>
             <Bell size={19} aria-hidden="true" />
             {notifications.some((notification) => notification.unread) && <span className="app-notification-dot" aria-label="Unread notifications" />}
           </button>
           {noticeOpen && <section className="app-popover app-notice-popover" id="notification-popover" aria-label="Notifications">
             <div className="app-popover-heading"><div><strong>Notifications</strong><span>{notifications.filter((notification) => notification.unread).length} unread</span></div><button type="button" aria-label="Close notifications" onClick={() => setNoticeOpen(false)}><X size={17} /></button></div>
-            {notifications.length ? <ul className="app-notification-list">{notifications.map((item) => <li key={item.id}><span className="app-notification-mark" /><div><strong>{item.title}</strong><p>{item.description}</p><small>{item.createdAtLabel}</small></div></li>)}</ul> : <div className="app-popover-empty"><Bell size={20} aria-hidden="true" /><strong>You’re all caught up</strong><p>Updates about your service activity will show up here.</p></div>}
+            {noticeError && <p className="app-popover-error" role="alert">{noticeError}</p>}
+            {notifications.length ? <ul className="app-notification-list">{notifications.map((item) => <li key={item.id}>{item.unread && <span className="app-notification-mark" />}<button type="button" onClick={() => { setNoticeError(''); void notificationsService.markRead(item.id).then(() => { setNotifications((items) => items.map((note) => note.id === item.id ? { ...note, unread: false } : note)); setNoticeOpen(false); navigate('/my-requests') }).catch(() => { setNoticeError('We couldn’t open that update. Please try again.') }) }}><strong>{item.title}</strong><p>{item.description}</p><small>{item.createdAtLabel}</small></button></li>)}</ul> : <div className="app-popover-empty"><Bell size={20} aria-hidden="true" /><strong>You’re all caught up</strong><p>Updates about your service activity will show up here.</p></div>}
           </section>}
         </div>
         <div className="app-popover-anchor" ref={profileRef}>
@@ -93,7 +89,7 @@ export default function AuthenticatedHeader() {
             <nav aria-label="Account menu links">
               <Link to="/account/profile" onClick={() => setProfileOpen(false)}><UserRound size={17} /> View profile</Link>
               <Link to="/account/locations?add=1" onClick={() => setProfileOpen(false)}><MapPin size={17} /> My addresses</Link>
-              <Link to="/provider/apply" onClick={() => setProfileOpen(false)}><Settings2 size={17} /> Become a provider</Link>
+              <Link to="/provider" onClick={() => setProfileOpen(false)}><Settings2 size={17} /> Switch to Provider Mode</Link>
             </nav>
             {signOutError && <p className="app-popover-error" role="alert">{signOutError}</p>}
             <button className="app-signout-button" type="button" onClick={() => void logout()}><LogOut size={17} /> Sign out</button>

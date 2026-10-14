@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, ShieldCheck } from 'lucide-react'
 import FormField from '../components/auth/FormField'
 import Button from '../components/ui/Button'
@@ -12,17 +12,21 @@ export default function MfaChallengePage() {
   const [busy, setBusy] = useState(false)
   const { refreshUser } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setError(''); setBusy(true)
     const code = String(new FormData(event.currentTarget).get('code') ?? '').trim()
     try {
       await authRequest('/two-factor-challenge', { method: 'POST', body: JSON.stringify(recovery ? { recovery_code: code } : { code }) })
       const user = await refreshUser()
+      const requested = (location.state as { from?: string } | null)?.from
       navigate(user && !user.email_verified
         ? '/verify-email'
-        : user && !user.address_complete
-          ? '/account/address'
-          : '/account', { replace: true })
+        : user?.admin_access
+          ? '/admin'
+          : requested || (user && !user.address_complete
+            ? '/account/address'
+            : '/account'), { replace: true })
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'That code didn’t work. Check it and try again.') }
     finally { setBusy(false) }
   }

@@ -1,0 +1,38 @@
+import { apiRequest } from '../lib/api/client'
+
+export interface AdminPageResult<T> {
+  data: T[]
+  current_page: number
+  last_page: number
+  total: number
+}
+
+export interface AdminAccess { access: 'allowed'; permissions: string[] }
+export interface AdminDashboard {
+  totalUsers: number
+  approvedProviders: number
+  pendingApplications: number
+  activeRequests: number
+  completedJobs: number
+  openDisputes: number
+  quotaReachedProviders: number
+  lifetimeActivations: number
+  pendingPayments: number
+  recentActivity: { id: number; event: string; created_at: string; actor: string | null }[]
+}
+
+const encode = (value: unknown) => JSON.stringify(value)
+const query = (values: Record<string, string | number | undefined>) => {
+  const params = new URLSearchParams()
+  Object.entries(values).forEach(([key, value]) => { if (value !== undefined && value !== '') params.set(key, String(value)) })
+  const text = params.toString()
+  return text ? `?${text}` : ''
+}
+
+export const adminService = {
+  access: () => apiRequest<AdminAccess>('/admin/access-check'),
+  dashboard: () => apiRequest<{ data: AdminDashboard }>('/admin/dashboard'),
+  list: <T,>(path: string, values: Record<string, string | number | undefined> = {}) => apiRequest<AdminPageResult<T>>(`${path}${query(values)}`),
+  get: <T,>(path: string) => apiRequest<{ data: T }>(path),
+  send: <T,>(path: string, method: string, payload?: unknown) => apiRequest<T>(path, { method, ...(payload === undefined ? {} : { body: encode(payload) }) }),
+}

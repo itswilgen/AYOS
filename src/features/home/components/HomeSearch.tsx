@@ -51,6 +51,9 @@ export default function HomeSearch({ categories, locations }: Props) {
           <h1 id="home-search-title">What do you need help with today?</h1>
           <p>Find trusted local skills for repairs, installations and everyday home services.</p>
         </div>
+        <div className="home-hero-art">
+          <img src="/images/home/home-services-3d.webp" alt="A home with tools for repair and maintenance" width="1374" height="1145" decoding="async" />
+        </div>
         <form className="home-search-form" onSubmit={submit}>
           <div className="home-search-field-wrap">
             <label className="sr-only" htmlFor="service-search-input">What service do you need?</label>

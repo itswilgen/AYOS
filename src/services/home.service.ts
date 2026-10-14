@@ -1,75 +1,74 @@
-import { sampleNotifications, sampleProviders, sampleRequests, serviceCategories } from '../mocks/marketplace.mock'
-import type {
-  NotificationSummary,
-  ProviderSummary,
-  ServiceCategory,
-  ServiceRequestSummary,
-  ServiceSearchFilters,
-} from '../types/marketplace'
+import { apiRequest, backendUrl } from '../lib/api/client'
+import type { NotificationSummary, ProviderSummary, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
 
-const pause = () => new Promise<void>((resolve) => window.setTimeout(resolve, 90))
-const categoryAliases: Record<string, string[]> = {
-  electrical: ['electrician', 'electric', 'wiring'],
-  plumbing: ['plumber', 'pipe', 'leak'],
-  carpentry: ['carpenter', 'woodwork'],
-  aircon: ['air con', 'air conditioning', 'ac cleaning', 'cooling'],
-  'appliance-repair': ['appliance', 'refrigerator', 'washing machine'],
-  'phone-repair': ['phone', 'smartphone', 'mobile repair'],
-  'computer-repair': ['computer', 'laptop', 'pc repair'],
-  solar: ['solar installer', 'solar panel'],
-  cctv: ['camera installation', 'security camera'],
-  'network-wifi': ['network', 'wifi', 'wi-fi', 'internet'],
+type ApiCategory = { id: number; slug: string; name: string; description: string }
+type ApiProvider = { id: string; displayName: string; specialties: string[]; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
+
+const icon: Record<string, ServiceIconKey> = {
+  electrical: 'electrical', plumbing: 'plumbing', carpentry: 'carpentry', aircon: 'aircon',
+  'appliance-repair': 'appliance', 'phone-repair': 'phone', 'computer-repair': 'computer',
+  solar: 'solar', cctv: 'cctv', 'network-wifi': 'network',
+}
+const aliases: Record<string, string[]> = {
+  electrical: ['electrician', 'wiring'], plumbing: ['plumber', 'leak', 'pipe'], carpentry: ['carpenter', 'woodwork'],
+  aircon: ['air conditioning', 'ac cleaning', 'cooling'], 'appliance-repair': ['appliance', 'refrigerator', 'washing machine'],
+  'phone-repair': ['phone', 'smartphone'], 'computer-repair': ['computer', 'laptop'], solar: ['solar panel'],
+  cctv: ['security camera'], 'network-wifi': ['network', 'wifi', 'wi-fi', 'internet'],
 }
 
 export function findServiceCategories(categories: ServiceCategory[], query: string): ServiceCategory[] {
-  const normalized = query.trim().toLocaleLowerCase()
-  if (!normalized) return []
-  return categories.filter((category) =>
-    `${category.name} ${category.shortDescription} ${category.slug}`.toLocaleLowerCase().includes(normalized)
-    || categoryAliases[category.slug]?.some((alias) => alias.includes(normalized) || normalized.includes(alias)),
-  )
+  const term = query.trim().toLowerCase()
+  return term ? categories.filter((category) => `${category.name} ${category.shortDescription} ${category.slug}`.toLowerCase().includes(term)
+    || aliases[category.slug]?.some((alias) => alias.includes(term) || term.includes(alias))) : []
 }
+
+const mapProvider = (provider: ApiProvider): ProviderSummary => ({
+  id: provider.id, displayName: provider.displayName, specialties: provider.specialties,
+  serviceAreaLabel: provider.serviceAreaLabel, rating: provider.rating === null ? null : Number(provider.rating),
+  reviewCount: provider.reviewCount, completedServices: provider.completedServices,
+  verificationStatus: provider.verified ? 'verified' : 'unverified', availability: 'available',
+  initials: provider.displayName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(),
+  photo: provider.photo ? (provider.photo.startsWith('/') ? backendUrl(provider.photo) : provider.photo) : null,
+  sample: false,
+})
 
 export const servicesService = {
   async getCategories(): Promise<ServiceCategory[]> {
-    await pause()
-    return serviceCategories
+    const result = await apiRequest<{ data: ApiCategory[] }>('/service-categories')
+    return result.data.map((item) => ({ id: item.id, slug: item.slug, name: item.name,
+      shortDescription: item.description, icon: icon[item.slug] ?? 'electrical' }))
   },
 }
 
 export const providersService = {
+  async getProvider(id: string): Promise<ProviderSummary | null> {
+    const result = await apiRequest<{ data: ApiProvider[] }>(`/providers?${new URLSearchParams({ providerId: id })}`)
+    return result.data[0] ? mapProvider(result.data[0]) : null
+  },
   async getFeaturedProviders(): Promise<ProviderSummary[]> {
-    await pause()
-    return sampleProviders.filter((provider) => provider.availability !== 'offline')
+    const result = await apiRequest<{ data: ApiProvider[] }>('/providers')
+    return result.data.map(mapProvider)
   },
-
-  async searchProviders(filters: ServiceSearchFilters & { locationLabel?: string }): Promise<ProviderSummary[]> {
-    await pause()
-    const query = filters.query?.trim().toLocaleLowerCase()
-    if (!query) return []
-    if (!filters.locationLabel || !filters.locationLabel.toLocaleLowerCase().includes('tanjay')) return []
-    const matchedCategory = serviceCategories.find((category) =>
-      `${category.name} ${category.slug}`.toLocaleLowerCase().includes(query)
-      || categoryAliases[category.slug]?.some((alias) => alias.includes(query) || query.includes(alias)),
-    )
-    const categoryName = matchedCategory?.name.toLocaleLowerCase()
-    return sampleProviders.filter((provider) => provider.specialties.some((specialty) =>
-      specialty.toLocaleLowerCase().includes(query)
-      || Boolean(categoryName && specialty.toLocaleLowerCase().includes(categoryName)),
-    ) || provider.displayName.toLocaleLowerCase().includes(query))
-  },
-}
-
-export const requestsService = {
-  async getActiveRequests(): Promise<ServiceRequestSummary[]> {
-    await pause()
-    return sampleRequests
+  async searchProviders(filters: ServiceSearchFilters & { locationLabel?: string; cityCode?: string }): Promise<ProviderSummary[]> {
+    const params = new URLSearchParams()
+    const term = filters.query?.trim().toLowerCase()
+    if (term) {
+      const categories = await servicesService.getCategories()
+      const match = categories.find((item) => term.includes(item.name.toLowerCase()) || item.name.toLowerCase().includes(term)
+        || aliases[item.slug]?.some((alias) => term.includes(alias) || alias.includes(term)))
+      if (match) params.set('category', match.slug)
+      else params.set('q', term)
+    }
+    if (filters.cityCode) params.set('cityCode', filters.cityCode)
+    const result = await apiRequest<{ data: ApiProvider[] }>(`/providers?${params}`)
+    return result.data.map(mapProvider)
   },
 }
 
 export const notificationsService = {
   async getNotifications(): Promise<NotificationSummary[]> {
-    await pause()
-    return sampleNotifications
+    const result = await apiRequest<{ data: NotificationSummary[] }>('/customer/notifications')
+    return result.data.map((item) => ({ ...item, createdAtLabel: new Date(item.createdAtLabel).toLocaleString('en-PH') }))
   },
+  async markRead(id: string): Promise<void> { await apiRequest(`/customer/notifications/${id}/read`, { method: 'POST' }) },
 }

@@ -9,6 +9,8 @@ export type AuthUser = {
   address_complete: boolean
   customer_capability: true
   mfa_enabled: boolean
+  admin_access: boolean
+  account_status: 'active' | 'suspended'
 }
 
 export type AuthContextValue = {

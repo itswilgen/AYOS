@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Middleware\EnforcePlatformAvailability;
+use App\Http\Middleware\EnsureAccountActive;
 use App\Http\Middleware\EnsureAdmin;
-use App\Http\Middleware\EnsureAdminHasConfirmedMfa;
+use App\Http\Middleware\RequireAdminPermission;
 use App\Http\Middleware\RequireMfaCodeToDisable;
 use App\Http\Middleware\ThrottleSensitiveAuthRoutes;
 use Illuminate\Foundation\Application;
@@ -19,10 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        $middleware->api(prepend: [EnforcePlatformAvailability::class]);
         $middleware->web(append: [ThrottleSensitiveAuthRoutes::class, RequireMfaCodeToDisable::class]);
         $middleware->alias([
             'admin' => EnsureAdmin::class,
-            'admin.mfa' => EnsureAdminHasConfirmedMfa::class,
+            'admin.permission' => RequireAdminPermission::class,
+            'account.active' => EnsureAccountActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

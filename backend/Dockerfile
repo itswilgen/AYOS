@@ -20,6 +20,8 @@ RUN apt-get update \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
+RUN printf 'upload_max_filesize=5M\npost_max_size=30M\nmax_file_uploads=10\n' > /usr/local/etc/php/conf.d/ayos-uploads.ini
+
 COPY --from=composer-bin /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /var/www/html

@@ -33,6 +33,11 @@ until php artisan db:show --database=pgsql >/dev/null 2>&1; do
 done
 
 php artisan migrate --force
+php artisan db:seed --class=PhilippineGeographySeeder --force
+php artisan db:seed --class=ServiceCategorySeeder --force
+if [ ! -L public/storage ]; then
+    php artisan storage:link
+fi
 
 cd /var/www/html/public
 exec php -S 0.0.0.0:8000 /var/www/html/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php

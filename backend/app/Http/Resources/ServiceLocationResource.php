@@ -14,12 +14,14 @@ class ServiceLocationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $province = $this->resource->province ?? $this->resource->cityMunicipality->province;
+
         return [
             'id' => $this->resource->id,
             'label' => $this->resource->label,
             'is_default' => $this->resource->is_default,
             'region' => ['code' => $this->resource->region->code, 'name' => $this->resource->region->name],
-            'province' => $this->resource->province ? ['code' => $this->resource->province->code, 'name' => $this->resource->province->name] : null,
+            'province' => $province ? ['code' => $province->code, 'name' => $province->name] : null,
             'city_municipality' => [
                 'code' => $this->resource->cityMunicipality->code,
                 'name' => $this->resource->cityMunicipality->name,

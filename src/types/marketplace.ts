@@ -30,6 +30,7 @@ export interface ProviderSummary {
   availability: 'available' | 'busy' | 'offline'
   initials: string
   sample: boolean
+  photo?: string | null
 }
 
 export interface ServiceLocationSummary {

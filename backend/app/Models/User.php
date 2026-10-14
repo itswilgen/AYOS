@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
@@ -50,6 +51,28 @@ class User extends Authenticatable implements MustVerifyEmail
     public function serviceLocations(): HasMany
     {
         return $this->hasMany(ServiceLocation::class);
+    }
+
+    /** @return BelongsToMany<Role, $this> */
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role_id')->withPivot('assigned_by', 'created_at');
+    }
+
+    public function hasAdminAccess(): bool
+    {
+        return $this->roles()->whereIn('slug', ['super_admin', 'admin', 'moderator', 'support'])->exists();
+    }
+
+    public function hasAdminPermission(string $permission): bool
+    {
+        return $this->roles()->whereHas('permissions', fn ($query) => $query->where('permissions.slug', $permission))->exists();
+    }
+
+    /** @return list<string> */
+    public function adminPermissions(): array
+    {
+        return $this->roles()->with('permissions')->get()->flatMap(fn (Role $role) => $role->permissions->pluck('slug'))->unique()->values()->all();
     }
 
     public function defaultServiceLocation(): ?ServiceLocation

@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use App\Services\PlatformSettings;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,8 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        abort_unless(app(PlatformSettings::class)->get('registrations_enabled', true), 503, 'New account registration is temporarily unavailable.');
+
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'email' => [

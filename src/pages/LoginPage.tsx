@@ -38,7 +38,11 @@ export default function LoginPage() {
       : googleError ? 'Google sign-in could not be completed. Please try again.' : ''
 
   if (authLoading) return <div className="route-loading" role="status">Checking your AYOS session…</div>
-  if (user) return <Navigate to={user.email_verified ? '/home' : '/verify-email'} replace />
+  if (user) {
+    if (!user.email_verified) return <Navigate to="/verify-email" replace />
+    if (user.admin_access) return <Navigate to="/admin" replace />
+    return <Navigate to="/home" replace />
+  }
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -77,9 +81,10 @@ export default function LoginPage() {
 
       const signedInUser = await refreshUser()
       const destination = (location.state as { from?: string } | null)?.from || '/home'
+      const adminDestination = signedInUser?.admin_access ? '/admin' : destination
 
       navigate(
-        signedInUser && !signedInUser.email_verified ? '/verify-email' : destination,
+        signedInUser && !signedInUser.email_verified ? '/verify-email' : adminDestination,
         { replace: true },
       )
     } catch (error) {
@@ -141,7 +146,7 @@ export default function LoginPage() {
           {errors.captcha && <p className="field-error" role="alert">{errors.captcha}</p>}
         </div>
 
-        {notice && <p className="form-notice" role="alert">{notice}</p>}
+      {notice && <p className="form-notice" role="alert">{notice}</p>}
 
        <Button type="submit" className="form-submit"
           disabled={busy || !captchaToken}

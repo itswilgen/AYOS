@@ -44,7 +44,7 @@ export default function SearchResultsPage() {
       ? `${currentLocation.city_municipality.name}, ${currentLocation.province?.name ?? currentLocation.region.name}`
       : params.get('location') ?? undefined
     try {
-      setProviders(await providersService.searchProviders({ query: term, locationId: currentLocation?.id, locationLabel: area }))
+      setProviders(await providersService.searchProviders({ query: term, locationId: currentLocation?.id, locationLabel: area, cityCode: currentLocation?.city_municipality.code }))
     } catch {
       setError('We couldn’t search service providers right now. Please try again.')
     } finally { setLoading(false) }
@@ -57,7 +57,7 @@ export default function SearchResultsPage() {
     const area = currentLocation
       ? `${currentLocation.city_municipality.name}, ${currentLocation.province?.name ?? currentLocation.region.name}`
       : params.get('location') ?? undefined
-    void providersService.searchProviders({ query: serviceQuery, locationId: currentLocation?.id, locationLabel: area }).then((results) => {
+    void providersService.searchProviders({ query: serviceQuery, locationId: currentLocation?.id, locationLabel: area, cityCode: currentLocation?.city_municipality.code }).then((results) => {
       if (active) setProviders(results)
     }).catch(() => {
       if (active) setError('We couldn’t search service providers right now. Please try again.')
@@ -100,12 +100,11 @@ export default function SearchResultsPage() {
       <label className="search-results-location"><MapPin size={18} aria-hidden="true" /><span className="sr-only">Service location</span><select value={locationId} onChange={(event) => pickLocation(event.target.value)} disabled={locationsLoading}><option value="">Choose a saved location</option>{locations.map((location) => <option key={location.id} value={location.id}>{location.label} · {location.city_municipality.name}</option>)}</select></label>
       <button className="home-search-submit" type="submit" disabled={!query.trim()}><Search size={17} aria-hidden="true" /><span>Search</span><ArrowRight size={16} aria-hidden="true" /></button>
     </form>
-    {!locationsLoading && !locations.length && <div className="search-location-prompt"><MapPin size={18} aria-hidden="true" /><p>Add a saved location to see sample listings for your service area.</p><Link to="/account/locations">Manage locations <ArrowRight size={15} aria-hidden="true" /></Link></div>}
-    <div className="search-results-title"><div><h2>{serviceQuery ? `Results for “${serviceQuery}”` : 'Choose a service to get started'}</h2>{locationLabel && <p><MapPin size={15} aria-hidden="true" /> {locationLabel}</p>}</div><span className="home-sample-label">SAMPLE PROFILES</span></div>
+    {!locationsLoading && !locations.length && <div className="search-location-prompt"><MapPin size={18} aria-hidden="true" /><p>Add a saved location to find providers for your service area.</p><Link to="/account/locations">Manage locations <ArrowRight size={15} aria-hidden="true" /></Link></div>}
+    <div className="search-results-title"><div><h2>{serviceQuery ? `Results for “${serviceQuery}”` : 'Choose a service to get started'}</h2>{locationLabel && <p><MapPin size={15} aria-hidden="true" /> {locationLabel}</p>}</div></div>
     {error && <div className="app-load-error" role="alert"><p>{error}</p><button type="button" onClick={() => void loadResults(serviceQuery, locationId, locations)}>Try again</button></div>}
-    {loading ? <div className="search-loading" role="status">Searching example profiles…</div> : providers.length ? <div className="search-provider-list">{providers.map((provider) => <article className="search-provider-item" key={provider.id}>
-      <span className="provider-avatar" aria-hidden="true">{provider.initials}</span><div className="search-provider-main"><span className="provider-sample-pill">Example profile</span><h3>{provider.displayName}</h3><p>{provider.specialties.join(' · ')}</p><span className="provider-location"><MapPin size={14} aria-hidden="true" /> {provider.serviceAreaLabel}</span><div className="provider-meta">{provider.rating !== null && <span><Star size={14} fill="currentColor" aria-hidden="true" /> {provider.rating.toFixed(1)} ({provider.reviewCount} sample reviews)</span>}<span><BadgeCheck size={14} aria-hidden="true" /> {provider.verificationStatus === 'verified' ? 'Identity checked (sample)' : 'Not yet checked'}</span></div></div>
-    </article>)}</div> : serviceQuery && !error ? <div className="search-no-results"><span><Search size={20} aria-hidden="true" /></span><h3>No example profiles match this search</h3><p>Live provider matching is not connected yet. Try a different service or browse all categories.</p><Link to="/home#services">Browse services <ArrowRight size={15} aria-hidden="true" /></Link></div> : null}
-    <p className="home-sample-disclaimer">Example results are illustrative only. They aren’t live AYOS providers and can’t be contacted through this preview.</p>
+    {loading ? <div className="search-loading" role="status">Searching local providers…</div> : providers.length ? <div className="search-provider-list">{providers.map((provider) => <article className="search-provider-item" key={provider.id}>
+      <span className="provider-avatar" aria-hidden="true">{provider.initials}</span><div className="search-provider-main"><h3>{provider.displayName}</h3><p>{provider.specialties.join(' · ')}</p><span className="provider-location"><MapPin size={14} aria-hidden="true" /> {provider.serviceAreaLabel}</span><div className="provider-meta">{provider.rating !== null && <span><Star size={14} fill="currentColor" aria-hidden="true" /> {provider.rating.toFixed(1)} ({provider.reviewCount} reviews)</span>}<span><BadgeCheck size={14} aria-hidden="true" /> {provider.verificationStatus === 'verified' ? 'Identity checked' : 'Not yet checked'}</span></div><Link className="provider-text-link" to={`/services/request/${provider.id}?${new URLSearchParams({ service: serviceQuery, locationId })}`}>Request service <ArrowRight size={16} /></Link></div>
+    </article>)}</div> : serviceQuery && !error ? <div className="search-no-results"><span><Search size={20} aria-hidden="true" /></span><h3>No providers match this search</h3><p>Try a different service or location, or browse all categories.</p><Link to="/home#services">Browse services <ArrowRight size={15} aria-hidden="true" /></Link></div> : null}
   </div>
 }

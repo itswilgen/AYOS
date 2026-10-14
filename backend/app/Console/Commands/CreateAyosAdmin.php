@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Role;
 use App\Models\SecurityAudit;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -32,6 +33,8 @@ class CreateAyosAdmin extends Command
         if (! $this->confirm("Grant administrator access to {$user->email}?", false)) {
             return self::FAILURE;
         }
+        $superAdmin = Role::query()->where('slug', 'super_admin')->firstOrFail();
+        $user->roles()->syncWithoutDetaching([$superAdmin->id => ['assigned_by' => null, 'created_at' => now()]]);
         $user->forceFill(['is_admin' => true])->save();
         SecurityAudit::create([
             'user_id' => $user->id,
