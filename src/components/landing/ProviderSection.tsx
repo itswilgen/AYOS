@@ -1,5 +1,29 @@
-import { ArrowUpRight, BriefcaseBusiness, CircleCheck } from 'lucide-react'
+import { ArrowUpRight, CircleCheck } from 'lucide-react'
 import Button from '../ui/Button'
+
+const providerTools = [
+  'Choose the barangays you serve',
+  'Accept or decline each request',
+  'Schedule and track every job',
+  'Show your work and reviews',
+]
+
 export default function ProviderSection() {
-  return <section id="providers" className="provider-section"><div className="container provider-layout"><div className="provider-sign"><div className="provider-sign-label"><BriefcaseBusiness size={24} strokeWidth={1.6} aria-hidden="true" /><span>For local service professionals</span></div><img className="provider-mascot" src="/images/provider-electrician.webp" alt="Smiling electrician wearing safety gear and holding insulated tools" width="1024" height="1536" loading="lazy" decoding="async" /></div><div className="provider-copy"><span className="eyebrow">Your skill has a place here</span><h2>Turn your skills into<br /><em>more opportunities.</em></h2><p>Build a professional service profile and connect with people looking for the work you do well.</p><ul><li><CircleCheck size={17} /> Show customers what you can do</li><li><CircleCheck size={17} /> Reach people in your service area</li></ul><Button href="/signup" variant="secondary">Create your AYOS account <ArrowUpRight size={16} /></Button><small className="provider-note">All AYOS accounts begin with the same customer account. Provider applications come later.</small></div></div></section>
+  return <section id="providers" className="lp-section lp-providers" aria-labelledby="providers-title">
+    <div className="lp-container lp-providers-layout">
+      <div className="lp-providers-panel">
+        <img src="/images/provider-electrician.webp" alt="Smiling electrician wearing safety gear and holding insulated tools" width="1024" height="1536" loading="lazy" decoding="async" />
+      </div>
+      <div className="lp-providers-copy lp-reveal">
+        <p className="lp-kicker">For local service professionals</p>
+        <h2 id="providers-title" className="lp-title">Turn your skills into <em>more opportunities.</em></h2>
+        <p className="lp-lede">Build a professional profile, choose where you work, and get requests from people who need what you do well.</p>
+        <ul className="lp-checklist lp-checklist-grid">
+          {providerTools.map((item) => <li key={item}><CircleCheck size={18} aria-hidden="true" />{item}</li>)}
+        </ul>
+        <Button href="/signup" variant="secondary">Create your AYOS account <ArrowUpRight size={16} aria-hidden="true" /></Button>
+        <small className="lp-providers-note">Everyone starts with one AYOS account. Once your email is verified, you can apply as a provider from it.</small>
+      </div>
+    </div>
+  </section>
 }

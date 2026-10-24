@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\ProviderWorkspace;
 use App\Services\PlatformSettings;
+use App\Services\ProviderWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -80,7 +80,7 @@ class CustomerServiceRequestController extends Controller
 
     public function notifications(Request $request): JsonResponse
     {
-        $items = DB::table('customer_notifications')->where('customer_id', $request->user()->id)->orderByDesc('created_at')->limit(100)->get();
+        $items = DB::table('customer_notifications')->where('customer_id', $request->user()->id)->orderByDesc('created_at')->orderByDesc('id')->limit(100)->get();
 
         return response()->json(['data' => $items->map(fn ($item) => [
             'id' => (string) $item->id, 'title' => $item->title, 'description' => $item->detail,

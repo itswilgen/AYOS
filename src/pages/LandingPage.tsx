@@ -6,7 +6,9 @@ import LocationSection from '../components/landing/LocationSection'
 import ProviderSection from '../components/landing/ProviderSection'
 import FinalCta from '../components/landing/FinalCta'
 import { usePageMotion } from '../animations/usePageMotion'
+import '../components/landing/landing.css'
+
 export default function LandingPage() {
   usePageMotion()
-  return <main id="main-content"><Hero /><ServicesSection /><HowItWorks /><TrustSection /><LocationSection /><ProviderSection /><FinalCta /></main>
+  return <main id="main-content" className="lp"><Hero /><ServicesSection /><HowItWorks /><TrustSection /><LocationSection /><ProviderSection /><FinalCta /></main>
 }

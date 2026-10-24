@@ -107,7 +107,7 @@ class ProviderWorkspace
             ->map(fn ($item) => ['id' => (string) $item->id, 'title' => $item->title, 'category' => $item->category,
                 'image' => Storage::disk('public')->url($item->image_path)])->all();
         $latestActivationPayment = DB::table('activation_payments')->where('provider_profile_id', $pid)->orderByDesc('id')->first();
-        $notifications = DB::table('provider_notifications')->where('provider_profile_id', $pid)->orderByDesc('created_at')->limit(100)->get()
+        $notifications = DB::table('provider_notifications')->where('provider_profile_id', $pid)->orderByDesc('created_at')->orderByDesc('id')->limit(100)->get()
             ->map(fn ($note) => ['id' => (string) $note->id, 'title' => $note->title, 'detail' => $note->detail,
                 'createdAt' => $note->created_at, 'read' => $note->read_at !== null, 'href' => $note->href])->all();
 

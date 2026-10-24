@@ -1,65 +1,43 @@
-import {
-  BadgeCheck,
-  ClipboardList,
-  MessageSquareText,
-  MapPinned,
-} from "lucide-react";
-const trustFeatures = [
+import { ArrowUpRight, BadgeCheck, ClipboardCheck, LockKeyhole, MessageSquareText } from 'lucide-react'
+
+const safeguards = [
   {
-    icon: ClipboardList,
-    title: "Profiles with the details",
-    text: "Profiles will show the services a provider offers and examples of their work.",
+    icon: ClipboardCheck,
+    title: 'Providers are reviewed first',
+    text: 'Every provider application is checked by the AYOS team before a profile can receive requests.',
   },
   {
-    icon: MapPinned,
-    title: "Service areas that make sense",
-    text: "Compare declared coverage for your barangay, city, or municipality.",
+    icon: LockKeyhole,
+    title: 'Your address stays private',
+    text: 'Providers see only your city until they accept your request. Your exact address is shared after that.',
   },
   {
     icon: MessageSquareText,
-    title: "Community feedback",
-    text: "Customer ratings and reviews will help you make an informed choice.",
+    title: 'Reviews come from finished jobs',
+    text: 'Only a customer who confirmed the completed work can leave a review, and only once per job.',
   },
   {
     icon: BadgeCheck,
-    title: "Clear identity information",
-    text: "AYOS is designed to make provider identity and profile details easier to understand.",
+    title: 'Identity checks, clearly marked',
+    text: 'Providers can submit an ID for verification. Checked profiles carry an “Identity checked” badge.',
   },
-];
+]
+
 export default function TrustSection() {
-  return (
-    <section className="trust-section">
-      <div className="container trust-layout">
-        <div className="trust-intro">
-          <span className="eyebrow">Good work starts with trust</span>
-          <h2>Know who you’re inviting in.</h2>
-          <p>
-            When someone comes to your home or workplace, you deserve useful
-            information before you reach out.
-          </p>
-          <a href="/#how-it-works" className="inline-link">
-            See how AYOS works <span>↗</span>
-          </a>
-        </div>
-        <div className="trust-list">
-          {trustFeatures.map(({ icon: Icon, title, text }, i) => (
-            <article className="trust-item" key={title}>
-              <span className={`trust-icon trust-icon-${i}`}>
-                <Icon size={19} strokeWidth={1.8} />
-              </span>
-              <div>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+  return <section className="lp-trust" aria-labelledby="trust-title">
+    <div className="lp-container lp-trust-layout">
+      <div className="lp-trust-intro lp-reveal">
+        <p className="lp-kicker">Good work starts with trust</p>
+        <h2 id="trust-title" className="lp-title">Know who you’re <em>inviting in.</em></h2>
+        <p className="lp-lede">When someone comes to your home, you deserve more than a phone number. Here’s how AYOS keeps every job accountable.</p>
+        <a className="lp-trust-contact" href="mailto:hello@ayos.ph">Questions about safety? hello@ayos.ph <ArrowUpRight size={16} aria-hidden="true" /></a>
       </div>
-      <div className="container trust-footnote">
-        <span className="trust-rule" />
-        We’re building a marketplace where provider information and customer
-        experiences can help you decide with confidence.
-      </div>
-    </section>
-  );
+      <ul className="lp-trust-list">
+        {safeguards.map(({ icon: Icon, title, text }) => <li className="lp-trust-item" key={title}>
+          <Icon size={24} strokeWidth={1.6} aria-hidden="true" />
+          <div><h3>{title}</h3><p>{text}</p></div>
+        </li>)}
+      </ul>
+    </div>
+  </section>
 }
