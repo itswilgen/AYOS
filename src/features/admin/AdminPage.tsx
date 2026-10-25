@@ -13,7 +13,6 @@ import {
   AlertTriangle,
   ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
   BadgeCheck,
   Bell,
   BriefcaseBusiness,
@@ -50,11 +49,19 @@ import {
 import "./admin.css";
 
 type RecordValue = Record<string, unknown>;
+/** Sidebar groups, in nav order. Each section names one, so a new section can't silently drop out of the sidebar. */
+const navGroups = [
+  "Operations",
+  "Marketplace",
+  "Trust & payments",
+  "Platform",
+] as const;
 type Section = {
   id: string;
   label: string;
   permission: string;
   icon: typeof Gauge;
+  group: (typeof navGroups)[number] | "Account";
 };
 const sections: Section[] = [
   {
@@ -62,97 +69,119 @@ const sections: Section[] = [
     label: "Overview",
     permission: "dashboard.view",
     icon: Gauge,
+    group: "Operations",
   },
   {
     id: "applications",
     label: "Provider applications",
     permission: "providers.review",
     icon: BriefcaseBusiness,
+    group: "Operations",
   },
   {
     id: "providers",
     label: "Service providers",
     permission: "providers.view",
     icon: Building2,
+    group: "Operations",
   },
-  { id: "users", label: "Users", permission: "users.view", icon: Users },
+  {
+    id: "users",
+    label: "Users",
+    permission: "users.view",
+    icon: Users,
+    group: "Operations",
+  },
   {
     id: "listings",
     label: "Provider listings",
     permission: "listings.manage",
     icon: Eye,
+    group: "Operations",
   },
   {
     id: "requests",
     label: "Service requests",
     permission: "requests.view",
     icon: ClipboardList,
+    group: "Operations",
   },
   {
     id: "categories",
     label: "Service categories",
     permission: "categories.manage",
     icon: Tag,
+    group: "Marketplace",
   },
   {
     id: "locations",
     label: "Supported locations",
     permission: "locations.manage",
     icon: MapPin,
+    group: "Marketplace",
   },
   {
     id: "reviews",
     label: "Reviews",
     permission: "reviews.view",
     icon: BadgeCheck,
+    group: "Trust & payments",
   },
   {
     id: "reports",
     label: "Reports",
     permission: "reports.manage",
     icon: MessageSquareWarning,
+    group: "Trust & payments",
   },
   {
     id: "disputes",
     label: "Disputes",
     permission: "disputes.manage",
     icon: AlertTriangle,
+    group: "Trust & payments",
   },
   {
     id: "payments",
     label: "Activation payments",
     permission: "payments.manage",
     icon: Wallet,
+    group: "Trust & payments",
   },
   {
     id: "settings",
     label: "Platform settings",
     permission: "settings.manage",
     icon: Settings2,
+    group: "Platform",
   },
   {
     id: "notices",
     label: "Notifications & notices",
     permission: "notices.manage",
     icon: Bell,
+    group: "Platform",
   },
   {
     id: "audit",
     label: "Audit logs",
     permission: "audit.view",
     icon: FileText,
+    group: "Platform",
   },
   {
     id: "analytics",
     label: "Reports & analytics",
     permission: "analytics.view",
     icon: Activity,
+    group: "Platform",
   },
   {
     id: "security",
     label: "Admin security",
     permission: "security.view",
     icon: ShieldCheck,
+    group: "Platform",
   },
 ];
 /** Every administrator can manage their own sign-in, whatever their role. */
@@ -161,6 +190,7 @@ const accountSection: Section = {
   label: "My account",
   permission: "",
   icon: KeyRound,
+  group: "Account",
 };
 const asText = (value: unknown) =>
   value == null || value === "" ? "—" : String(value);
@@ -279,17 +309,28 @@ function Metric({
   tone: string;
   hint: string;
 }) {
+  const attention = (tone === "orange" || tone === "red") && Number(value) > 0;
+  // Rates arrive already formatted ("6%"), so show them as given rather than as "NaN".
+  const shown =
+    typeof value === "string" && Number.isNaN(Number(value))
+      ? value
+      : asNumber(value);
   return (
-    <article className="admin-metric">
-      <span className={`admin-metric-icon ${tone}`}>
+    <article className={`admin-metric${attention ? " needs-attention" : ""}`}>
+      <span className={`admin-metric-icon ${tone}`} aria-hidden="true">
         <Icon size={19} />
       </span>
       <div>
         <span>{label}</span>
-        <strong>{asNumber(value)}</strong>
+        <strong
+          className={
+            Number.parseFloat(String(value ?? 0)) === 0 ? "is-zero" : undefined
+          }
+        >
+          {shown}
+        </strong>
         <small>{hint}</small>
       </div>
-      <ArrowUpRight className="admin-metric-mark" size={17} />
     </article>
   );
 }
@@ -1189,7 +1230,10 @@ export default function AdminPage() {
     <div className="admin-shell">
       <aside className={`admin-sidebar ${mobileMenu ? "is-open" : ""}`}>
         <div className="admin-brand-row">
-          <Brand />
+          <div className="admin-brand-stack">
+            <Brand />
+            <span>ADMIN CONSOLE</span>
+          </div>
           <button
             className="admin-icon-button admin-mobile-close"
             type="button"
@@ -1199,27 +1243,47 @@ export default function AdminPage() {
             <X size={19} />
           </button>
         </div>
-        <div className="admin-side-label">WORKSPACE</div>
         <nav className="admin-nav" aria-label="Administrator sections">
-          {visibleSections.map((item) => (
-            <NavLink
-              key={item.id}
-              to={`/admin/${item.id}`}
-              end={item.id === "dashboard"}
-              onClick={() => setMobileMenu(false)}
-              className={({ isActive }) =>
-                `admin-nav-link${isActive ? " is-active" : ""}`
-              }
-            >
-              <item.icon size={18} aria-hidden="true" />
-              <span>{item.label}</span>
-              {item.id === "applications" &&
-                dashboard &&
-                dashboard.pendingApplications > 0 && (
-                  <i>{dashboard.pendingApplications}</i>
-                )}
-            </NavLink>
-          ))}
+          {navGroups.map((group) => {
+            const items = visibleSections.filter(
+              (item) => item.group === group,
+            );
+            const labelId = `admin-nav-${group.toLowerCase().replace(/[^a-z]+/g, "-")}`;
+            return (
+              items.length > 0 && (
+                <div
+                  key={group}
+                  className="admin-nav-group"
+                  role="group"
+                  aria-labelledby={labelId}
+                >
+                  <span className="admin-side-label" id={labelId}>
+                    {group}
+                  </span>
+                  {items.map((item) => (
+                    <NavLink
+                      key={item.id}
+                      to={`/admin/${item.id}`}
+                      end={item.id === "dashboard"}
+                      onClick={() => setMobileMenu(false)}
+                      className={({ isActive }) =>
+                        // "/admin" opens the overview too, so mark it active there as well.
+                        `admin-nav-link${isActive || item.id === section.id ? " is-active" : ""}`
+                      }
+                    >
+                      <item.icon size={18} aria-hidden="true" />
+                      <span>{item.label}</span>
+                      {item.id === "applications" &&
+                        dashboard &&
+                        dashboard.pendingApplications > 0 && (
+                          <i>{dashboard.pendingApplications}</i>
+                        )}
+                    </NavLink>
+                  ))}
+                </div>
+              )
+            );
+          })}
         </nav>
         <div className="admin-side-label">YOUR ACCOUNT</div>
         <nav className="admin-nav" aria-label="Your account">
@@ -1500,6 +1564,7 @@ export default function AdminPage() {
                   <label className="admin-switch-row">
                     <input
                       type="checkbox"
+                      role="switch"
                       checked={noticeForm.is_active}
                       onChange={(event) =>
                         setNoticeForm((value) => ({
@@ -2023,6 +2088,7 @@ function SettingsView({
               </span>
               <input
                 type="checkbox"
+                role="switch"
                 checked={Boolean(settings[key])}
                 onChange={(event) =>
                   setSettings((value) => ({

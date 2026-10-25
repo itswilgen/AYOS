@@ -8,7 +8,10 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --pretty",
-    "lint": "eslint src --max-warnings=0"
+    "lint": "eslint src --max-warnings=0",
+    "agent:frontend": "./.claude/launch-agent.sh frontend",
+    "agent:backend": "./.claude/launch-agent.sh backend",
+    "agent:team": "./.claude/launch-agent.sh team"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

@@ -9,19 +9,21 @@ import type { ProviderWorkspaceData } from '../../types/provider'
 import type { ProviderOutletContext } from './provider-context'
 import './provider.css'
 
+// One flat list keeps the phone nav order (first four in the bar, the rest under More); the sidebar groups it.
 const links = [
-  { to: '/provider', label: 'Overview', icon: LayoutDashboard, end: true },
-  { to: '/provider/requests', label: 'Requests', icon: ClipboardList },
-  { to: '/provider/messages', label: 'Messages', icon: MessagesSquare },
-  { to: '/provider/jobs', label: 'My Jobs', icon: BriefcaseBusiness },
-  { to: '/provider/schedule', label: 'Schedule', icon: CalendarDays },
-  { to: '/provider/services', label: 'My Services', icon: Wrench },
-  { to: '/provider/service-areas', label: 'Service Areas', icon: MapPinned },
-  { to: '/provider/reviews', label: 'Reviews', icon: Star },
-  { to: '/provider/profile', label: 'Profile', icon: UserRound },
-  { to: '/provider/access', label: 'Quota & Access', icon: ShieldCheck },
-  { to: '/provider/notifications', label: 'Notifications', icon: Bell },
+  { to: '/provider', label: 'Overview', icon: LayoutDashboard, end: true, group: 'Work' },
+  { to: '/provider/requests', label: 'Requests', icon: ClipboardList, group: 'Work' },
+  { to: '/provider/messages', label: 'Messages', icon: MessagesSquare, group: 'Work' },
+  { to: '/provider/jobs', label: 'My Jobs', icon: BriefcaseBusiness, group: 'Work' },
+  { to: '/provider/schedule', label: 'Schedule', icon: CalendarDays, group: 'Work' },
+  { to: '/provider/services', label: 'My Services', icon: Wrench, group: 'Business' },
+  { to: '/provider/service-areas', label: 'Service Areas', icon: MapPinned, group: 'Business' },
+  { to: '/provider/reviews', label: 'Reviews', icon: Star, group: 'Business' },
+  { to: '/provider/profile', label: 'Profile', icon: UserRound, group: 'Account' },
+  { to: '/provider/access', label: 'Quota & Access', icon: ShieldCheck, group: 'Account' },
+  { to: '/provider/notifications', label: 'Notifications', icon: Bell, group: 'Account' },
 ]
+const linkGroups = ['Work', 'Business', 'Account'] as const
 
 export default function ProviderLayout() {
   const { user } = useAuth()
@@ -79,20 +81,20 @@ export default function ProviderLayout() {
   const newRequests = data?.requests.filter((item) => item.status === 'new').length ?? 0
   const approved = data?.approved === true
   const applicationMode = data !== null && !approved
+  const today = new Date().toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' })
   const initials = user?.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'AY'
 
   return <div className={`provider-shell${applicationMode ? ' provider-shell-application' : ''}`}>
     <a className="skip-link" href="#provider-main">Skip to provider content</a>
     {!applicationMode && <aside className="provider-sidebar" aria-label="Provider navigation">
       <div className="provider-brand"><Brand to="/provider" /><span>{approved ? 'PROVIDER WORKSPACE' : 'PROVIDER APPLICATION'}</span></div>
-      {approved && <><div className="provider-sidebar-label">WORKSPACE</div>
-      <nav className="provider-side-nav" aria-label="Provider sections">{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setMoreOpen(false)}><Icon size={18} aria-hidden="true" /><span>{label}</span>{label === 'Requests' && newRequests > 0 && <small>{newRequests}</small>}{label === 'Messages' && unreadMessages > 0 && <small>{unreadMessages}</small>}{label === 'Notifications' && unread > 0 && <small>{unread}</small>}</NavLink>)}</nav></>}
+      {approved && <nav className="provider-side-nav" aria-label="Provider sections">{linkGroups.map((group) => <div key={group} className="provider-nav-group" role="group" aria-labelledby={`provider-nav-${group.toLowerCase()}`}><span className="provider-sidebar-label" id={`provider-nav-${group.toLowerCase()}`}>{group}</span>{links.filter((link) => link.group === group).map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setMoreOpen(false)}><Icon size={18} aria-hidden="true" /><span>{label}</span>{label === 'Requests' && newRequests > 0 && <small>{newRequests}</small>}{label === 'Messages' && unreadMessages > 0 && <small>{unreadMessages}</small>}{label === 'Notifications' && unread > 0 && <small>{unread}</small>}</NavLink>)}</div>)}</nav>}
       <div className="provider-sidebar-bottom"><Link to="/home"><House size={18} aria-hidden="true" /> Switch to Customer Mode</Link><p>Your customer account stays the same.</p></div>
     </aside>}
     <div className="provider-body">
       {!applicationMode && <header className="provider-topbar">
         <div className="provider-mobile-brand"><Brand to="/provider" /><span>{approved ? 'Provider' : 'Application'}</span></div>
-        <div className="provider-topbar-context"><span>{approved ? 'Manage your local service work' : 'Your provider application'}</span></div>
+        <div className="provider-topbar-context"><span className="provider-topbar-date"><CalendarDays size={16} aria-hidden="true" />{today}</span><span>{approved ? 'Manage your local service work' : 'Your provider application'}</span></div>
         <div className="provider-topbar-actions">{approved ? <><Link className="provider-bell" to="/provider/notifications" aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}><Bell size={20} aria-hidden="true" />{unread > 0 && <i aria-hidden="true" />}</Link><Link className="provider-user" to="/provider/profile"><span>{initials}</span><strong>{user?.name.trim().split(/\s+/)[0] || 'Provider'}</strong><ChevronDown size={15} aria-hidden="true" /></Link></> : <Link className="provider-topbar-customer" to="/home">Customer mode <ArrowRight size={16} aria-hidden="true" /></Link>}</div>
       </header>}
       <main id="provider-main" className={`provider-main${data && !approved ? ' provider-main-onboarding' : ''}`}>
@@ -107,6 +109,6 @@ export default function ProviderLayout() {
       {links.slice(0, 4).map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} aria-label={label === 'Messages' && unreadMessages ? `Messages, ${unreadMessages} unread` : undefined}><Icon size={20} aria-hidden="true" />{label === 'Messages' && unreadMessages > 0 && <i className="provider-mobile-dot" aria-hidden="true" />}<span>{label === 'Overview' ? 'Home' : label === 'My Jobs' ? 'Jobs' : label}</span></NavLink>)}
       <button type="button" aria-expanded={moreOpen} aria-controls="provider-more-menu" onClick={() => setMoreOpen((open) => !open)}>{moreOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}<span>More</span></button>
     </nav>}
-    {approved && moreOpen && <div className="provider-more-menu" id="provider-more-menu"><div className="provider-more-heading"><strong>More provider tools</strong><button type="button" onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19} /></button></div>{links.slice(4).map(({ to, label, icon: Icon }) => <Link key={to} to={to} onClick={() => setMoreOpen(false)}><Icon size={19} aria-hidden="true" /> {label}</Link>)}<Link to="/home" onClick={() => setMoreOpen(false)}><House size={19} aria-hidden="true" /> Switch to Customer Mode</Link></div>}
+    {approved && moreOpen && <div className="provider-more-menu" id="provider-more-menu"><div className="provider-more-heading"><strong>More provider tools</strong><button type="button" onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19} /></button></div>{links.slice(4).map(({ to, label, icon: Icon }) => <Link key={to} to={to} onClick={() => setMoreOpen(false)}><span className="provider-more-icon" aria-hidden="true"><Icon size={18} /></span>{label}</Link>)}<Link to="/home" onClick={() => setMoreOpen(false)}><span className="provider-more-icon" aria-hidden="true"><House size={18} /></span>Switch to Customer Mode</Link></div>}
   </div>
 }

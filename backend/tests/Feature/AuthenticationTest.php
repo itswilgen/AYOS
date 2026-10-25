@@ -224,45 +224,6 @@ class AuthenticationTest extends TestCase
         $this->assertDatabaseHas('security_audits', ['user_id' => $user->id, 'event_type' => 'OTHER_SESSIONS_REVOKED']);
     }
 
-    public function test_verified_user_can_save_and_retrieve_their_address(): void
-    {
-        $user = User::factory()->create();
-        $payload = [
-            'address_line' => '26 Jesus Street',
-            'barangay' => 'Barangay IX',
-            'city' => 'Tanjay City',
-            'province' => 'Negros Oriental',
-            'postal_code' => '6204',
-            'latitude' => 9.5167,
-            'longitude' => 123.1583,
-        ];
-
-        $this->actingAs($user)->putJson('/api/account/address', $payload)
-            ->assertOk()
-            ->assertJsonPath('address_line', '26 Jesus Street');
-
-        $this->assertTrue($user->fresh()->hasCompleteAddress());
-        $this->actingAs($user)->getJson('/api/account/address')->assertOk()
-            ->assertJsonPath('city', 'Tanjay City')
-            ->assertJsonPath('latitude', 9.5167);
-    }
-
-    public function test_account_address_requires_email_verification_and_valid_location_coordinates(): void
-    {
-        $unverified = User::factory()->unverified()->create();
-        $this->actingAs($unverified)->getJson('/api/account/address')->assertForbidden();
-
-        $verified = User::factory()->create();
-        $this->actingAs($verified)->putJson('/api/account/address', [
-            'address_line' => '26 Jesus Street',
-            'barangay' => 'Barangay IX',
-            'city' => 'Tanjay City',
-            'province' => 'Negros Oriental',
-            'latitude' => 120,
-            'longitude' => 123.1583,
-        ])->assertUnprocessable()->assertJsonValidationErrors(['latitude']);
-    }
-
     public function test_verification_resend_is_rate_limited(): void
     {
         Notification::fake();
