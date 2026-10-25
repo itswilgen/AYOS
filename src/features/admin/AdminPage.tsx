@@ -26,6 +26,7 @@ import {
   Eye,
   FileText,
   Gauge,
+  KeyRound,
   MapPin,
   Menu,
   MessageSquareWarning,
@@ -38,6 +39,7 @@ import {
   X,
 } from "lucide-react";
 import Brand from "../../components/common/Brand";
+import AdminAccount from "./AdminAccount";
 import { backendUrl } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/useAuth";
 import {
@@ -153,6 +155,13 @@ const sections: Section[] = [
     icon: ShieldCheck,
   },
 ];
+/** Every administrator can manage their own sign-in, whatever their role. */
+const accountSection: Section = {
+  id: "account",
+  label: "My account",
+  permission: "",
+  icon: KeyRound,
+};
 const asText = (value: unknown) =>
   value == null || value === "" ? "—" : String(value);
 const asNumber = (value: unknown) => Number(value ?? 0).toLocaleString("en-PH");
@@ -290,7 +299,10 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const sectionId = pathname.split("/")[2] || "dashboard";
-  const section = sections.find((item) => item.id === sectionId) ?? sections[0];
+  const section =
+    sectionId === accountSection.id
+      ? accountSection
+      : (sections.find((item) => item.id === sectionId) ?? sections[0]);
   const [permissions, setPermissions] = useState<string[]>([]);
   const permissionsLoaded = useRef(false);
   const [dashboard, setDashboard] = useState<AdminDashboard | null>(null);
@@ -337,7 +349,10 @@ export default function AdminPage() {
           setPermissions((await adminService.access()).permissions);
           permissionsLoaded.current = true;
         }
-        if (section.id === "dashboard") {
+        if (section.id === accountSection.id) {
+          setRows([]);
+          setSpecial(null);
+        } else if (section.id === "dashboard") {
           const response = await adminService.dashboard();
           setDashboard(response.data);
           setRows([]);
@@ -608,31 +623,70 @@ export default function AdminPage() {
       );
     if (section.id === "listings")
       return (
-        <button
-          type="button"
-          className={
-            row.is_visible
-              ? "admin-text-action is-danger"
-              : "admin-text-action is-positive"
-          }
-          onClick={(event) => {
-            event.stopPropagation();
-            const reason = window.prompt(
-              row.is_visible
-                ? "Reason for hiding this listing:"
-                : "Reason for restoring this listing:",
-            );
-            if (reason?.trim())
-              void mutate(
-                `/admin/listings/${asText(row.type)}/${id}/visibility`,
-                "PATCH",
-                { is_visible: !row.is_visible, reason },
-                "Listing visibility updated.",
+        <div className="admin-row-actions">
+          {["pending", "rejected"].includes(asText(row.cover_status)) && (
+            <button
+              type="button"
+              className="is-positive"
+              disabled={saving}
+              onClick={(event) => {
+                event.stopPropagation();
+                void mutate(
+                  `/admin/listings/service/${id}/cover-review`,
+                  "POST",
+                  { decision: "approved" },
+                  "Cover approved. The provider has been notified.",
+                );
+              }}
+            >
+              Approve cover
+            </button>
+          )}
+          {["pending", "approved"].includes(asText(row.cover_status)) && (
+            <button
+              type="button"
+              className="is-danger"
+              disabled={saving}
+              onClick={(event) => {
+                event.stopPropagation();
+                const reason = window.prompt(
+                  "Tell the provider why the cover was not approved (for example: remove the phone number from the poster):",
+                );
+                if (reason?.trim())
+                  void mutate(
+                    `/admin/listings/service/${id}/cover-review`,
+                    "POST",
+                    { decision: "rejected", reason },
+                    "Cover rejected. The provider has been notified.",
+                  );
+              }}
+            >
+              Reject cover
+            </button>
+          )}
+          <button
+            type="button"
+            className={row.is_visible ? "is-danger" : "is-positive"}
+            disabled={saving}
+            onClick={(event) => {
+              event.stopPropagation();
+              const reason = window.prompt(
+                row.is_visible
+                  ? "Reason for hiding this listing:"
+                  : "Reason for restoring this listing:",
               );
-          }}
-        >
-          {row.is_visible ? "Hide listing" : "Restore listing"}
-        </button>
+              if (reason?.trim())
+                void mutate(
+                  `/admin/listings/${asText(row.type)}/${id}/visibility`,
+                  "PATCH",
+                  { is_visible: !row.is_visible, reason },
+                  "Listing visibility updated.",
+                );
+            }}
+          >
+            {row.is_visible ? "Hide listing" : "Restore listing"}
+          </button>
+        </div>
       );
     if (section.id === "locations")
       return (
@@ -844,6 +898,34 @@ export default function AdminPage() {
             key: "title",
             label: "Listing",
             render: (row: RecordValue) => asText(row.title ?? row.category),
+          },
+          {
+            key: "cover_status",
+            label: "Home cover",
+            render: (row: RecordValue) => {
+              if (!row.cover_image) return "—";
+              const image = asText(row.cover_image);
+              const src = image.startsWith("/") ? backendUrl(image) : image;
+              return (
+                <div className="admin-cover-cell">
+                  <a
+                    href={src}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Open the full ${asText(row.category)} cover from ${asText(row.display_name)} in a new tab`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <img src={src} alt="" />
+                  </a>
+                  <div>
+                    <StatusPill value={row.cover_status} />
+                    {row.cover_status === "rejected" && row.cover_review_note ? (
+                      <small>{asText(row.cover_review_note)}</small>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            },
           },
           { key: "display_name", label: "Provider" },
           { key: "owner_name", label: "Account holder" },
@@ -1139,6 +1221,19 @@ export default function AdminPage() {
             </NavLink>
           ))}
         </nav>
+        <div className="admin-side-label">YOUR ACCOUNT</div>
+        <nav className="admin-nav" aria-label="Your account">
+          <NavLink
+            to={`/admin/${accountSection.id}`}
+            onClick={() => setMobileMenu(false)}
+            className={({ isActive }) =>
+              `admin-nav-link${isActive ? " is-active" : ""}`
+            }
+          >
+            <KeyRound size={18} aria-hidden="true" />
+            <span>Password &amp; sign-in</span>
+          </NavLink>
+        </nav>
         <div className="admin-sidebar-footer">
           <span className="admin-online-dot" /> AYOS operations{" "}
           <small>Restricted workspace</small>
@@ -1171,7 +1266,11 @@ export default function AdminPage() {
             <span className="admin-secure-label">
               <ShieldCheck size={16} /> Secure workspace
             </span>
-            <span className="admin-user-chip">
+            <Link
+              className="admin-user-chip"
+              to={`/admin/${accountSection.id}`}
+              title="Your account and password"
+            >
               <i>
                 {(user?.name || "A")
                   .split(" ")
@@ -1184,7 +1283,7 @@ export default function AdminPage() {
                 {user?.name || "Administrator"}
                 <small>Admin access</small>
               </span>
-            </span>
+            </Link>
             <button
               className="admin-signout"
               type="button"
@@ -1208,6 +1307,8 @@ export default function AdminPage() {
                   ? "A clear view of AYOS activity and the work that needs attention."
                   : section.id === "payments"
                     ? "Review provider submitted references against your verified payment records."
+                    : section.id === accountSection.id
+                      ? "Change the password you use to sign in to AYOS admin."
                     : `Review and manage ${section.label.toLowerCase()} using current AYOS records.`}
               </p>
             </div>
@@ -1251,6 +1352,9 @@ export default function AdminPage() {
               loading={loading}
               onOpen={(id) => navigate(`/admin/${id}`)}
             />
+          )}
+          {section.id === accountSection.id && (
+            <AdminAccount email={user?.email ?? ""} />
           )}
           {section.id === "settings" && (
             <SettingsView
@@ -1487,6 +1591,7 @@ export default function AdminPage() {
               "security",
               "categories",
               "notices",
+              accountSection.id,
             ].includes(section.id) && (
               <Panel title={`${heading} · ${asNumber(meta.total)}`}>
                 {loading ? (

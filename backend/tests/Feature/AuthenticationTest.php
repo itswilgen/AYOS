@@ -145,6 +145,44 @@ class AuthenticationTest extends TestCase
         $this->assertDatabaseHas('security_audits', ['user_id' => $user->id, 'event_type' => 'PASSWORD_CHANGED']);
     }
 
+    public function test_admin_can_change_their_own_password_and_keep_admin_access(): void
+    {
+        $admin = User::factory()->create(['password' => 'first-admin-passphrase', 'is_admin' => true]);
+        $admin->roles()->attach(Role::query()->where('slug', 'moderator')->value('id'), ['created_at' => now()]);
+
+        $this->withHeader('Origin', 'http://localhost:5173')->actingAs($admin)->putJson('/api/account/password', [
+            'current_password' => 'first-admin-passphrase',
+            'password' => 'second-admin-passphrase',
+            'password_confirmation' => 'second-admin-passphrase',
+        ])->assertOk();
+
+        $this->assertTrue(password_verify('second-admin-passphrase', $admin->fresh()->password));
+        $this->actingAs($admin->fresh())->getJson('/api/admin/access-check')->assertOk()->assertJsonPath('access', 'allowed');
+    }
+
+    public function test_password_change_rejects_reusing_the_current_password(): void
+    {
+        $user = User::factory()->create(['password' => 'a-long-passphrase-for-ayos']);
+
+        $this->actingAs($user)->putJson('/api/account/password', [
+            'current_password' => 'a-long-passphrase-for-ayos',
+            'password' => 'a-long-passphrase-for-ayos',
+            'password_confirmation' => 'a-long-passphrase-for-ayos',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['password' => 'Choose a new password that is different from your current one.']);
+    }
+
+    public function test_password_change_attempts_are_rate_limited(): void
+    {
+        $user = User::factory()->create(['password' => 'a-long-passphrase-for-ayos']);
+        $guess = ['current_password' => 'wrong-guess', 'password' => 'another-long-passphrase', 'password_confirmation' => 'another-long-passphrase'];
+
+        for ($attempt = 0; $attempt < 6; $attempt++) {
+            $this->actingAs($user)->putJson('/api/account/password', $guess)->assertUnprocessable();
+        }
+        $this->actingAs($user)->putJson('/api/account/password', $guess)->assertTooManyRequests();
+    }
+
     public function test_user_can_review_and_revoke_an_owned_session(): void
     {
         $user = User::factory()->create();

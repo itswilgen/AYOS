@@ -1,5 +1,5 @@
 import { apiRequest, backendUrl } from '../lib/api/client'
-import type { NotificationSummary, ProviderSummary, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
+import type { CustomerRequest, FeaturedService, NotificationSummary, ProviderSummary, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
 
 type ApiCategory = { id: number; slug: string; name: string; description: string }
 type ApiProvider = { id: string; displayName: string; specialties: string[]; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
@@ -22,13 +22,15 @@ export function findServiceCategories(categories: ServiceCategory[], query: stri
     || aliases[category.slug]?.some((alias) => alias.includes(term) || term.includes(alias))) : []
 }
 
+const absoluteMedia = (path: string) => path.startsWith('/') ? backendUrl(path) : path
+
 const mapProvider = (provider: ApiProvider): ProviderSummary => ({
   id: provider.id, displayName: provider.displayName, specialties: provider.specialties,
   serviceAreaLabel: provider.serviceAreaLabel, rating: provider.rating === null ? null : Number(provider.rating),
   reviewCount: provider.reviewCount, completedServices: provider.completedServices,
   verificationStatus: provider.verified ? 'verified' : 'unverified', availability: 'available',
   initials: provider.displayName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(),
-  photo: provider.photo ? (provider.photo.startsWith('/') ? backendUrl(provider.photo) : provider.photo) : null,
+  photo: provider.photo ? absoluteMedia(provider.photo) : null,
   sample: false,
 })
 
@@ -62,6 +64,20 @@ export const providersService = {
     if (filters.cityCode) params.set('cityCode', filters.cityCode)
     const result = await apiRequest<{ data: ApiProvider[] }>(`/providers?${params}`)
     return result.data.map(mapProvider)
+  },
+}
+
+export const featuredServicesService = {
+  async getFeatured(cityCode?: string): Promise<FeaturedService[]> {
+    const result = await apiRequest<{ data: FeaturedService[] }>(`/featured-services${cityCode ? `?${new URLSearchParams({ cityCode })}` : ''}`)
+    return result.data.map((item) => ({ ...item, cover: { ...item.cover, image: absoluteMedia(item.cover.image) } }))
+  },
+}
+
+export const requestsService = {
+  async getRequests(): Promise<CustomerRequest[]> {
+    const result = await apiRequest<{ data: CustomerRequest[] }>('/customer/requests')
+    return result.data
   },
 }
 

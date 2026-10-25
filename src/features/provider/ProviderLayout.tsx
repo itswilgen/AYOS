@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
-import { ArrowRight, Bell, BriefcaseBusiness, CalendarDays, ChevronDown, ClipboardList, House, LayoutDashboard, MapPinned, Menu, ShieldCheck, Star, UserRound, Wrench, X } from 'lucide-react'
+import { ArrowRight, Bell, BriefcaseBusiness, CalendarDays, ChevronDown, ClipboardList, House, LayoutDashboard, MapPinned, Menu, MessagesSquare, ShieldCheck, Star, UserRound, Wrench, X } from 'lucide-react'
 import Brand from '../../components/common/Brand'
 import { useAuth } from '../../lib/auth/useAuth'
+import { useInboxUnread } from '../../lib/hooks/useInboxUnread'
 import { providerWorkspaceService } from '../../services/provider.service'
 import type { ProviderWorkspaceData } from '../../types/provider'
 import type { ProviderOutletContext } from './provider-context'
@@ -11,6 +12,7 @@ import './provider.css'
 const links = [
   { to: '/provider', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/provider/requests', label: 'Requests', icon: ClipboardList },
+  { to: '/provider/messages', label: 'Messages', icon: MessagesSquare },
   { to: '/provider/jobs', label: 'My Jobs', icon: BriefcaseBusiness },
   { to: '/provider/schedule', label: 'Schedule', icon: CalendarDays },
   { to: '/provider/services', label: 'My Services', icon: Wrench },
@@ -29,6 +31,7 @@ export default function ProviderLayout() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [moreOpen, setMoreOpen] = useState(false)
+  const unreadMessages = useInboxUnread().provider
 
   const load = useCallback(async () => {
     if (!user) return
@@ -83,7 +86,7 @@ export default function ProviderLayout() {
     {!applicationMode && <aside className="provider-sidebar" aria-label="Provider navigation">
       <div className="provider-brand"><Brand to="/provider" /><span>{approved ? 'PROVIDER WORKSPACE' : 'PROVIDER APPLICATION'}</span></div>
       {approved && <><div className="provider-sidebar-label">WORKSPACE</div>
-      <nav className="provider-side-nav" aria-label="Provider sections">{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setMoreOpen(false)}><Icon size={18} aria-hidden="true" /><span>{label}</span>{label === 'Requests' && newRequests > 0 && <small>{newRequests}</small>}{label === 'Notifications' && unread > 0 && <small>{unread}</small>}</NavLink>)}</nav></>}
+      <nav className="provider-side-nav" aria-label="Provider sections">{links.map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} onClick={() => setMoreOpen(false)}><Icon size={18} aria-hidden="true" /><span>{label}</span>{label === 'Requests' && newRequests > 0 && <small>{newRequests}</small>}{label === 'Messages' && unreadMessages > 0 && <small>{unreadMessages}</small>}{label === 'Notifications' && unread > 0 && <small>{unread}</small>}</NavLink>)}</nav></>}
       <div className="provider-sidebar-bottom"><Link to="/home"><House size={18} aria-hidden="true" /> Switch to Customer Mode</Link><p>Your customer account stays the same.</p></div>
     </aside>}
     <div className="provider-body">
@@ -101,7 +104,7 @@ export default function ProviderLayout() {
       </main>
     </div>
     {approved && <nav className="provider-mobile-nav" aria-label="Provider mobile navigation">
-      {links.slice(0, 4).map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end}><Icon size={20} aria-hidden="true" /><span>{label === 'Overview' ? 'Home' : label === 'My Jobs' ? 'Jobs' : label}</span></NavLink>)}
+      {links.slice(0, 4).map(({ to, label, icon: Icon, end }) => <NavLink key={to} to={to} end={end} aria-label={label === 'Messages' && unreadMessages ? `Messages, ${unreadMessages} unread` : undefined}><Icon size={20} aria-hidden="true" />{label === 'Messages' && unreadMessages > 0 && <i className="provider-mobile-dot" aria-hidden="true" />}<span>{label === 'Overview' ? 'Home' : label === 'My Jobs' ? 'Jobs' : label}</span></NavLink>)}
       <button type="button" aria-expanded={moreOpen} aria-controls="provider-more-menu" onClick={() => setMoreOpen((open) => !open)}>{moreOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}<span>More</span></button>
     </nav>}
     {approved && moreOpen && <div className="provider-more-menu" id="provider-more-menu"><div className="provider-more-heading"><strong>More provider tools</strong><button type="button" onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19} /></button></div>{links.slice(4).map(({ to, label, icon: Icon }) => <Link key={to} to={to} onClick={() => setMoreOpen(false)}><Icon size={19} aria-hidden="true" /> {label}</Link>)}<Link to="/home" onClick={() => setMoreOpen(false)}><House size={19} aria-hidden="true" /> Switch to Customer Mode</Link></div>}

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\Conversations;
 use App\Services\PlatformSettings;
+use App\Services\ProviderDirectory;
 use App\Services\ProviderWorkspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +15,7 @@ use Illuminate\Validation\Rule;
 
 class CustomerServiceRequestController extends Controller
 {
-    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings) {}
+    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private ProviderDirectory $directory, private Conversations $conversations) {}
 
     public function providers(Request $request): JsonResponse
     {
@@ -24,7 +26,7 @@ class CustomerServiceRequestController extends Controller
         $query = DB::table('provider_profiles as p')->join('provider_services as s', 's.provider_profile_id', '=', 'p.id')
             ->join('service_categories as c', 'c.id', '=', 's.service_category_id')
             ->join('provider_service_areas as a', 'a.provider_profile_id', '=', 'p.id')
-            ->where('p.status', 'approved')->where('p.accepting_requests', true)->where('s.active', true)->where('a.active', true)
+            ->where('p.status', 'approved')->where('p.accepting_requests', true)->where('s.active', true)->where('s.is_visible', true)->where('a.active', true)
             ->select('p.id', 'p.display_name', 'p.bio', 'p.years_experience', 'p.photo_path', 'p.verified', 'p.access_kind')->distinct();
         if (isset($data['category'])) {
             $query->where('c.slug', $data['category']);
@@ -41,17 +43,13 @@ class CustomerServiceRequestController extends Controller
         $providers = $query->limit(100)->get();
         $ids = $providers->pluck('id')->all();
         $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
-            ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->orderBy('c.name')
+            ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
             ->get(['s.provider_profile_id', 'c.name'])->groupBy('provider_profile_id');
         $areas = DB::table('provider_service_areas as a')->join('city_municipalities as city', 'city.code', '=', 'a.city_municipality_code')
             ->whereIn('a.provider_profile_id', $ids)->where('a.active', true)->orderBy('city.name')
             ->get(['a.provider_profile_id', 'city.name'])->groupBy('provider_profile_id');
-        $reviews = DB::table('provider_reviews')->whereIn('provider_profile_id', $ids)
-            ->selectRaw('provider_profile_id, AVG(rating) as average, COUNT(*) as total')->groupBy('provider_profile_id')->get()->keyBy('provider_profile_id');
-        $completed = DB::table('provider_jobs')->whereIn('provider_profile_id', $ids)->where('status', 'completed')
-            ->selectRaw('provider_profile_id, COUNT(*) as total, COUNT(DISTINCT customer_id) as clients')->groupBy('provider_profile_id')->get()->keyBy('provider_profile_id');
-        $quota = $this->settings->get('free_successful_client_quota', 10);
-        $providers = $providers->filter(fn ($p) => $p->access_kind === 'lifetime' || (int) ($completed->get($p->id)?->clients ?? 0) < $quota);
+        ['reviews' => $reviews, 'completed' => $completed] = $this->directory->stats($ids);
+        $providers = $providers->filter(fn ($p) => $this->directory->withinFreeQuota((int) $p->id, $p->access_kind, $completed));
 
         return response()->json(['data' => $providers->map(function ($p) use ($services, $areas, $reviews, $completed) {
             return ['id' => (string) $p->id, 'displayName' => $p->display_name, 'bio' => $p->bio,
@@ -65,6 +63,42 @@ class CustomerServiceRequestController extends Controller
         })->values()]);
     }
 
+    /**
+     * A provider's public profile. `isOwnProfile` lets the owner preview it without offering to message or book themselves.
+     */
+    public function profile(Request $request, int $providerId): JsonResponse
+    {
+        abort_unless($this->settings->get('customer_requests_enabled', true), 503, 'Customer requests are temporarily unavailable.');
+        $provider = DB::table('provider_profiles')->where('id', $providerId)->first();
+        $profile = $provider ? $this->directory->profile($providerId, $this->workspace->canReceive($provider)) : null;
+        abort_unless($profile, 404);
+
+        return response()->json(['data' => [...$profile, 'isOwnProfile' => $request->user('sanctum')?->id === $provider->user_id]]);
+    }
+
+    /**
+     * More of a provider's reviews for the profile page, filtered by star rating and continued with `before`.
+     */
+    public function reviews(Request $request, int $providerId): JsonResponse
+    {
+        abort_unless($this->settings->get('customer_requests_enabled', true), 503, 'Customer requests are temporarily unavailable.');
+        abort_unless(DB::table('provider_profiles')->where('id', $providerId)->where('status', 'approved')->exists(), 404);
+        $data = $request->validate(['rating' => ['nullable', 'integer', 'between:1,5'], 'before' => ['nullable', 'integer', 'min:1']]);
+
+        return response()->json($this->directory->reviews($providerId, $data['rating'] ?? null, $data['before'] ?? null));
+    }
+
+    /**
+     * Approved service covers for the customer Home page, limited to providers serving the given city.
+     */
+    public function featuredServices(Request $request): JsonResponse
+    {
+        abort_unless($this->settings->get('customer_requests_enabled', true), 503, 'Customer requests are temporarily unavailable.');
+        $data = $request->validate(['cityCode' => ['nullable', 'string', Rule::exists('city_municipalities', 'code')]]);
+
+        return response()->json(['data' => $this->directory->featuredServices($data['cityCode'] ?? null)]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $items = DB::table('service_requests as r')->join('provider_profiles as p', 'p.id', '=', 'r.provider_profile_id')
@@ -73,7 +107,7 @@ class CustomerServiceRequestController extends Controller
             ->leftJoin('provider_reviews as rv', 'rv.provider_job_id', '=', 'j.id')
             ->where('r.customer_id', $request->user()->id)->orderByDesc('r.created_at')
             ->get(['r.id', 'r.description', 'r.preferred_at', 'r.status as request_status', 'r.created_at',
-                'p.display_name as provider_name', 'c.name as service', 'j.id as job_id', 'j.status as job_status', 'rv.id as review_id']);
+                'p.id as provider_id', 'p.display_name as provider_name', 'c.name as service', 'j.id as job_id', 'j.status as job_status', 'rv.id as review_id']);
 
         return response()->json(['data' => $items]);
     }
@@ -84,7 +118,7 @@ class CustomerServiceRequestController extends Controller
 
         return response()->json(['data' => $items->map(fn ($item) => [
             'id' => (string) $item->id, 'title' => $item->title, 'description' => $item->detail,
-            'createdAtLabel' => $item->created_at, 'unread' => $item->read_at === null,
+            'createdAtLabel' => $item->created_at, 'unread' => $item->read_at === null, 'href' => $item->href ?: '/my-requests',
         ])]);
     }
 
@@ -127,6 +161,7 @@ class CustomerServiceRequestController extends Controller
                 'preferred_at' => $data['preferredAt'], 'status' => 'new', 'created_at' => now(), 'updated_at' => now(),
             ]);
             $this->workspace->notify($provider->id, 'New customer request', 'A customer requested '.$category->name.'.', '/provider/requests/'.$id);
+            $this->conversations->note($userId, $provider->id, 'Request #'.$id.' sent for '.$category->name.'.');
 
             return $id;
         });
@@ -148,6 +183,7 @@ class CustomerServiceRequestController extends Controller
             abort_unless($job->status === 'provider_finished', 409, 'The provider must finish the work before you can confirm it.');
             DB::table('provider_jobs')->where('id', $jobId)->update(['status' => 'completed', 'completed_at' => now(), 'updated_at' => now()]);
             $this->workspace->notify($job->provider_profile_id, 'Service completed', 'Your customer confirmed the completed service.', '/provider/jobs/'.$jobId);
+            $this->conversations->note($job->customer_id, $job->provider_profile_id, 'Request #'.$job->service_request_id.' completed.');
             if ($profile->access_kind === 'trial' && $this->workspace->completedCount($profile->id) >= $this->settings->get('free_successful_client_quota', 10)) {
                 DB::table('provider_profiles')->where('id', $profile->id)->update(['accepting_requests' => false, 'updated_at' => now()]);
                 $this->workspace->notify($profile->id, 'Free client quota complete', 'New requests are paused until lifetime access is activated.', '/provider/access');
@@ -165,6 +201,7 @@ class CustomerServiceRequestController extends Controller
             abort_unless(in_array($job->status, ['accepted', 'scheduled'], true), 409, 'This job can no longer be cancelled online.');
             DB::table('provider_jobs')->where('id', $jobId)->update(['status' => 'cancelled', 'updated_at' => now()]);
             $this->workspace->notify($job->provider_profile_id, 'Job cancelled', 'A customer cancelled a booked service.', '/provider/jobs/'.$jobId);
+            $this->conversations->note($job->customer_id, $job->provider_profile_id, 'Request #'.$job->service_request_id.' cancelled by the customer.');
         });
 
         return response()->json(['status' => 'cancelled']);

@@ -1,0 +1,142 @@
+/* A provider's photo or poster: filled and positioned by the provider, or shown whole over a soft blur of itself. */
+.cover-card {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ayos-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--ayos-white);
+  color: var(--ayos-ink);
+  font-family: var(--font-body);
+  transition:
+    transform var(--duration-medium) var(--ease-out-expo),
+    box-shadow var(--duration-medium) var(--ease-standard);
+}
+.cover-card.is-link:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+}
+.cover-card:has(.cover-card-link:focus-visible) {
+  outline: 3px solid var(--ayos-orange);
+  outline-offset: 3px;
+}
+.cover-card-media {
+  position: relative;
+  flex: none;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--ayos-deep-sky);
+}
+.cover-card-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.cover-card-media.is-contain .cover-card-image {
+  position: relative;
+  object-fit: contain;
+}
+.cover-card-backdrop {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  filter: blur(20px) saturate(1.15);
+  transform: scale(1.25);
+}
+.cover-card-media.is-cover .cover-card-image {
+  transition: transform var(--duration-slow) var(--ease-out-expo);
+}
+.cover-card.is-link:hover .cover-card-media.is-cover .cover-card-image {
+  transform: scale(1.03);
+}
+.cover-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 0;
+}
+.cover-card-info {
+  display: grid;
+  gap: 6px;
+}
+.cover-card-info p {
+  margin: 0;
+}
+.cover-card-trade {
+  color: var(--ayos-sky-deep);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.cover-card h3 {
+  margin: 0;
+  font: 700 1rem / 1.3 var(--font-body);
+  text-transform: none;
+}
+.cover-card-description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ayos-text);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.cover-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--ayos-text-soft);
+  font-size: 0.8125rem;
+}
+.cover-card-meta:empty {
+  display: none;
+}
+.cover-card-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.cover-card-rating {
+  color: var(--ayos-text);
+}
+.cover-card-rating svg {
+  color: var(--ayos-orange-bright);
+}
+.cover-card-rating strong {
+  color: var(--ayos-ink);
+}
+.cover-card-verified {
+  color: var(--ayos-success);
+  font-weight: 600;
+}
+.cover-card-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  border-top: 1px solid var(--ayos-hairline);
+  color: var(--ayos-sky-deep);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+a.cover-card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+a.cover-card-link:focus-visible {
+  outline: 0;
+}
+.cover-card-link svg {
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.cover-card.is-link:hover .cover-card-link svg {
+  transform: translateX(3px);
+}

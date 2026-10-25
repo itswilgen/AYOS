@@ -583,6 +583,39 @@
   color: #b54839;
   background: #fff8f6;
 }
+.admin-cover-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 170px;
+}
+.admin-cover-cell a {
+  flex: none;
+  display: block;
+  border-radius: 6px;
+}
+.admin-cover-cell img {
+  width: 72px;
+  height: 54px;
+  display: block;
+  border: 1px solid #dbe7ed;
+  border-radius: 6px;
+  object-fit: cover;
+  transition: transform 160ms ease;
+}
+.admin-cover-cell a:hover img {
+  transform: scale(1.04);
+}
+.admin-cover-cell > div {
+  display: grid;
+  gap: 4px;
+}
+.admin-cover-cell small {
+  max-width: 220px;
+  color: #6a7a83;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
 .admin-row-actions button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -1627,5 +1660,123 @@
   }
   .admin-app-foot {
     font-size: 10px;
+  }
+}
+
+/* My account: the administrator's own password */
+a.admin-user-chip {
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  transition: background 160ms ease;
+}
+a.admin-user-chip:hover {
+  background: var(--admin-canvas);
+}
+.admin-account-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  align-items: start;
+  gap: 14px;
+}
+.admin-account-form {
+  max-width: 460px;
+  display: grid;
+  gap: 16px;
+}
+.admin-password-field label {
+  color: #526a77;
+}
+.admin-password-input {
+  position: relative;
+  display: block;
+}
+.admin-password-input input {
+  min-height: 44px;
+  padding-right: 46px;
+}
+.admin-password-input input[aria-invalid="true"] {
+  border-color: #d9877a;
+}
+.admin-password-input button {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  color: var(--admin-muted);
+  background: transparent;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.admin-password-input button:hover {
+  color: var(--admin-blue);
+  background: var(--admin-canvas);
+}
+.admin-field small.admin-field-error {
+  color: #b54839;
+  font-weight: 600;
+}
+.admin-account-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.admin-account-message.is-success {
+  color: #28744f;
+  background: #f1faf5;
+}
+.admin-account-message.is-error {
+  color: #b54839;
+  background: #fff6f4;
+}
+.admin-account-form .admin-primary-button {
+  justify-self: start;
+  min-height: 44px;
+  padding-inline: 18px;
+}
+.admin-account-email {
+  margin: 0 0 14px;
+  color: var(--admin-muted);
+  font-size: 13px;
+}
+.admin-account-email strong {
+  color: var(--admin-ink);
+}
+.admin-account-notes ul {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--admin-line);
+  list-style: none;
+}
+.admin-account-notes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #4a6170;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.admin-account-notes li svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--admin-blue);
+}
+@media (max-width: 900px) {
+  .admin-account-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-account-form {
+    max-width: none;
   }
 }

@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronDown, CircleUserRound, LogOut, MapPin, Settings2, UserRound, X } from 'lucide-react'
 import Brand from '../common/Brand'
 import { useAuth } from '../../lib/auth/useAuth'
+import { useInboxUnread } from '../../lib/hooks/useInboxUnread'
 import { notificationsService } from '../../services/home.service'
 import type { NotificationSummary } from '../../types/marketplace'
 
@@ -15,6 +16,7 @@ export default function AuthenticatedHeader() {
   const [notifications, setNotifications] = useState<NotificationSummary[]>([])
   const [noticeError, setNoticeError] = useState('')
   const [signOutError, setSignOutError] = useState('')
+  const unreadMessages = useInboxUnread().customer
   const profileRef = useRef<HTMLDivElement>(null)
   const noticeRef = useRef<HTMLDivElement>(null)
 
@@ -67,6 +69,7 @@ export default function AuthenticatedHeader() {
           }
         }}>Services</Link>
         <NavLink to="/my-requests">My requests</NavLink>
+        <NavLink to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : undefined}>Messages{unreadMessages > 0 && <span className="app-nav-count" aria-hidden="true">{unreadMessages > 99 ? '99+' : unreadMessages}</span>}</NavLink>
       </nav>
       <div className="app-header-actions">
         <div className="app-popover-anchor" ref={noticeRef}>
@@ -77,7 +80,7 @@ export default function AuthenticatedHeader() {
           {noticeOpen && <section className="app-popover app-notice-popover" id="notification-popover" aria-label="Notifications">
             <div className="app-popover-heading"><div><strong>Notifications</strong><span>{notifications.filter((notification) => notification.unread).length} unread</span></div><button type="button" aria-label="Close notifications" onClick={() => setNoticeOpen(false)}><X size={17} /></button></div>
             {noticeError && <p className="app-popover-error" role="alert">{noticeError}</p>}
-            {notifications.length ? <ul className="app-notification-list">{notifications.map((item) => <li key={item.id}>{item.unread && <span className="app-notification-mark" />}<button type="button" onClick={() => { setNoticeError(''); void notificationsService.markRead(item.id).then(() => { setNotifications((items) => items.map((note) => note.id === item.id ? { ...note, unread: false } : note)); setNoticeOpen(false); navigate('/my-requests') }).catch(() => { setNoticeError('We couldn’t open that update. Please try again.') }) }}><strong>{item.title}</strong><p>{item.description}</p><small>{item.createdAtLabel}</small></button></li>)}</ul> : <div className="app-popover-empty"><Bell size={20} aria-hidden="true" /><strong>You’re all caught up</strong><p>Updates about your service activity will show up here.</p></div>}
+            {notifications.length ? <ul className="app-notification-list">{notifications.map((item) => <li key={item.id}>{item.unread && <span className="app-notification-mark" />}<button type="button" onClick={() => { setNoticeError(''); void notificationsService.markRead(item.id).then(() => { setNotifications((items) => items.map((note) => note.id === item.id ? { ...note, unread: false } : note)); setNoticeOpen(false); navigate(item.href || '/my-requests') }).catch(() => { setNoticeError('We couldn’t open that update. Please try again.') }) }}><strong>{item.title}</strong><p>{item.description}</p><small>{item.createdAtLabel}</small></button></li>)}</ul> : <div className="app-popover-empty"><Bell size={20} aria-hidden="true" /><strong>You’re all caught up</strong><p>Updates about your service activity will show up here.</p></div>}
           </section>}
         </div>
         <div className="app-popover-anchor" ref={profileRef}>

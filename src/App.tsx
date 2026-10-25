@@ -23,6 +23,8 @@ const AddressSetupPage = lazy(() => import('./pages/AddressSetupPage'))
 const HomePage = lazy(() => import('./features/home/HomePage'))
 const SearchResultsPage = lazy(() => import('./features/services/SearchResultsPage'))
 const CustomerRequestPage = lazy(() => import('./features/services/CustomerRequestPage'))
+const ProviderProfilePage = lazy(() => import('./features/services/ProviderProfilePage'))
+const MessagesPage = lazy(() => import('./features/messages/MessagesPage'))
 const MyRequestsPage = lazy(() => import('./features/services/MyRequestsPage'))
 const ProfilePage = lazy(() => import('./features/account/ProfilePage'))
 const SavedLocationsPage = lazy(() => import('./features/account/SavedLocationsPage'))
@@ -81,6 +83,9 @@ export default function App() {
           <Route path="/home" element={<Suspense fallback={routeFallback}><HomePage /></Suspense>} />
           <Route path="/services/search" element={<Suspense fallback={routeFallback}><SearchResultsPage /></Suspense>} />
           <Route path="/services/request/:providerId" element={<Suspense fallback={routeFallback}><CustomerRequestPage /></Suspense>} />
+          <Route path="/providers/:providerId" element={<Suspense fallback={routeFallback}><ProviderProfilePage /></Suspense>} />
+          <Route path="/messages" element={<Suspense fallback={routeFallback}><MessagesPage side="customer" /></Suspense>} />
+          <Route path="/messages/:conversationId" element={<Suspense fallback={routeFallback}><MessagesPage side="customer" /></Suspense>} />
           <Route path="/my-requests" element={<Suspense fallback={routeFallback}><MyRequestsPage /></Suspense>} />
           <Route path="/account" element={<Navigate to="/home" replace />} />
           <Route path="/account/profile" element={<Suspense fallback={routeFallback}><ProfilePage /></Suspense>} />
@@ -95,6 +100,8 @@ export default function App() {
           <Route index element={<ProviderPages.ProviderOverview />} />
           <Route path="requests" element={<ProviderPages.ProviderRequests />} />
           <Route path="requests/:id" element={<ProviderPages.ProviderRequestDetails />} />
+          <Route path="messages" element={<Suspense fallback={routeFallback}><MessagesPage side="provider" /></Suspense>} />
+          <Route path="messages/:conversationId" element={<Suspense fallback={routeFallback}><MessagesPage side="provider" /></Suspense>} />
           <Route path="jobs" element={<ProviderPages.ProviderJobs />} />
           <Route path="jobs/:id" element={<ProviderPages.ProviderJobDetails />} />
           <Route path="schedule" element={<ProviderPages.ProviderSchedule />} />

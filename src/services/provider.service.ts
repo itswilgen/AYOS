@@ -1,4 +1,5 @@
 import { apiRequest, backendUrl } from '../lib/api/client'
+import type { CoverLayout } from '../types/marketplace'
 import type { PortfolioItem, ProviderProfile, ProviderService, ProviderServiceArea, ProviderWorkspaceData } from '../types/provider'
 
 const json = (value: unknown) => JSON.stringify(value)
@@ -8,6 +9,7 @@ const upload = (path: string, form: FormData) => apiRequest<ProviderWorkspaceDat
 function absolutePhotos(data: ProviderWorkspaceData): ProviderWorkspaceData {
   const absolute = (path: string) => path.startsWith('/') ? backendUrl(path) : path
   return { ...data, requests: data.requests.map((request) => ({ ...request, photos: request.photos.map(absolute) })),
+    services: data.services.map((service) => service.cover ? { ...service, cover: { ...service.cover, image: absolute(service.cover.image) } } : service),
     profile: { ...data.profile, photo: data.profile.photo ? absolute(data.profile.photo) : null,
       portfolio: data.profile.portfolio.map((item) => ({ ...item, image: absolute(item.image) })) } }
 }
@@ -37,6 +39,16 @@ export const providerWorkspaceService = {
   finishJob: (_id: number, _name: string, jobId: string) => updated(change(`/provider/jobs/${jobId}/finish`, 'POST')),
   saveService: (_id: number, _name: string, service: Pick<ProviderService, 'category' | 'description'> & { id?: string }) => updated(change(service.id ? `/provider/services/${service.id}` : '/provider/services', service.id ? 'PUT' : 'POST', { category: service.category, description: service.description })),
   toggleService: (_id: number, _name: string, serviceId: string) => updated(change(`/provider/services/${serviceId}/toggle`, 'POST')),
+  uploadServiceCover: (serviceId: string, cover: File, layout: CoverLayout) => {
+    const form = new FormData()
+    form.set('cover', cover)
+    form.set('fit', layout.fit)
+    form.set('focusX', String(layout.focusX))
+    form.set('focusY', String(layout.focusY))
+    return updated(upload(`/provider/services/${serviceId}/cover`, form))
+  },
+  updateServiceCover: (serviceId: string, layout: CoverLayout) => updated(change(`/provider/services/${serviceId}/cover`, 'PATCH', layout)),
+  removeServiceCover: (serviceId: string) => updated(change(`/provider/services/${serviceId}/cover`, 'DELETE')),
   addArea: (_id: number, _name: string, area: Pick<ProviderServiceArea, 'region' | 'province' | 'city' | 'barangay'>) => updated(change('/provider/areas', 'POST', area)),
   removeArea: (_id: number, _name: string, areaId: string) => updated(change(`/provider/areas/${areaId}`, 'DELETE')),
   saveProfile: (_id: number, _name: string, profile: Pick<ProviderProfile, 'displayName' | 'bio' | 'yearsExperience'>) => updated(change('/provider/profile', 'PATCH', profile)),

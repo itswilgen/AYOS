@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountAddressController;
 use App\Http\Controllers\Api\AccountProfileController;
 use App\Http\Controllers\Api\AccountSecurityController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\CustomerServiceRequestController;
 use App\Http\Controllers\Api\LocationReferenceController;
 use App\Http\Controllers\Api\ProviderController;
@@ -49,7 +50,7 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::get('/account/sessions', [AccountSecurityController::class, 'sessions']);
     Route::delete('/account/sessions/others', [AccountSecurityController::class, 'revokeOtherSessions']);
     Route::delete('/account/sessions/{id}', [AccountSecurityController::class, 'revokeSession']);
-    Route::put('/account/password', [AccountSecurityController::class, 'updatePassword']);
+    Route::put('/account/password', [AccountSecurityController::class, 'updatePassword'])->middleware('throttle:6,1');
 });
 
 Route::middleware(['auth:sanctum', 'verified', 'account.active'])->prefix('account')->group(function (): void {
@@ -68,6 +69,9 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->prefix('me/se
 
 Route::get('/service-categories', [ProviderController::class, 'categories']);
 Route::get('/providers', [CustomerServiceRequestController::class, 'providers']);
+Route::get('/providers/{providerId}', [CustomerServiceRequestController::class, 'profile'])->whereNumber('providerId');
+Route::get('/providers/{providerId}/reviews', [CustomerServiceRequestController::class, 'reviews'])->whereNumber('providerId');
+Route::get('/featured-services', [CustomerServiceRequestController::class, 'featuredServices']);
 
 Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(function (): void {
     Route::post('/reports', [AdminController::class, 'createReport'])->middleware('throttle:6,1');
@@ -79,6 +83,24 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
     Route::post('/customer/jobs/{jobId}/confirm', [CustomerServiceRequestController::class, 'confirm'])->middleware('throttle:20,1');
     Route::post('/customer/jobs/{jobId}/cancel', [CustomerServiceRequestController::class, 'cancel']);
     Route::post('/customer/jobs/{jobId}/review', [CustomerServiceRequestController::class, 'review'])->middleware('throttle:10,1');
+
+    Route::get('/inbox/unread', [ConversationController::class, 'unread']);
+    Route::controller(ConversationController::class)->prefix('conversations')->name('customer.conversations.')->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'start')->middleware('throttle:10,1')->name('start');
+        Route::get('/{conversationId}/messages', 'messages')->whereNumber('conversationId')->name('messages');
+        Route::post('/{conversationId}/messages', 'send')->whereNumber('conversationId')->middleware('throttle:30,1')->name('send');
+        Route::post('/{conversationId}/read', 'read')->whereNumber('conversationId')->name('read');
+        Route::get('/{conversationId}/messages/{messageId}/image', 'image')->whereNumber(['conversationId', 'messageId'])->name('image');
+    });
+    Route::controller(ConversationController::class)->prefix('provider/conversations')->name('provider.conversations.')->group(function (): void {
+        Route::get('/', 'index')->name('index');
+        Route::post('/', 'startForRequest')->middleware('throttle:10,1')->name('start');
+        Route::get('/{conversationId}/messages', 'messages')->whereNumber('conversationId')->name('messages');
+        Route::post('/{conversationId}/messages', 'send')->whereNumber('conversationId')->middleware('throttle:30,1')->name('send');
+        Route::post('/{conversationId}/read', 'read')->whereNumber('conversationId')->name('read');
+        Route::get('/{conversationId}/messages/{messageId}/image', 'image')->whereNumber(['conversationId', 'messageId'])->name('image');
+    });
 
     Route::get('/provider/workspace', [ProviderController::class, 'workspace'])->middleware('account.active');
     Route::post('/provider/apply', [ProviderController::class, 'apply'])->middleware(['account.active', 'throttle:3,1']);
@@ -94,6 +116,9 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
     Route::post('/provider/services', [ProviderController::class, 'saveService']);
     Route::put('/provider/services/{serviceId}', [ProviderController::class, 'saveService']);
     Route::post('/provider/services/{serviceId}/toggle', [ProviderController::class, 'toggleService']);
+    Route::post('/provider/services/{serviceId}/cover', [ProviderController::class, 'uploadServiceCover'])->middleware('throttle:10,1');
+    Route::patch('/provider/services/{serviceId}/cover', [ProviderController::class, 'updateServiceCover']);
+    Route::delete('/provider/services/{serviceId}/cover', [ProviderController::class, 'removeServiceCover']);
     Route::post('/provider/areas', [ProviderController::class, 'addArea']);
     Route::delete('/provider/areas/{areaId}', [ProviderController::class, 'removeArea']);
     Route::patch('/provider/profile', [ProviderController::class, 'saveProfile']);
@@ -121,6 +146,7 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active', 'admin'])->pref
     Route::post('/providers/{providerId}/verify-identity', [AdminController::class, 'verifyProvider'])->middleware('admin.permission:providers.manage');
     Route::get('/listings', [AdminController::class, 'listings'])->middleware('admin.permission:listings.manage');
     Route::patch('/listings/{type}/{listingId}/visibility', [AdminController::class, 'setListingVisibility'])->middleware('admin.permission:listings.manage');
+    Route::post('/listings/service/{serviceId}/cover-review', [AdminController::class, 'reviewServiceCover'])->middleware('admin.permission:listings.manage');
     Route::get('/requests', [AdminController::class, 'requests'])->middleware('admin.permission:requests.view');
     Route::get('/categories', [AdminController::class, 'categories'])->middleware('admin.permission:categories.manage');
     Route::post('/categories', [AdminController::class, 'createCategory'])->middleware('admin.permission:categories.manage');

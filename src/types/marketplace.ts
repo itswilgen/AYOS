@@ -79,12 +79,18 @@ export interface ServiceSearchFilters {
   locationId?: number
 }
 
-export interface ServiceRequestSummary {
-  id: string
-  serviceName: string
-  status: string
-  locationLabel: string
-  updatedAtLabel: string
+export interface CustomerRequest {
+  id: number
+  description: string
+  preferred_at: string
+  request_status: string
+  created_at: string
+  provider_name: string
+  service: string
+  provider_id: number
+  job_id: number | null
+  job_status: string | null
+  review_id: number | null
 }
 
 export interface NotificationSummary {
@@ -93,4 +99,26 @@ export interface NotificationSummary {
   description: string
   createdAtLabel: string
   unread: boolean
+  href: string
+}
+
+export interface CoverLayout {
+  fit: 'cover' | 'contain'
+  focusX: number
+  focusY: number
+}
+
+export interface FeaturedService {
+  id: string
+  providerId: string
+  providerName: string
+  category: string
+  categorySlug: string
+  description: string
+  cover: CoverLayout & { image: string }
+  rating: number | null
+  reviewCount: number
+  completedServices: number
+  verified: boolean
+  areaLabel: string
 }

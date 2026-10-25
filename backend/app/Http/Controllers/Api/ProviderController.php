@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\SubmitActivationPaymentRequest;
+use App\Services\Conversations;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
+use App\Services\PublicImageStore;
 use App\Services\SecurityAuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,7 +19,7 @@ use Throwable;
 
 class ProviderController extends Controller
 {
-    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private SecurityAuditLogger $audit) {}
+    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private SecurityAuditLogger $audit, private PublicImageStore $images, private Conversations $conversations) {}
 
     public function submitActivationPayment(SubmitActivationPaymentRequest $request): JsonResponse
     {
@@ -169,6 +171,7 @@ class ProviderController extends Controller
             DB::table('provider_jobs')->insert(['service_request_id' => $requestId, 'provider_profile_id' => $profile->id,
                 'customer_id' => $item->customer_id, 'status' => 'accepted', 'created_at' => now(), 'updated_at' => now()]);
             $this->workspace->notifyCustomer($item->customer_id, 'Request accepted', 'Your provider accepted your service request.');
+            $this->conversations->note($item->customer_id, $profile->id, 'Request #'.$requestId.' accepted. You can now share contact details here.');
         });
 
         return $this->workspace($request);
@@ -183,6 +186,7 @@ class ProviderController extends Controller
             abort_unless($item->status === 'new', 409, 'This request is no longer available.');
             DB::table('service_requests')->where('id', $requestId)->update(['status' => 'declined', 'updated_at' => now()]);
             $this->workspace->notifyCustomer($item->customer_id, 'Request declined', 'This provider is unavailable for your request.');
+            $this->conversations->note($item->customer_id, $profile->id, 'Request #'.$requestId.' declined.');
         });
 
         return $this->workspace($request);
@@ -218,6 +222,8 @@ class ProviderController extends Controller
             $this->workspace->notifyCustomer($job->customer_id,
                 ['schedule' => 'Visit scheduled', 'start' => 'Work started', 'finish' => 'Work finished'][$action],
                 ['schedule' => 'Your provider scheduled the visit.', 'start' => 'Your provider started the service.', 'finish' => 'Please confirm the completed work in My requests.'][$action]);
+            $this->conversations->note($job->customer_id, $profile->id, 'Request #'.$job->service_request_id.': '
+                .['schedule' => 'visit scheduled.', 'start' => 'work started.', 'finish' => 'work marked finished. Waiting for the customer to confirm.'][$action]);
         });
 
         return $this->workspace($request);
@@ -234,7 +240,11 @@ class ProviderController extends Controller
             if ($service->service_category_id != $categoryId && DB::table('provider_services')->where('provider_profile_id', $profile->id)->where('service_category_id', $categoryId)->exists()) {
                 throw ValidationException::withMessages(['category' => 'This service is already listed.']);
             }
-            DB::table('provider_services')->where('id', $serviceId)->update(['service_category_id' => $categoryId, 'description' => trim($data['description'] ?? ''), 'updated_at' => now()]);
+            $categoryChanged = (int) $service->service_category_id !== (int) $categoryId;
+            DB::table('provider_services')->where('id', $serviceId)->update([
+                'service_category_id' => $categoryId, 'description' => trim($data['description'] ?? ''), 'updated_at' => now(),
+                ...($categoryChanged && $service->cover_path ? ['cover_status' => 'pending', 'cover_review_note' => null, 'cover_submitted_at' => now(), 'cover_reviewed_at' => null] : []),
+            ]);
         } else {
             abort_if(DB::table('provider_services')->where('provider_profile_id', $profile->id)->where('service_category_id', $categoryId)->exists(), 409, 'This service is already listed.');
             DB::table('provider_services')->insert(['provider_profile_id' => $profile->id, 'service_category_id' => $categoryId,
@@ -255,6 +265,82 @@ class ProviderController extends Controller
         }
 
         return $this->workspace($request);
+    }
+
+    /**
+     * Uploads a new cover for one of the provider's services. Every new image waits for review before it reaches customers.
+     */
+    public function uploadServiceCover(Request $request, int $serviceId): JsonResponse
+    {
+        $profile = $this->workspace->approved($request->user()->id);
+        $service = $this->ownedService($profile->id, $serviceId);
+        $data = $request->validate([
+            'cover' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:5120', 'dimensions:min_width=1000,min_height=600'],
+            ...$this->coverLayoutRules(),
+        ], [
+            'cover.dimensions' => 'Use an image at least 1000 × 600 pixels so it stays sharp on the Home page.',
+            'cover.max' => 'Use an image smaller than 5 MB.',
+        ]);
+        $path = $this->images->store($data['cover'], 'providers/'.$profile->id.'/services', 'cover');
+        DB::table('provider_services')->where('id', $service->id)->update([
+            'cover_path' => $path, 'cover_status' => 'pending', 'cover_review_note' => null,
+            'cover_fit' => $data['fit'], 'cover_focus_x' => $data['focusX'], 'cover_focus_y' => $data['focusY'],
+            'cover_submitted_at' => now(), 'cover_reviewed_at' => null, 'updated_at' => now(),
+        ]);
+        if ($service->cover_path) {
+            Storage::disk('public')->delete($service->cover_path);
+        }
+
+        return $this->workspace($request);
+    }
+
+    /**
+     * Repositions the current cover. The image itself is unchanged, so its review status stays as it is.
+     */
+    public function updateServiceCover(Request $request, int $serviceId): JsonResponse
+    {
+        $profile = $this->workspace->approved($request->user()->id);
+        $service = $this->ownedService($profile->id, $serviceId);
+        abort_unless($service->cover_path, 404, 'This service has no cover yet.');
+        $data = $request->validate($this->coverLayoutRules());
+        DB::table('provider_services')->where('id', $service->id)->update([
+            'cover_fit' => $data['fit'], 'cover_focus_x' => $data['focusX'], 'cover_focus_y' => $data['focusY'], 'updated_at' => now(),
+        ]);
+
+        return $this->workspace($request);
+    }
+
+    public function removeServiceCover(Request $request, int $serviceId): JsonResponse
+    {
+        $profile = $this->workspace->approved($request->user()->id);
+        $service = $this->ownedService($profile->id, $serviceId);
+        DB::table('provider_services')->where('id', $service->id)->update([
+            'cover_path' => null, 'cover_status' => null, 'cover_review_note' => null, 'cover_fit' => 'cover',
+            'cover_focus_x' => 50, 'cover_focus_y' => 50, 'cover_submitted_at' => null, 'cover_reviewed_at' => null, 'updated_at' => now(),
+        ]);
+        if ($service->cover_path) {
+            Storage::disk('public')->delete($service->cover_path);
+        }
+
+        return $this->workspace($request);
+    }
+
+    private function ownedService(int $profileId, int $serviceId): object
+    {
+        $service = DB::table('provider_services')->where('id', $serviceId)->where('provider_profile_id', $profileId)->where('is_visible', true)->first();
+        abort_unless($service, 404);
+
+        return $service;
+    }
+
+    /** @return array<string, array<int, mixed>> */
+    private function coverLayoutRules(): array
+    {
+        return [
+            'fit' => ['required', Rule::in(['cover', 'contain'])],
+            'focusX' => ['required', 'integer', 'between:0,100'],
+            'focusY' => ['required', 'integer', 'between:0,100'],
+        ];
     }
 
     public function addArea(Request $request): JsonResponse
@@ -311,8 +397,8 @@ class ProviderController extends Controller
     public function profilePhoto(Request $request): JsonResponse
     {
         $profile = $this->workspace->approved($request->user()->id);
-        $data = $request->validate(['photo' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:2048']]);
-        $path = $data['photo']->store('providers/'.$profile->id.'/profile', 'public');
+        $data = $request->validate(['photo' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:5120']]);
+        $path = $this->images->store($data['photo'], 'providers/'.$profile->id.'/profile', 'photo', 1200, 1200);
         DB::table('provider_profiles')->where('id', $profile->id)->update(['photo_path' => $path, 'updated_at' => now()]);
         if ($profile->photo_path) {
             Storage::disk('public')->delete($profile->photo_path);
@@ -325,9 +411,9 @@ class ProviderController extends Controller
     {
         $profile = $this->workspace->approved($request->user()->id);
         $data = $request->validate(['title' => ['required', 'string', 'max:70'], 'category' => ['required', 'string', 'max:50'],
-            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:2048']]);
+            'image' => ['required', 'image', 'mimes:jpeg,png,webp', 'max:5120']]);
         abort_if(DB::table('provider_portfolio_items')->where('provider_profile_id', $profile->id)->count() >= 20, 409, 'You can upload up to 20 work samples.');
-        $path = $data['image']->store('providers/'.$profile->id.'/portfolio', 'public');
+        $path = $this->images->store($data['image'], 'providers/'.$profile->id.'/portfolio', 'image');
         DB::table('provider_portfolio_items')->insert(['provider_profile_id' => $profile->id, 'title' => trim($data['title']),
             'category' => trim($data['category']), 'image_path' => $path, 'created_at' => now(), 'updated_at' => now()]);
 

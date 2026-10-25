@@ -1,92 +1,96 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Search, Wrench } from 'lucide-react'
+import { ArrowRight, Search } from 'lucide-react'
+import Button from '../../../components/ui/Button'
 import { findServiceCategories } from '../../../services/home.service'
 import type { ServiceCategory, ServiceLocationSummary } from '../../../types/marketplace'
+import { serviceSearchPath } from '../home-links'
+import { serviceIcons } from '../service-visuals'
 
 type Props = {
   categories: ServiceCategory[]
-  locations: ServiceLocationSummary[]
+  location?: ServiceLocationSummary
 }
 
-export default function HomeSearch({ categories, locations }: Props) {
+export default function HomeSearch({ categories, location }: Props) {
   const navigate = useNavigate()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState(-1)
 
-  const suggestions = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase()
-    if (!normalized) return []
-    return findServiceCategories(categories, normalized).slice(0, 5)
-  }, [categories, query])
+  const suggestions = useMemo(() => findServiceCategories(categories, query).slice(0, 5), [categories, query])
+  const expanded = open && suggestions.length > 0
+  const activeOption = expanded && activeIndex >= 0 ? suggestions[activeIndex] : undefined
 
-  const selectedLocation = locations.find((location) => location.is_default) ?? locations[0]
-  const locationLabel = selectedLocation
-    ? `${selectedLocation.city_municipality.name}, ${selectedLocation.province?.name ?? selectedLocation.region.name}`
-    : ''
+  const search = (service: string) => {
+    setOpen(false)
+    navigate(serviceSearchPath(service, location))
+  }
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const search = query.trim()
-    if (!search) return
-    const params = new URLSearchParams({ service: search })
-    if (selectedLocation) {
-      params.set('location', locationLabel)
-      params.set('locationId', String(selectedLocation.id))
+    const service = query.trim()
+    if (service) search(service)
+    else inputRef.current?.focus()
+  }
+
+  const moveSelection = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      setOpen(false)
+      return
     }
-    navigate(`/services/search?${params.toString()}`)
-    setOpen(false)
+    if (!suggestions.length) return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      const last = suggestions.length - 1
+      const down = event.key === 'ArrowDown'
+      setOpen(true)
+      setActiveIndex((index) => down ? (index >= last ? 0 : index + 1) : (index <= 0 ? last : index - 1))
+    } else if (event.key === 'Enter' && activeOption) {
+      event.preventDefault()
+      search(activeOption.name)
+    }
   }
 
-  const chooseSuggestion = (category: ServiceCategory) => {
-    setQuery(category.name)
-    setOpen(false)
-  }
-
-  return <section className="home-search-section" id="service-search" aria-labelledby="home-search-title">
-    <div className="home-search-layout">
-      <div className="home-search-main">
-        <div className="home-search-copy">
-          <span className="home-eyebrow"><span className="home-eyebrow-dot" /> LOCAL HELP, MADE EASIER</span>
-          <h1 id="home-search-title">What do you need help with today?</h1>
-          <p>Find trusted local skills for repairs, installations and everyday home services.</p>
-        </div>
-        <div className="home-hero-art">
-          <img src="/images/home/home-services-3d.webp" alt="A home with tools for repair and maintenance" width="1374" height="1145" decoding="async" />
-        </div>
-        <form className="home-search-form" onSubmit={submit}>
-          <div className="home-search-field-wrap">
-            <label className="sr-only" htmlFor="service-search-input">What service do you need?</label>
-            <Wrench size={19} aria-hidden="true" />
-            <input
-              id="service-search-input"
-              type="search"
-              role="combobox"
-              aria-autocomplete="list"
-              aria-expanded={open && suggestions.length > 0}
-              aria-controls="service-suggestions"
-              placeholder="Try aircon cleaning or electrical repair"
-              value={query}
-              onChange={(event) => { setQuery(event.target.value); setOpen(true) }}
-              onFocus={() => setOpen(true)}
-              onBlur={() => window.setTimeout(() => setOpen(false), 120)}
-              autoComplete="off"
-            />
-            {open && suggestions.length > 0 && <ul className="home-search-suggestions" id="service-suggestions" role="listbox" aria-label="Service suggestions">
-              {suggestions.map((category) => <li key={category.id}>
-                <button type="button" role="option" aria-selected="false" onMouseDown={(event) => event.preventDefault()} onClick={() => chooseSuggestion(category)}>
-                  <span className="home-suggestion-icon"><Wrench size={17} aria-hidden="true" /></span>
-                  <span><strong>{category.name}</strong><small>{category.shortDescription}</small></span>
-                  <ArrowRight size={16} aria-hidden="true" />
-                </button>
-              </li>)}
-            </ul>}
-          </div>
-          <button className="home-search-submit" type="submit" disabled={!query.trim()}>
-            <Search size={21} aria-hidden="true" /><span className="sr-only">Search services</span>
-          </button>
-        </form>
-      </div>
-    </div>
-  </section>
+  return <form className="home-search" role="search" aria-label="Find a service" onSubmit={submit}>
+    <Search size={20} aria-hidden="true" />
+    <label className="sr-only" htmlFor="service-search-input">What needs fixing?</label>
+    <input
+      ref={inputRef}
+      id="service-search-input"
+      type="search"
+      role="combobox"
+      aria-autocomplete="list"
+      aria-expanded={expanded}
+      aria-controls="service-suggestions"
+      aria-activedescendant={activeOption ? `service-option-${activeOption.id}` : undefined}
+      placeholder="Try “aircon cleaning”"
+      enterKeyHint="search"
+      autoComplete="off"
+      value={query}
+      onChange={(event) => { setQuery(event.target.value); setActiveIndex(-1); setOpen(true) }}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+      onKeyDown={moveSelection}
+    />
+    <Button type="submit">Find help <ArrowRight size={17} aria-hidden="true" /></Button>
+    {expanded && <ul className="home-search-suggestions" id="service-suggestions" role="listbox" aria-label="Matching services">
+      {suggestions.map((category, index) => {
+        const Icon = serviceIcons[category.icon]
+        return <li
+          key={category.id}
+          id={`service-option-${category.id}`}
+          role="option"
+          aria-selected={index === activeIndex}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => search(category.name)}
+        >
+          <span className="home-suggestion-icon"><Icon size={18} aria-hidden="true" /></span>
+          <span><strong>{category.name}</strong><small>{category.shortDescription}</small></span>
+          <ArrowRight size={16} aria-hidden="true" />
+        </li>
+      })}
+    </ul>}
+  </form>
 }

@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\ModerateReportRequest;
 use App\Http\Requests\Admin\ResolveDisputeRequest;
 use App\Http\Requests\Admin\ReviewActivationPaymentRequest;
 use App\Http\Requests\Admin\ReviewProviderApplicationRequest;
+use App\Http\Requests\Admin\ReviewServiceCoverRequest;
 use App\Http\Requests\Admin\SaveServiceCategoryRequest;
 use App\Http\Requests\Admin\SetProviderStatusRequest;
 use App\Http\Requests\Admin\SetUserStatusRequest;
@@ -28,6 +29,18 @@ class AdminController extends Controller
     private function pageSize(Request $request): int
     {
         return min(100, max(10, (int) $request->integer('per_page', 20)));
+    }
+
+    /**
+     * Only someone in the conversation can report a message, and only one written by the other side.
+     */
+    private function canReportMessage(int $userId, int $messageId): bool
+    {
+        return DB::table('conversation_messages as m')->join('conversations as c', 'c.id', '=', 'm.conversation_id')
+            ->join('provider_profiles as p', 'p.id', '=', 'c.provider_profile_id')->where('m.id', $messageId)
+            ->where(fn ($query) => $query->where(fn ($customer) => $customer->where('c.customer_id', $userId)->where('m.sender_role', 'provider'))
+                ->orWhere(fn ($provider) => $provider->where('p.user_id', $userId)->where('m.sender_role', 'customer')))
+            ->exists();
     }
 
     public function overview(): JsonResponse
@@ -239,11 +252,18 @@ class AdminController extends Controller
         $services = DB::table('provider_services as s')->join('provider_profiles as p', 'p.id', '=', 's.provider_profile_id')
             ->join('users as u', 'u.id', '=', 'p.user_id')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
             ->orderByDesc('s.created_at')->limit(200)->get(['s.id', 's.provider_profile_id', 's.description', 's.active', 's.is_visible', 's.created_at',
-                'p.display_name', 'u.name as owner_name', 'c.name as category'])->map(fn ($item) => ['id' => $item->id, 'type' => 'service', ...((array) $item)])->all();
+                's.cover_path', 's.cover_status', 's.cover_review_note', 's.cover_fit', 's.cover_focus_x', 's.cover_focus_y', 's.cover_submitted_at',
+                'p.display_name', 'u.name as owner_name', 'c.name as category'])
+            ->map(fn ($item) => ['id' => $item->id, 'type' => 'service', ...((array) $item),
+                'cover_image' => $item->cover_path ? Storage::disk('public')->url($item->cover_path) : null])->all();
         $portfolio = DB::table('provider_portfolio_items as i')->join('provider_profiles as p', 'p.id', '=', 'i.provider_profile_id')
             ->join('users as u', 'u.id', '=', 'p.user_id')->orderByDesc('i.created_at')->limit(200)->get(['i.id', 'i.provider_profile_id', 'i.title', 'i.category', 'i.image_path', 'i.is_visible', 'i.created_at', 'p.display_name', 'u.name as owner_name'])
             ->map(fn ($item) => ['id' => $item->id, 'type' => 'portfolio', ...((array) $item), 'image' => Storage::disk('public')->url($item->image_path)])->all();
-        $items = collect([...$services, ...$portfolio])->sortByDesc('created_at')->values();
+        // Covers waiting for review lead the list so the queue never hides behind older listings.
+        $items = collect([...$services, ...$portfolio])->sortBy([
+            fn (array $a, array $b): int => (int) (($b['cover_status'] ?? null) === 'pending') <=> (int) (($a['cover_status'] ?? null) === 'pending'),
+            fn (array $a, array $b): int => strcmp((string) $b['created_at'], (string) $a['created_at']),
+        ])->values();
         if (filled($request->query('q'))) {
             $term = mb_strtolower(trim((string) $request->query('q')));
             $items = $items->filter(fn (array $item): bool => str_contains(mb_strtolower(implode(' ', array_map('strval', [
@@ -275,6 +295,36 @@ class AdminController extends Controller
         });
 
         return response()->json(['id' => $listingId, 'type' => $type, 'is_visible' => $data['is_visible']]);
+    }
+
+    /**
+     * Approves a service cover for the customer Home page, or rejects it with a reason the provider can act on.
+     */
+    public function reviewServiceCover(ReviewServiceCoverRequest $request, int $serviceId): JsonResponse
+    {
+        $data = $request->validated();
+        $service = DB::transaction(function () use ($request, $data, $serviceId): object {
+            $service = DB::table('provider_services')->where('id', $serviceId)->lockForUpdate()->first();
+            abort_unless($service?->cover_path, 404, 'This service has no cover to review.');
+            $service->category = DB::table('service_categories')->where('id', $service->service_category_id)->value('name');
+            $note = $data['decision'] === 'rejected' ? trim($data['reason']) : null;
+            DB::table('provider_services')->where('id', $serviceId)->update([
+                'cover_status' => $data['decision'], 'cover_review_note' => $note, 'cover_reviewed_at' => now(), 'updated_at' => now(),
+            ]);
+            $this->audit->record($data['decision'] === 'approved' ? 'SERVICE_COVER_APPROVED' : 'SERVICE_COVER_REJECTED', $request->user()->id, $request,
+                ['service_id' => $serviceId, 'provider_id' => (int) $service->provider_profile_id, 'reason' => $note]);
+            if ($data['decision'] === 'approved') {
+                $this->workspace->notify((int) $service->provider_profile_id, 'Cover approved',
+                    "Your {$service->category} cover can now appear on the customer Home page.", '/provider/services');
+            } else {
+                $this->workspace->notify((int) $service->provider_profile_id, 'Cover not approved',
+                    "Your {$service->category} cover was not approved: {$note}", '/provider/services');
+            }
+
+            return $service;
+        });
+
+        return response()->json(['id' => $service->id, 'cover_status' => $data['decision']]);
     }
 
     public function requests(Request $request): JsonResponse
@@ -391,13 +441,16 @@ class AdminController extends Controller
     public function createReport(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'target_type' => ['required', Rule::in(['provider', 'service', 'portfolio', 'review', 'request'])],
+            'target_type' => ['required', Rule::in(['provider', 'service', 'portfolio', 'review', 'request', 'message'])],
             'target_id' => ['required', 'integer', 'min:1'],
             'reason' => ['required', Rule::in(['unsafe', 'fraud', 'harassment', 'inappropriate', 'spam', 'other'])],
             'details' => ['nullable', 'string', 'max:2000'],
         ]);
-        $targetTable = ['provider' => 'provider_profiles', 'service' => 'provider_services', 'portfolio' => 'provider_portfolio_items', 'review' => 'provider_reviews', 'request' => 'service_requests'][$data['target_type']];
+        $targetTable = ['provider' => 'provider_profiles', 'service' => 'provider_services', 'portfolio' => 'provider_portfolio_items', 'review' => 'provider_reviews', 'request' => 'service_requests', 'message' => 'conversation_messages'][$data['target_type']];
         abort_unless(DB::table($targetTable)->where('id', $data['target_id'])->exists(), 404);
+        if ($data['target_type'] === 'message') {
+            abort_unless($this->canReportMessage($request->user()->id, $data['target_id']), 404);
+        }
         $id = DB::table('content_reports')->insertGetId([...$data, 'reporter_id' => $request->user()->id, 'status' => 'open', 'created_at' => now(), 'updated_at' => now()]);
 
         return response()->json(['id' => $id, 'status' => 'open'], 201);
@@ -411,10 +464,12 @@ class AdminController extends Controller
             abort_unless($report, 404);
             if (($data['action'] ?? null) === 'hide') {
                 $table = match ($report->target_type) {
-                    'service' => 'provider_services', 'portfolio' => 'provider_portfolio_items', default => null
+                    'service' => 'provider_services', 'portfolio' => 'provider_portfolio_items', 'message' => 'conversation_messages', default => null
                 };
-                abort_unless($table, 422, 'Only provider service and portfolio listings can be hidden from a report.');
-                DB::table($table)->where('id', $report->target_id)->update(['is_visible' => false, 'updated_at' => now()]);
+                abort_unless($table, 422, 'Only provider service and portfolio listings and messages can be hidden from a report.');
+                DB::table($table)->where('id', $report->target_id)->update($table === 'conversation_messages'
+                    ? ['hidden_at' => now(), 'updated_at' => now()]
+                    : ['is_visible' => false, 'updated_at' => now()]);
             }
             DB::table('content_reports')->where('id', $report->id)->update(['status' => $data['status'], 'review_note' => $data['note'] ?? null,
                 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'updated_at' => now()]);

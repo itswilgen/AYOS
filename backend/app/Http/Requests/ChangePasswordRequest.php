@@ -16,7 +16,12 @@ class ChangePasswordRequest extends FormRequest
     {
         return [
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'string', Password::min(12), 'confirmed'],
+            'password' => ['required', 'string', Password::min(12), 'confirmed', 'different:current_password'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return ['password.different' => 'Choose a new password that is different from your current one.'];
     }
 }
