@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\CreateAdministratorRequest;
 use App\Http\Requests\Admin\ModerateReportRequest;
 use App\Http\Requests\Admin\ResolveDisputeRequest;
 use App\Http\Requests\Admin\ReviewActivationPaymentRequest;
@@ -12,12 +13,14 @@ use App\Http\Requests\Admin\SaveServiceCategoryRequest;
 use App\Http\Requests\Admin\SetProviderStatusRequest;
 use App\Http\Requests\Admin\SetUserStatusRequest;
 use App\Http\Requests\Admin\UpdatePlatformSettingsRequest;
+use App\Models\Role;
 use App\Models\User;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
 use App\Services\SecurityAuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -657,13 +660,32 @@ class AdminController extends Controller
         ]]);
     }
 
-    public function security(): JsonResponse
+    public function security(Request $request): JsonResponse
     {
         $admins = DB::table('user_roles as ur')->join('roles as r', 'r.id', '=', 'ur.role_id')->join('users as u', 'u.id', '=', 'ur.user_id')
             ->whereIn('r.slug', ['admin', 'super_admin', 'moderator', 'support'])->select('u.id', 'u.name', 'u.email', 'r.name as role', 'u.two_factor_confirmed_at', 'u.updated_at')->orderBy('u.name')->get();
         $events = DB::table('security_audits as a')->leftJoin('users as u', 'u.id', '=', 'a.user_id')->where('a.event_type', 'like', 'ADMIN_%')
             ->orderByDesc('a.created_at')->limit(20)->get(['a.id', 'a.event_type', 'a.created_at', 'u.name as actor']);
+        $assignableRoles = Role::query()->whereIn('slug', $request->user()->assignableAdminRoles())->orderBy('id')->get(['slug', 'name']);
 
-        return response()->json(['data' => ['administrators' => $admins, 'recentSecurityEvents' => $events]]);
+        return response()->json(['data' => ['administrators' => $admins, 'recentSecurityEvents' => $events, 'assignableRoles' => $assignableRoles]]);
+    }
+
+    /**
+     * The new admin's email counts as verified because an administrator vouched for it, as with `ayos:bootstrap-admin`.
+     */
+    public function createAdministrator(CreateAdministratorRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $administrator = DB::transaction(function () use ($request, $validated): User {
+            $administrator = User::create(Arr::only($validated, ['name', 'email', 'mobile_number', 'password']));
+            $administrator->forceFill(['email_verified_at' => now(), 'is_admin' => true])->save();
+            $administrator->roles()->attach(Role::query()->where('slug', $validated['role'])->value('id'), ['assigned_by' => $request->user()->id, 'created_at' => now()]);
+            $this->audit->record('ADMIN_ACCOUNT_CREATED', $request->user()->id, $request, ['target_user_id' => (int) $administrator->id, 'role' => $validated['role']]);
+
+            return $administrator;
+        });
+
+        return response()->json(['data' => ['id' => $administrator->id, 'name' => $administrator->name, 'email' => $administrator->email, 'role' => $validated['role']]], 201);
     }
 }

@@ -33,11 +33,13 @@ import {
   Settings2,
   ShieldCheck,
   Tag,
+  UserPlus,
   Users,
   Wallet,
   X,
 } from "lucide-react";
 import Brand from "../../components/common/Brand";
+import AddAdministrator from "./AddAdministrator";
 import AdminAccount from "./AdminAccount";
 import { backendUrl } from "../../lib/api/client";
 import { useAuth } from "../../lib/auth/useAuth";
@@ -45,6 +47,7 @@ import {
   adminService,
   type AdminDashboard,
   type AdminPageResult,
+  type AdminRoleOption,
 } from "../../services/admin.service";
 import "./admin.css";
 
@@ -206,6 +209,11 @@ const humanize = (value: unknown) =>
   asText(value)
     .replaceAll("_", " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
+/** Empty unless the signed-in admin may add administrators. */
+const assignableRoles = (security: RecordValue | null) =>
+  Array.isArray(security?.assignableRoles)
+    ? (security.assignableRoles as AdminRoleOption[])
+    : [];
 
 function StatusPill({ value }: { value: unknown }) {
   const status = asText(value).toLowerCase().replaceAll("_", "-");
@@ -373,6 +381,7 @@ export default function AdminPage() {
     is_active: true,
   });
   const [reviewNote, setReviewNote] = useState("");
+  const [addingAdministrator, setAddingAdministrator] = useState(false);
 
   const visibleSections = useMemo(
     () => sections.filter((item) => permissions.includes(item.permission)),
@@ -545,6 +554,14 @@ export default function AdminPage() {
       noticeForm,
       "Platform notice saved.",
     ).then(() => setNoticeForm({ title: "", body: "", is_active: true }));
+  };
+  /** Updates the administrator list behind the add dialog. `load` would show the loading state and hide the view. */
+  const refreshSecurity = async () => {
+    try {
+      setSpecial((await adminService.get<RecordValue>("/admin/security")).data);
+    } catch {
+      // The list catches up the next time this section loads.
+    }
   };
   const signOutAdmin = async () => {
     await signOut();
@@ -1432,7 +1449,11 @@ export default function AdminPage() {
             <AnalyticsView data={special} loading={loading} />
           )}
           {section.id === "security" && (
-            <SecurityView data={special} loading={loading} />
+            <SecurityView
+              data={special}
+              loading={loading}
+              onAddAdministrator={() => setAddingAdministrator(true)}
+            />
           )}
           {section.id === "categories" && (
             <>
@@ -1805,6 +1826,13 @@ export default function AdminPage() {
             )}
           </section>
         </div>
+      )}
+      {addingAdministrator && (
+        <AddAdministrator
+          roles={assignableRoles(special)}
+          onClose={() => setAddingAdministrator(false)}
+          onCreated={() => void refreshSecurity()}
+        />
       )}
     </div>
   );
@@ -2241,9 +2269,11 @@ function AnalyticsView({
 function SecurityView({
   data,
   loading,
+  onAddAdministrator,
 }: {
   data: RecordValue | null;
   loading: boolean;
+  onAddAdministrator: () => void;
 }) {
   if (loading || !data)
     return (
@@ -2259,7 +2289,20 @@ function SecurityView({
     : [];
   return (
     <div className="admin-dashboard-bottom">
-      <Panel title="Administrator accounts">
+      <Panel
+        title="Administrator accounts"
+        action={
+          assignableRoles(data).length > 0 && (
+            <button
+              type="button"
+              className="admin-outline-button"
+              onClick={onAddAdministrator}
+            >
+              <UserPlus size={15} aria-hidden="true" /> Add administrator
+            </button>
+          )
+        }
+      >
         <DataTable
           rows={admins}
           columns={[
@@ -2296,8 +2339,8 @@ function SecurityView({
       </Panel>
       <Panel title="Role assignment">
         <p className="admin-muted">
-          Admin roles are assigned from a trusted server shell, never from
-          public registration.
+          Super admins and administrators add new admin accounts here. To give
+          an existing AYOS account an admin role, use a trusted server shell.
         </p>
         <code>
           php artisan ayos:grant-admin-role admin@example.com super_admin

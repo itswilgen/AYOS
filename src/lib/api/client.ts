@@ -21,6 +21,22 @@ export class ApiError extends Error {
   }
 }
 
+/** Splits a 422 into messages for the form's own fields and the first message for anything else. */
+export function validationErrors<F extends string>(
+  cause: unknown,
+  formFields: readonly F[],
+): { fields: Partial<Record<F, string>>; other?: string } {
+  if (!(cause instanceof ApiError) || cause.status !== 422) return { fields: {} };
+  const details = cause.details as { errors?: Record<string, string[]> } | undefined;
+  const fields: Partial<Record<F, string>> = {};
+  let other: string | undefined;
+  for (const [field, messages] of Object.entries(details?.errors ?? {})) {
+    if ((formFields as readonly string[]).includes(field)) fields[field as F] = messages[0];
+    else other ??= messages[0];
+  }
+  return { fields, other };
+}
+
 function csrfToken(): string | undefined {
   const entry = document.cookie
     .split("; ")

@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
@@ -67,6 +67,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasAdminPermission(string $permission): bool
     {
         return $this->roles()->whereHas('permissions', fn ($query) => $query->where('permissions.slug', $permission))->exists();
+    }
+
+    /**
+     * Roles this admin may give a new administrator. Only a super admin can create another super admin.
+     *
+     * @return list<string>
+     */
+    public function assignableAdminRoles(): array
+    {
+        if (! $this->hasAdminPermission('admins.manage')) {
+            return [];
+        }
+        $roles = ['admin', 'moderator', 'support'];
+
+        return $this->roles()->where('slug', 'super_admin')->exists() ? ['super_admin', ...$roles] : $roles;
     }
 
     /** @return list<string> */

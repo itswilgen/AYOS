@@ -75,3 +75,17 @@ The response shapes below are frontend expectations, not existing server routes.
   - Loading: the button reads "Updating…" and is disabled.
   - Success: show the success message and clear the form.
   - Errors: `422` field errors appear under their fields, and any other field's error appears above the button. `429` shows "Too many attempts. Wait a minute, then try again." `404` (route not deployed) shows "Password changes aren’t available right now. Please try again later."
+
+### `POST /api/admin/administrators`
+
+- Purpose: a super admin or administrator creates another administrator account from the admin console's "Admin security" section, choosing its first password and sharing it privately.
+- Permission: `admins.manage`, granted to the `super_admin` and `admin` roles (migration `add_admins_manage_permission`). Other admins get `403`. Limited to 10 requests a minute (`429`).
+- Body: `{ name, email, mobile_number, role, password, password_confirmation }`.
+- Validation (`422 { message, errors }`, `Admin\CreateAdministratorRequest`):
+  - `email` is trimmed and lowercased, then must be unique: "An AYOS account already uses this email."
+  - `mobile_number` has spaces, dots, dashes and brackets removed, then must match `^\+?[0-9]{7,32}$`: "Enter a valid mobile number, like +63 917 123 4567."
+  - `role` must be one the creator may assign. Only a super admin may assign `super_admin`; an administrator may assign `admin`, `moderator` or `support`.
+  - `password` uses the registration rules: at least 12 characters, at least one symbol, `confirmed`.
+- Side effects: the account is created with a verified email (the creator vouches for it, as with `ayos:bootstrap-admin`), the role is attached with `assigned_by` set to the creator, and `ADMIN_ACCOUNT_CREATED` is recorded for the creator with `{ target_user_id, role }`.
+- Response: `201 { data: { id, name, email, role } }`.
+- `GET /api/admin/security` now also returns `assignableRoles: { slug, name }[]`: the roles the signed-in admin may assign, or an empty list without `admins.manage`. The console shows "Add administrator" only when the list isn't empty.

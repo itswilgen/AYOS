@@ -172,4 +172,5 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active', 'admin'])->pref
     Route::get('/audit-logs', [AdminController::class, 'auditLogs'])->middleware('admin.permission:audit.view');
     Route::get('/analytics', [AdminController::class, 'analytics'])->middleware('admin.permission:analytics.view');
     Route::get('/security', [AdminController::class, 'security'])->middleware('admin.permission:security.view');
+    Route::post('/administrators', [AdminController::class, 'createAdministrator'])->middleware(['admin.permission:admins.manage', 'throttle:10,1']);
 });

@@ -9,6 +9,9 @@ export interface AdminPageResult<T> {
 
 export interface AdminAccess { access: 'allowed'; permissions: string[] }
 export interface AdminPasswordChange { password: string; password_confirmation: string }
+export interface AdminRoleOption { slug: string; name: string }
+export interface NewAdministrator extends AdminPasswordChange { name: string; email: string; mobile_number: string; role: string }
+export interface CreatedAdministrator { id: number; name: string; email: string; role: string }
 export interface AdminDashboard {
   totalUsers: number
   approvedProviders: number
@@ -38,4 +41,6 @@ export const adminService = {
   send: <T,>(path: string, method: string, payload?: unknown) => apiRequest<T>(path, { method, ...(payload === undefined ? {} : { body: encode(payload) }) }),
   /** The signed-in administrator's own password. The admin form doesn't ask for the current one. */
   changePassword: (payload: AdminPasswordChange) => apiRequest<{ message: string }>('/admin/account/password', { method: 'PUT', body: encode(payload) }),
+  /** Super admins and administrators only. The creator chooses the first password and shares it privately. */
+  createAdministrator: (payload: NewAdministrator) => apiRequest<{ data: CreatedAdministrator }>('/admin/administrators', { method: 'POST', body: encode(payload) }),
 }

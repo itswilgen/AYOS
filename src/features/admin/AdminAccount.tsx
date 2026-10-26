@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Check, Eye, EyeOff, KeyRound, LogOut, ShieldCheck } from "lucide-react";
-import { ApiError } from "../../lib/api/client";
+import { ApiError, validationErrors } from "../../lib/api/client";
 import { adminService } from "../../services/admin.service";
 
 type Field = "password" | "password_confirmation";
@@ -12,7 +12,8 @@ const emptyValues: Values = {
   password_confirmation: "",
 };
 
-function PasswordInput({
+/** A password field with a show/hide toggle. `idPrefix` keeps ids unique when two forms use the same field names. */
+export function PasswordInput({
   name,
   label,
   autoComplete,
@@ -20,25 +21,28 @@ function PasswordInput({
   error,
   hint,
   onChange,
+  idPrefix = "admin",
 }: {
-  name: Field;
+  name: string;
   label: string;
   autoComplete: "current-password" | "new-password";
   value: string;
   error?: string;
   hint?: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  idPrefix?: string;
 }) {
   const [visible, setVisible] = useState(false);
+  const id = `${idPrefix}-${name}`;
   const describedBy =
-    [hint && `${name}-hint`, error && `${name}-error`].filter(Boolean).join(" ") ||
+    [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") ||
     undefined;
   return (
     <div className="admin-field admin-password-field">
-      <label htmlFor={`admin-${name}`}>{label}</label>
+      <label htmlFor={id}>{label}</label>
       <span className="admin-password-input">
         <input
-          id={`admin-${name}`}
+          id={id}
           name={name}
           type={visible ? "text" : "password"}
           autoComplete={autoComplete}
@@ -55,29 +59,14 @@ function PasswordInput({
           {visible ? <EyeOff size={17} /> : <Eye size={17} />}
         </button>
       </span>
-      {hint && <small id={`${name}-hint`}>{hint}</small>}
+      {hint && <small id={`${id}-hint`}>{hint}</small>}
       {error && (
-        <small className="admin-field-error" id={`${name}-error`}>
+        <small className="admin-field-error" id={`${id}-error`}>
           {error}
         </small>
       )}
     </div>
   );
-}
-
-const isField = (field: string): field is Field => Object.hasOwn(emptyValues, field);
-
-/** Splits a 422 into messages for the fields on this form and the first message for anything else. */
-function serverErrors(cause: unknown): { fields: Partial<Values>; other?: string } {
-  if (!(cause instanceof ApiError) || cause.status !== 422) return { fields: {} };
-  const details = cause.details as { errors?: Record<string, string[]> } | undefined;
-  const fields: Partial<Values> = {};
-  let other: string | undefined;
-  for (const [field, messages] of Object.entries(details?.errors ?? {})) {
-    if (isField(field)) fields[field] = messages[0];
-    else other ??= messages[0];
-  }
-  return { fields, other };
 }
 
 /** The signed-in administrator's own password. Other users reset theirs through the reset-link flow. */
@@ -110,7 +99,7 @@ export default function AdminAccount({ email }: { email: string }) {
       setValues(emptyValues);
       setSaved(true);
     } catch (cause) {
-      const { fields, other } = serverErrors(cause);
+      const { fields, other } = validationErrors(cause, Object.keys(emptyValues) as Field[]);
       if (other || Object.keys(fields).length) {
         setErrors(fields);
         setFormError(other ?? "");
