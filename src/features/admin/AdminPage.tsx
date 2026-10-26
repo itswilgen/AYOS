@@ -490,9 +490,10 @@ export default function AdminPage() {
     setNotice("");
     try {
       await adminService.send(path, method, body);
-      setNotice(success);
       setDetail(null);
+      // After the reload: `load` clears the notice when it starts.
       await load(page, query);
+      setNotice(success);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -552,7 +553,9 @@ export default function AdminPage() {
       "/admin/notices",
       "POST",
       noticeForm,
-      "Platform notice saved.",
+      noticeForm.is_active
+        ? "Notice published and sent to every user’s notifications."
+        : "Notice saved as a draft.",
     ).then(() => setNoticeForm({ title: "", body: "", is_active: true }));
   };
   /** Updates the administrator list behind the add dialog. `load` would show the loading state and hide the view. */
@@ -1189,7 +1192,11 @@ export default function AdminPage() {
                       body: row.body,
                       is_active: !row.is_active,
                     },
-                    row.is_active ? "Notice unpublished." : "Notice published.",
+                    row.is_active
+                      ? "Notice unpublished."
+                      : row.notified_at
+                        ? "Notice published. Users were already notified about it."
+                        : "Notice published and sent to every user’s notifications.",
                   )
                 }
               >
@@ -1594,7 +1601,7 @@ export default function AdminPage() {
                         }))
                       }
                     />
-                    <span>Publish immediately</span>
+                    <span>Publish now and notify every user</span>
                   </label>
                   <button
                     className="admin-primary-button"
@@ -2336,15 +2343,6 @@ function SecurityView({
             },
           ]}
         />
-      </Panel>
-      <Panel title="Role assignment">
-        <p className="admin-muted">
-          Super admins and administrators add new admin accounts here. To give
-          an existing AYOS account an admin role, use a trusted server shell.
-        </p>
-        <code>
-          php artisan ayos:grant-admin-role admin@example.com super_admin
-        </code>
       </Panel>
     </div>
   );

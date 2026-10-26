@@ -15,6 +15,7 @@ use App\Http\Requests\Admin\SetUserStatusRequest;
 use App\Http\Requests\Admin\UpdatePlatformSettingsRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\PlatformNoticeBroadcaster;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
 use App\Services\SecurityAuditLogger;
@@ -27,7 +28,7 @@ use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
-    public function __construct(private PlatformSettings $settings, private SecurityAuditLogger $audit, private ProviderWorkspace $workspace) {}
+    public function __construct(private PlatformSettings $settings, private SecurityAuditLogger $audit, private ProviderWorkspace $workspace, private PlatformNoticeBroadcaster $notices) {}
 
     private function pageSize(Request $request): int
     {
@@ -621,6 +622,7 @@ class AdminController extends Controller
                 $noticeId = DB::table('platform_notices')->insertGetId([...$data, 'created_by' => $request->user()->id, 'published_at' => $data['is_active'] ? now() : null, 'created_at' => now(), 'updated_at' => now()]);
             }
             $this->audit->record('PLATFORM_NOTICE_SAVED', $request->user()->id, $request, ['notice_id' => $noticeId, 'active' => $data['is_active'] ? 'true' : 'false']);
+            $this->notices->broadcastOnce($noticeId);
 
             return $noticeId;
         });

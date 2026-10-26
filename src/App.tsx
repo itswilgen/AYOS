@@ -37,27 +37,20 @@ function PlatformGate({ children }: { children: ReactNode }) {
   const location = useLocation()
   const { user } = useAuth()
   const [maintenance, setMaintenance] = useState(false)
-  const [notices, setNotices] = useState<{ id: number; title: string; body: string }[]>([])
   const adminPath = location.pathname.startsWith('/admin')
 
   useEffect(() => {
     if (adminPath) return
     let active = true
-    void Promise.allSettled([
-      apiRequest<{ maintenance_mode: boolean }>('/platform-state'),
-      apiRequest<{ data: { id: number; title: string; body: string }[] }>('/platform-notices'),
-    ]).then(([stateResult, noticeResult]) => {
-      if (!active) return
-      if (stateResult.status === 'fulfilled') setMaintenance(stateResult.value.maintenance_mode)
-      else setMaintenance(false)
-      if (noticeResult.status === 'fulfilled') setNotices(noticeResult.value.data)
-    })
+    apiRequest<{ maintenance_mode: boolean }>('/platform-state')
+      .then((state) => { if (active) setMaintenance(state.maintenance_mode) })
+      .catch(() => { if (active) setMaintenance(false) })
     return () => { active = false }
   }, [adminPath])
 
   if (!adminPath && maintenance) return <main className="platform-maintenance"><div><span>AYOS SERVICE UPDATE</span><h1>We’ll be back soon.</h1><p>AYOS is temporarily unavailable while we improve the marketplace. Please check back shortly.</p><a href="mailto:hello@ayos.ph">Contact support</a></div></main>
   if (!adminPath && user?.account_status === 'suspended') return <main className="platform-maintenance"><div><span>ACCOUNT ACCESS</span><h1>Your account is suspended.</h1><p>Contact AYOS support if you need help reviewing this account status.</p><a href="mailto:hello@ayos.ph">Contact support</a></div></main>
-  return <>{!adminPath && notices.map(notice => <aside className="platform-notice-banner" key={notice.id}><div><strong>{notice.title}</strong><span>{notice.body}</span></div><button type="button" aria-label="Dismiss notice" onClick={() => setNotices(current => current.filter(item => item.id !== notice.id))}>×</button></aside>)}{children}</>
+  return <>{children}</>
 }
 
 export default function App() {

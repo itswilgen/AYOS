@@ -89,3 +89,12 @@ The response shapes below are frontend expectations, not existing server routes.
 - Side effects: the account is created with a verified email (the creator vouches for it, as with `ayos:bootstrap-admin`), the role is attached with `assigned_by` set to the creator, and `ADMIN_ACCOUNT_CREATED` is recorded for the creator with `{ target_user_id, role }`.
 - Response: `201 { data: { id, name, email, role } }`.
 - `GET /api/admin/security` now also returns `assignableRoles: { slug, name }[]`: the roles the signed-in admin may assign, or an empty list without `admins.manage`. The console shows "Add administrator" only when the list isn't empty.
+
+### Platform notices in the notification bell (`POST /api/admin/notices`, `PUT /api/admin/notices/{id}`)
+
+- The first time a notice is saved as published (`is_active: true`), `PlatformNoticeBroadcaster` adds it to:
+  - the customer bell (`customer_notifications`, `href: "/home"`) of every user whose `status` is `active`, and
+  - the workspace bell (`provider_notifications`, `href: "/provider/notifications"`) of every `approved` provider.
+- `platform_notices.notified_at` records the send. Editing a published notice, or unpublishing and publishing it again, doesn't notify anyone a second time. Drafts notify nobody until they're published.
+- The bell's title and detail columns are shorter than a notice, so the title is cut to 100 characters and the body to 240, each ending in "…". The bell is the only place users see notices; the site no longer shows a banner above the header.
+- Users who sign up after a notice was sent don't get it.

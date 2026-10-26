@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
@@ -153,6 +154,69 @@ class AdminOperationsTest extends TestCase
             ->assertJsonPath('data.assignableRoles.*.slug', ['super_admin', 'admin', 'moderator', 'support']);
         $this->actingAs($this->admin('admin'))->getJson('/api/admin/security')->assertOk()
             ->assertJsonPath('data.assignableRoles.*.slug', ['admin', 'moderator', 'support']);
+    }
+
+    public function test_publishing_a_notice_puts_it_in_every_active_users_bell_and_every_approved_providers_bell(): void
+    {
+        $customer = User::factory()->create();
+        $suspended = User::factory()->create(['status' => 'suspended']);
+        $profileId = $this->approvedProviderProfile();
+
+        $this->actingAs($this->admin('super_admin'))->postJson('/api/admin/notices', ['title' => 'Maintenance tonight', 'body' => 'AYOS is offline from 11 PM to 1 AM.', 'is_active' => true])
+            ->assertOk();
+
+        $this->actingAs($customer)->getJson('/api/customer/notifications')->assertOk()
+            ->assertJsonPath('data.0.title', 'Maintenance tonight')->assertJsonPath('data.0.description', 'AYOS is offline from 11 PM to 1 AM.')
+            ->assertJsonPath('data.0.unread', true)->assertJsonPath('data.0.href', '/home');
+        $this->assertDatabaseHas('provider_notifications', ['provider_profile_id' => $profileId, 'title' => 'Maintenance tonight']);
+        $this->assertDatabaseMissing('customer_notifications', ['customer_id' => $suspended->id]);
+    }
+
+    public function test_draft_notice_notifies_nobody_until_it_is_published(): void
+    {
+        $customer = User::factory()->create();
+        $admin = $this->admin('super_admin');
+
+        $noticeId = $this->actingAs($admin)->postJson('/api/admin/notices', ['title' => 'New service areas', 'body' => 'AYOS now covers Dumaguete City.', 'is_active' => false])
+            ->assertOk()->json('data.id');
+        $this->assertDatabaseMissing('customer_notifications', ['customer_id' => $customer->id]);
+
+        $this->actingAs($admin)->putJson("/api/admin/notices/{$noticeId}", ['title' => 'New service areas', 'body' => 'AYOS now covers Dumaguete City.', 'is_active' => true])
+            ->assertOk();
+        $this->assertDatabaseHas('customer_notifications', ['customer_id' => $customer->id, 'title' => 'New service areas']);
+    }
+
+    public function test_editing_or_republishing_a_notice_does_not_notify_users_again(): void
+    {
+        $customer = User::factory()->create();
+        $admin = $this->admin('super_admin');
+        $noticeId = $this->actingAs($admin)->postJson('/api/admin/notices', ['title' => 'Maintenance tonight', 'body' => 'Offline from 11 PM.', 'is_active' => true])
+            ->assertOk()->json('data.id');
+
+        $this->actingAs($admin)->putJson("/api/admin/notices/{$noticeId}", ['title' => 'Maintenance tonight', 'body' => 'Offline from 11 PM to 1 AM.', 'is_active' => true])->assertOk();
+        $this->actingAs($admin)->putJson("/api/admin/notices/{$noticeId}", ['title' => 'Maintenance tonight', 'body' => 'Offline from 11 PM to 1 AM.', 'is_active' => false])->assertOk();
+        $this->actingAs($admin)->putJson("/api/admin/notices/{$noticeId}", ['title' => 'Maintenance tonight', 'body' => 'Offline from 11 PM to 1 AM.', 'is_active' => true])->assertOk();
+
+        $this->assertSame(1, DB::table('customer_notifications')->where('customer_id', $customer->id)->count());
+    }
+
+    public function test_long_notice_is_shortened_to_fit_the_notification_bell(): void
+    {
+        $customer = User::factory()->create();
+
+        $this->actingAs($this->admin('super_admin'))->postJson('/api/admin/notices', ['title' => str_repeat('T', 120), 'body' => str_repeat('B', 1000), 'is_active' => true])
+            ->assertOk();
+
+        $notification = DB::table('customer_notifications')->where('customer_id', $customer->id)->sole();
+        $this->assertSame(str_repeat('T', 99).'…', $notification->title);
+        $this->assertSame(str_repeat('B', 239).'…', $notification->detail);
+    }
+
+    private function approvedProviderProfile(): int
+    {
+        return DB::table('provider_profiles')->insertGetId([
+            'user_id' => User::factory()->create()->id, 'status' => 'approved', 'display_name' => 'Juan Electrical Works', 'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 
     /**

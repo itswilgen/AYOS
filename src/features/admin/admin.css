@@ -474,18 +474,6 @@
 .admin-panel-head > a:hover {
   background: var(--admin-wash);
 }
-.admin-panel code {
-  display: block;
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: var(--admin-radius-sm);
-  color: var(--admin-on-night);
-  background: var(--admin-night);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.8rem;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
 
 /* Review queue: a navy pass. The message sits on the main side; the stub, behind a tear line, holds the arrow.
    The notches are canvas-coloured half-discs kept inside the banner's edge, so the box-shadow stays intact. */
