@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ChangeOwnPasswordRequest;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\RevokeOtherSessionsRequest;
 use App\Models\User;
+use App\Notifications\AdminPasswordChanged;
 use App\Services\SecurityAuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Throwable;
 
 class AccountSecurityController extends Controller
 {
@@ -66,16 +69,37 @@ class AccountSecurityController extends Controller
 
     public function updatePassword(ChangePasswordRequest $request, SecurityAuditLogger $audit): JsonResponse
     {
-        $validated = $request->validated();
+        $this->replacePassword($request, $request->validated('password'), $audit);
 
+        return response()->json(['message' => 'Password updated. Other sessions were signed out.']);
+    }
+
+    /**
+     * The admin console changes the password without the current one, so the admin is emailed about every change.
+     * A failed email is reported but doesn't undo or fail the change.
+     */
+    public function updateAdminPassword(ChangeOwnPasswordRequest $request, SecurityAuditLogger $audit): JsonResponse
+    {
         $user = $request->user();
-        $user->forceFill(['password' => $validated['password']])->save();
+        $this->replacePassword($request, $request->validated('password'), $audit);
+
+        try {
+            $user->notify(new AdminPasswordChanged(now(), $request->ip(), $this->deviceName((string) $request->userAgent())));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        return response()->json(['message' => 'Password updated. Other devices were signed out.']);
+    }
+
+    private function replacePassword(Request $request, string $password, SecurityAuditLogger $audit): void
+    {
+        $user = $request->user();
+        $user->forceFill(['password' => $password])->save();
         DB::table(config('session.table'))->where('user_id', $user->id)->where('id', '!=', $request->session()->getId())->delete();
         $this->rotateRememberToken($user);
         $request->session()->regenerate();
         $audit->record('PASSWORD_CHANGED', $user->id, $request);
-
-        return response()->json(['message' => 'Password updated. Other sessions were signed out.']);
     }
 
     private function deviceName(string $agent): string

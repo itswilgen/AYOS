@@ -49,3 +49,29 @@ The response shapes below are frontend expectations, not existing server routes.
 
 - Expected response: `{ data: NotificationSummary[] }` with id, title, description, created timestamp, and unread state.
 - Empty: show “You’re all caught up.” The bell count should only reflect server-provided unread items.
+
+### `PUT /api/admin/account/password`
+
+- Purpose: the signed-in administrator changes their own password from the admin console's "Password & sign-in" page **without entering the current password**. To make up for the missing check, every successful change emails the admin. The customer route `PUT /api/account/password` and `ChangePasswordRequest` stay unchanged and still require `current_password`.
+- Body: `{ password: string, password_confirmation: string }`. There is no `current_password` field; if a client sends one, it is ignored.
+- Expected response: `200 { message: "Password updated. Other devices were signed out." }`.
+- Validation (`422 { message, errors }`), in a new Form Request:
+  - `password` is required, a string, at least 12 characters (`Password::min(12)`, matching the customer rule) and `confirmed`.
+  - If `password` matches the admin's current password (`Hash::check`), return the error on `password`: "Choose a new password that is different from your current one."
+- Authorization: register the route inside the existing admin group (`auth:sanctum`, `verified`, `account.active`, `admin`, prefix `admin`) with `throttle:6,1` and **no** `admin.permission:*` middleware, because every administrator manages their own sign-in. A non-admin gets `403`, a guest gets `401`, and too many attempts gets `429`. The route acts only on `$request->user()` and never takes a user id.
+- Side effects, same as `AccountSecurityController::updatePassword`:
+  - Save the hashed password.
+  - Delete the user's other rows in the sessions table.
+  - Rotate the remember token.
+  - Regenerate the current session.
+  - Record `PASSWORD_CHANGED` through `SecurityAuditLogger`.
+- Email alert (new): after the password is saved, send a mail notification (`App\Notifications\AdminPasswordChanged`) to the admin's own account email.
+  - Subject: "Your AYOS admin password was changed".
+  - Body: the date and time of the change (Asia/Manila), the request's IP address and a short device description (iPhone, Mac, Windows PC, etc.), and "If this wasn't you, reset your password from the sign-in page right away and contact the AYOS operations team."
+  - Never include the password or any token.
+  - If sending fails, log the error and still return `200`: the change already happened, and a mail outage must not break it.
+- UI states (admin "Password & sign-in" page; the frontend for this is already in the working tree):
+  - Fields: "New password" and "Confirm new password" only.
+  - Loading: the button reads "Updating…" and is disabled.
+  - Success: show the success message and clear the form.
+  - Errors: `422` field errors appear under their fields, and any other field's error appears above the button. `429` shows "Too many attempts. Wait a minute, then try again." `404` (route not deployed) shows "Password changes aren’t available right now. Please try again later."

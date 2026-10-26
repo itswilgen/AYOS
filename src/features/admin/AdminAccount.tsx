@@ -1,13 +1,13 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Check, Eye, EyeOff, KeyRound, LogOut, ShieldCheck } from "lucide-react";
-import { ApiError, apiRequest } from "../../lib/api/client";
+import { ApiError } from "../../lib/api/client";
+import { adminService } from "../../services/admin.service";
 
-type Field = "current_password" | "password" | "password_confirmation";
+type Field = "password" | "password_confirmation";
 type Values = Record<Field, string>;
 
 const MIN_LENGTH = 12;
 const emptyValues: Values = {
-  current_password: "",
   password: "",
   password_confirmation: "",
 };
@@ -65,12 +65,19 @@ function PasswordInput({
   );
 }
 
-function serverErrors(cause: unknown): Partial<Values> {
-  if (!(cause instanceof ApiError) || cause.status !== 422) return {};
+const isField = (field: string): field is Field => Object.hasOwn(emptyValues, field);
+
+/** Splits a 422 into messages for the fields on this form and the first message for anything else. */
+function serverErrors(cause: unknown): { fields: Partial<Values>; other?: string } {
+  if (!(cause instanceof ApiError) || cause.status !== 422) return { fields: {} };
   const details = cause.details as { errors?: Record<string, string[]> } | undefined;
-  return Object.fromEntries(
-    Object.entries(details?.errors ?? {}).map(([field, messages]) => [field, messages[0]]),
-  ) as Partial<Values>;
+  const fields: Partial<Values> = {};
+  let other: string | undefined;
+  for (const [field, messages] of Object.entries(details?.errors ?? {})) {
+    if (isField(field)) fields[field] = messages[0];
+    else other ??= messages[0];
+  }
+  return { fields, other };
 }
 
 /** The signed-in administrator's own password. Other users reset theirs through the reset-link flow. */
@@ -91,9 +98,7 @@ export default function AdminAccount({ email }: { email: string }) {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     const next: Partial<Values> = {};
-    if (!values.current_password) next.current_password = "Enter your current password.";
     if (values.password.length < MIN_LENGTH) next.password = `Use at least ${MIN_LENGTH} characters.`;
-    else if (values.password === values.current_password) next.password = "Choose a password you haven’t used for this account.";
     if (values.password !== values.password_confirmation) next.password_confirmation = "The new passwords don’t match.";
     setErrors(next);
     setFormError("");
@@ -101,12 +106,15 @@ export default function AdminAccount({ email }: { email: string }) {
 
     setSaving(true);
     try {
-      await apiRequest("/account/password", { method: "PUT", body: JSON.stringify(values) });
+      await adminService.changePassword(values);
       setValues(emptyValues);
       setSaved(true);
     } catch (cause) {
-      const fieldErrors = serverErrors(cause);
-      if (Object.keys(fieldErrors).length) setErrors(fieldErrors);
+      const { fields, other } = serverErrors(cause);
+      if (other || Object.keys(fields).length) {
+        setErrors(fields);
+        setFormError(other ?? "");
+      } else if (cause instanceof ApiError && cause.status === 404) setFormError("Password changes aren’t available right now. Please try again later.");
       else if (cause instanceof ApiError && cause.status === 429) setFormError("Too many attempts. Wait a minute, then try again.");
       else setFormError(cause instanceof Error ? cause.message : "We couldn’t update your password. Please try again.");
     } finally {
@@ -122,7 +130,6 @@ export default function AdminAccount({ email }: { email: string }) {
         </header>
         <form className="admin-account-form" onSubmit={(event) => void submit(event)} noValidate>
           <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
-          <PasswordInput name="current_password" label="Current password" autoComplete="current-password" value={values.current_password} error={errors.current_password} onChange={update} />
           <PasswordInput name="password" label="New password" autoComplete="new-password" value={values.password} error={errors.password} hint={`At least ${MIN_LENGTH} characters. A short phrase is easier to remember than random symbols.`} onChange={update} />
           <PasswordInput name="password_confirmation" label="Confirm new password" autoComplete="new-password" value={values.password_confirmation} error={errors.password_confirmation} onChange={update} />
           {formError && <p className="admin-account-message is-error" role="alert">{formError}</p>}

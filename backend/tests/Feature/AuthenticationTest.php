@@ -4,15 +4,20 @@ namespace Tests\Feature;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\AdminPasswordChanged;
+use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\TestWith;
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
@@ -181,6 +186,95 @@ class AuthenticationTest extends TestCase
             $this->actingAs($user)->putJson('/api/account/password', $guess)->assertUnprocessable();
         }
         $this->actingAs($user)->putJson('/api/account/password', $guess)->assertTooManyRequests();
+    }
+
+    public function test_admin_changes_password_without_current_password_signs_out_other_devices_and_is_emailed(): void
+    {
+        Notification::fake();
+        $this->travelTo(CarbonImmutable::parse('2026-10-26 07:45:00', 'UTC'));
+        $admin = $this->adminWithPassword('first-admin-passphrase');
+        DB::table('sessions')->insert(['id' => 'admin-laptop-session', 'user_id' => $admin->id, 'ip_address' => '127.0.0.2', 'user_agent' => 'Mozilla/5.0 (Windows NT 10.0)', 'payload' => '', 'last_activity' => now()->timestamp]);
+
+        $this->withHeaders(['Origin' => 'http://localhost:5173', 'User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'])->actingAs($admin)
+            ->putJson('/api/admin/account/password', ['password' => 'second-admin-passphrase', 'password_confirmation' => 'second-admin-passphrase'])
+            ->assertOk()->assertJsonPath('message', 'Password updated. Other devices were signed out.');
+
+        $this->assertTrue(password_verify('second-admin-passphrase', $admin->fresh()->password));
+        $this->assertDatabaseMissing('sessions', ['id' => 'admin-laptop-session']);
+        $this->assertDatabaseHas('security_audits', ['user_id' => $admin->id, 'event_type' => 'PASSWORD_CHANGED']);
+        Notification::assertSentTo($admin, AdminPasswordChanged::class, function (AdminPasswordChanged $notification) use ($admin): bool {
+            $mail = $notification->toMail($admin);
+            $body = (string) $mail->render();
+
+            return $mail->subject === 'Your AYOS admin password was changed'
+                && str_contains($body, 'When: October 26, 2026 at 3:45 PM (Philippine time)')
+                && str_contains($body, 'Device: iPhone')
+                && str_contains($body, 'IP address: 127.0.0.1')
+                && ! str_contains($body, 'second-admin-passphrase');
+        });
+    }
+
+    public function test_admin_password_change_returns_200_and_reports_the_error_when_the_alert_email_fails(): void
+    {
+        Exceptions::fake();
+        config(['mail.default' => 'unconfigured-mailer']);
+        $admin = $this->adminWithPassword('first-admin-passphrase');
+
+        $this->withHeader('Origin', 'http://localhost:5173')->actingAs($admin)
+            ->putJson('/api/admin/account/password', ['password' => 'second-admin-passphrase', 'password_confirmation' => 'second-admin-passphrase'])
+            ->assertOk();
+
+        $this->assertTrue(password_verify('second-admin-passphrase', $admin->fresh()->password));
+        Exceptions::assertReported(InvalidArgumentException::class);
+    }
+
+    #[TestWith(['first-admin-passphrase', 'first-admin-passphrase', 'Choose a new password that is different from your current one.'])]
+    #[TestWith(['too-short', 'too-short', 'The password field must be at least 12 characters.'])]
+    #[TestWith(['second-admin-passphrase', 'something-else-entirely', 'The password field confirmation does not match.'])]
+    public function test_admin_password_change_rejects_an_invalid_new_password_with_422(string $password, string $confirmation, string $message): void
+    {
+        $admin = $this->adminWithPassword('first-admin-passphrase');
+
+        $this->actingAs($admin)->putJson('/api/admin/account/password', ['password' => $password, 'password_confirmation' => $confirmation])
+            ->assertUnprocessable()->assertJsonValidationErrors(['password' => $message]);
+        $this->assertTrue(password_verify('first-admin-passphrase', $admin->fresh()->password));
+    }
+
+    public function test_admin_password_change_returns_403_for_a_non_admin(): void
+    {
+        $user = User::factory()->create(['password' => 'a-long-passphrase-for-ayos']);
+
+        $this->actingAs($user)->putJson('/api/admin/account/password', ['password' => 'another-long-passphrase', 'password_confirmation' => 'another-long-passphrase'])
+            ->assertForbidden();
+        $this->assertTrue(password_verify('a-long-passphrase-for-ayos', $user->fresh()->password));
+    }
+
+    public function test_admin_password_change_returns_401_for_a_guest(): void
+    {
+        $this->putJson('/api/admin/account/password', ['password' => 'another-long-passphrase', 'password_confirmation' => 'another-long-passphrase'])
+            ->assertUnauthorized();
+    }
+
+    public function test_admin_password_change_returns_429_after_six_attempts_a_minute(): void
+    {
+        $admin = $this->adminWithPassword('first-admin-passphrase');
+        $attempt = ['password' => 'too-short', 'password_confirmation' => 'too-short'];
+
+        for ($count = 0; $count < 6; $count++) {
+            $this->actingAs($admin)->putJson('/api/admin/account/password', $attempt)->assertUnprocessable();
+        }
+        $this->actingAs($admin)->putJson('/api/admin/account/password', $attempt)->assertTooManyRequests();
+    }
+
+    /**
+     * A support admin, whose role grants no settings or security permissions.
+     */
+    private function adminWithPassword(string $password): User
+    {
+        $admin = User::factory()->create(['password' => $password, 'is_admin' => true]);
+        $admin->roles()->attach(Role::query()->where('slug', 'support')->value('id'), ['created_at' => now()]);
+
+        return $admin;
     }
 
     public function test_user_can_review_and_revoke_an_owned_session(): void

@@ -8,6 +8,7 @@ export interface AdminPageResult<T> {
 }
 
 export interface AdminAccess { access: 'allowed'; permissions: string[] }
+export interface AdminPasswordChange { password: string; password_confirmation: string }
 export interface AdminDashboard {
   totalUsers: number
   approvedProviders: number
@@ -35,4 +36,6 @@ export const adminService = {
   list: <T,>(path: string, values: Record<string, string | number | undefined> = {}) => apiRequest<AdminPageResult<T>>(`${path}${query(values)}`),
   get: <T,>(path: string) => apiRequest<{ data: T }>(path),
   send: <T,>(path: string, method: string, payload?: unknown) => apiRequest<T>(path, { method, ...(payload === undefined ? {} : { body: encode(payload) }) }),
+  /** The signed-in administrator's own password. The admin form doesn't ask for the current one. */
+  changePassword: (payload: AdminPasswordChange) => apiRequest<{ message: string }>('/admin/account/password', { method: 'PUT', body: encode(payload) }),
 }

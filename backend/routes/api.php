@@ -131,6 +131,7 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
 
 Route::middleware(['auth:sanctum', 'verified', 'account.active', 'admin'])->prefix('admin')->group(function (): void {
     Route::get('/access-check', fn (Request $request) => response()->json(['access' => 'allowed', 'permissions' => $request->user()->adminPermissions()]));
+    Route::put('/account/password', [AccountSecurityController::class, 'updateAdminPassword'])->middleware('throttle:6,1');
     Route::get('/dashboard', [AdminController::class, 'overview'])->middleware('admin.permission:dashboard.view');
     Route::get('/users', [AdminController::class, 'users'])->middleware('admin.permission:users.view');
     Route::get('/users/{userId}', [AdminController::class, 'userDetails'])->middleware('admin.permission:users.view');
