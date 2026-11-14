@@ -13,7 +13,7 @@ const LandingPage = lazy(() => import('./pages/LandingPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const SignupPage = lazy(() => import('./pages/SignupPage'))
 const GoogleCompletePage = lazy(() => import('./pages/GoogleCompletePage'))
-const LegalPreviewPage = lazy(() => import('./pages/LegalPreviewPage'))
+const LegalPage = lazy(() => import('./features/legal/LegalPage'))
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'))
@@ -57,8 +57,8 @@ export default function App() {
   return <PlatformGate><Routes>
     <Route element={<PublicLayout />}>
       <Route path="/" element={<Suspense fallback={routeFallback}><LandingPage /></Suspense>} />
-      <Route path="/terms" element={<Suspense fallback={routeFallback}><LegalPreviewPage /></Suspense>} />
-      <Route path="/privacy" element={<Suspense fallback={routeFallback}><LegalPreviewPage /></Suspense>} />
+      <Route path="/terms" element={<Suspense fallback={routeFallback}><LegalPage /></Suspense>} />
+      <Route path="/privacy" element={<Suspense fallback={routeFallback}><LegalPage /></Suspense>} />
     </Route>
     <Route element={<AuthLayout />}>
       <Route path="/login" element={<Suspense fallback={routeFallback}><LoginPage /></Suspense>} />

@@ -1020,31 +1020,6 @@ button {
   color: var(--ayos-muted);
   font-size: 0.85rem;
 }
-.legal-preview {
-  min-height: calc(100vh - 145px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 120px;
-  padding-bottom: 80px;
-}
-.legal-preview h1 {
-  margin: 14px 0;
-  font: 700 clamp(2.5rem, 5vw, 3.7rem)/1.1 var(--font-display);
-  letter-spacing: -0.06em;
-}
-.legal-preview p {
-  max-width: 620px;
-  color: var(--ayos-body);
-  line-height: 1.8;
-}
-.legal-preview > a {
-  margin-top: 14px;
-  color: var(--ayos-sky-deep);
-  font-size: 0.86rem;
-  font-weight: 700;
-}
 
 .phase2-page {
   max-width: 560px;
