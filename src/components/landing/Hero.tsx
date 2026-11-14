@@ -1,17 +1,19 @@
 import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, Pause, Play, Search, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BadgeCheck, HandCoins, LockKeyhole, Pause, Play, Search } from 'lucide-react'
 import Button from '../ui/Button'
-import { useAuth } from '../../lib/auth/useAuth'
 import { serviceSearchPath } from './landing-links'
 
 const SLIDE_DURATION = 5600
 
-const heroSlides = [
+/* Each slide pairs a photo with the job status a customer would see in AYOS at that step. */
+const heroSlides: { image: string; alt: string; step: string; status: string; tone: 'sky' | 'green' | 'orange'; title: string; detail: string }[] = [
   {
     image: '/images/hero/01-find-local-help.webp',
     alt: 'A homeowner reviewing a local technician on her phone',
     step: 'Find help',
+    status: 'Searching near you',
+    tone: 'sky',
     title: 'Start with what you need.',
     detail: 'Explore skilled home and tech services near you.',
   },
@@ -19,6 +21,8 @@ const heroSlides = [
     image: '/images/hero/02-describe-the-job.webp',
     alt: 'A homeowner taking a photo of a leaking pipe to explain a repair',
     step: 'Describe the job',
+    status: 'Request sent',
+    tone: 'sky',
     title: 'Show what needs fixing.',
     detail: 'A short note or a photo helps your provider come prepared.',
   },
@@ -26,6 +30,8 @@ const heroSlides = [
     image: '/images/hero/03-choose-with-confidence.webp',
     alt: 'A customer and family member reviewing service profiles together',
     step: 'Choose a pro',
+    status: 'Accepted by provider',
+    tone: 'green',
     title: 'Pick the right person.',
     detail: 'Compare services, coverage, and reviews from finished jobs.',
   },
@@ -33,6 +39,8 @@ const heroSlides = [
     image: '/images/hero/04-get-the-work-done.webp',
     alt: 'An air-conditioning technician carefully servicing a home unit',
     step: 'Get it done',
+    status: 'Work in progress',
+    tone: 'orange',
     title: 'Track it until it’s sorted.',
     detail: 'Follow each step, then confirm the work once it’s complete.',
   },
@@ -40,6 +48,8 @@ const heroSlides = [
     image: '/images/hero/05-offer-your-skills.webp',
     alt: 'A local electrician checking a service request at his workbench',
     step: 'For providers',
+    status: 'New request nearby',
+    tone: 'sky',
     title: 'Bring your skills to AYOS.',
     detail: 'Build a profile and meet customers who need what you do.',
   },
@@ -52,6 +62,12 @@ const popularSearches = [
   { label: 'Cracked phone screen', service: 'Phone repair' },
 ]
 
+const heroFacts = [
+  { icon: BadgeCheck, title: 'Reviewed providers', detail: 'Checked before taking requests' },
+  { icon: HandCoins, title: 'No booking fees', detail: 'Agree on the price directly' },
+  { icon: LockKeyhole, title: 'Private contact', detail: 'Hidden until you book' },
+]
+
 const DEFAULT_PLACEHOLDER = 'What needs fixing? Try “aircon”'
 const typedExamples = ['aircon cleaning', 'a leaking pipe', 'faulty wiring', 'a cracked phone screen', 'solar panels']
 
@@ -60,7 +76,6 @@ const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: r
 
 export default function Hero() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [inputFocused, setInputFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -143,7 +158,7 @@ export default function Hero() {
   }
 
   return <section className="lp-hero" aria-labelledby="hero-title">
-    <div className="lp-container lp-hero-inner">
+    <div className="lp-container lp-hero-grid">
       <div className="lp-hero-copy">
         <p className="lp-kicker lp-hero-kicker">Skilled help, close to home</p>
         <h1 id="hero-title" className="lp-hero-title" aria-label="The right help, right around you.">
@@ -166,46 +181,56 @@ export default function Hero() {
           </ul>
         </div>
 
-        <p className="lp-hero-assurance lp-hero-reveal"><ShieldCheck size={18} aria-hidden="true" /> {!user && 'Free to join. '}Every provider is reviewed before they can take requests.</p>
-      </div>
-    </div>
-
-    <div className="lp-hero-visual" role="region" aria-roledescription="carousel" aria-label="How AYOS works" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onFocusCapture={() => setHasFocus(true)} onBlurCapture={(event) => {
-      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHasFocus(false)
-    }}>
-      <div className="lp-hero-frame">
-        <div className="lp-hero-media">{heroSlides.map((slide, index) => (carousel.visited.includes(index) || index === nextIndex) && <img
-          key={slide.image}
-          className={index === activeIndex ? 'is-active' : undefined}
-          src={slide.image}
-          alt={index === activeIndex ? slide.alt : ''}
-          aria-hidden={index === activeIndex ? undefined : true}
-          width="1200"
-          height="1500"
-          fetchPriority={index === 0 ? 'high' : 'low'}
-          decoding="async"
-        />)}</div>
-        <span className="lp-hero-curtain" aria-hidden="true" />
+        <ul className="lp-hero-facts lp-hero-reveal" aria-label="Why use AYOS">
+          {heroFacts.map(({ icon: Icon, title, detail }) => <li key={title}>
+            <Icon size={18} aria-hidden="true" />
+            <span><strong>{title}</strong>{detail}</span>
+          </li>)}
+        </ul>
       </div>
 
-      <div className="lp-ticket-wrap">
-        <div className="lp-ticket">
-          <div className="lp-ticket-body">
-            <div className="lp-ticket-head"><span>{pad(activeIndex + 1)} · {activeSlide.step}</span><span className="lp-ticket-count">{pad(activeIndex + 1)}<span> / {pad(heroSlides.length)}</span></span></div>
-            <div className="lp-ticket-copy" key={activeIndex} aria-live={autoplay ? 'off' : 'polite'} aria-atomic="true">
-              <h2>{activeSlide.title.split(' ').map((word, index) => <Fragment key={`${word}-${index}`}>{index > 0 && ' '}<span className="lp-word" style={{ animationDelay: `${index * 55}ms` }}>{word}</span></Fragment>)}</h2>
-              <p>{activeSlide.detail}</p>
-            </div>
+      <div className="lp-hero-visual" role="region" aria-roledescription="carousel" aria-label="How AYOS works" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onFocusCapture={() => setHasFocus(true)} onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHasFocus(false)
+      }}>
+        <div className="lp-hero-frame">
+          <div className="lp-hero-media">{heroSlides.map((slide, index) => (carousel.visited.includes(index) || index === nextIndex) && <img
+            key={slide.image}
+            className={index === activeIndex ? 'is-active' : undefined}
+            src={slide.image}
+            alt={index === activeIndex ? slide.alt : ''}
+            aria-hidden={index === activeIndex ? undefined : true}
+            width="1200"
+            height="1500"
+            fetchPriority={index === 0 ? 'high' : 'low'}
+            decoding="async"
+          />)}</div>
+
+          <p className={`lp-hero-status is-${activeSlide.tone}`} key={`status-${activeIndex}`} aria-hidden="true">
+            <span className="lp-hero-status-dot" />{activeSlide.status}
+          </p>
+
+          <div className="lp-hero-caption" key={`caption-${activeIndex}`} aria-live={autoplay ? 'off' : 'polite'} aria-atomic="true">
+            <span className="lp-hero-caption-step">{pad(activeIndex + 1)} — {activeSlide.step}</span>
+            <h2>{activeSlide.title.split(' ').map((word, index) => <Fragment key={`${word}-${index}`}>{index > 0 && ' '}<span className="lp-word" style={{ animationDelay: `${index * 55}ms` }}>{word}</span></Fragment>)}</h2>
+            <p>{activeSlide.detail}</p>
           </div>
-          <div className="lp-ticket-foot">
-            <div className="lp-ticket-dots" role="group" aria-label="Choose a slide">
-              {heroSlides.map((slide, index) => <button type="button" key={slide.step} className={index === activeIndex ? 'is-active' : undefined} aria-label={`Show slide ${index + 1}: ${slide.title}`} aria-current={index === activeIndex ? 'true' : undefined} onClick={() => showSlide(index)}><span /></button>)}
-            </div>
-            {motionAllowed && <button type="button" className="lp-ticket-toggle" aria-label={userPaused ? 'Play slideshow' : 'Pause slideshow'} onClick={() => setUserPaused((paused) => !paused)}>
-              {userPaused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
-            </button>}
-          </div>
-          {autoplay && <span className="lp-ticket-progress" key={activeIndex} style={{ animationDuration: `${SLIDE_DURATION}ms` }} aria-hidden="true" />}
+          <span className="lp-hero-curtain" aria-hidden="true" />
+        </div>
+
+        <div className="lp-hero-rail">
+          <ol role="group" aria-label="Choose a slide">
+            {heroSlides.map((slide, index) => <li key={slide.step}>
+              <button type="button" className={index === activeIndex ? 'is-active' : index < activeIndex ? 'is-past' : undefined} aria-label={`Show slide ${index + 1}: ${slide.title}`} aria-current={index === activeIndex ? 'true' : undefined} onClick={() => showSlide(index)}>
+                <span className="lp-rail-track" aria-hidden="true">
+                  {index === activeIndex && <span className={`lp-rail-fill${autoplay ? ' is-running' : ''}`} key={`fill-${activeIndex}-${autoplay}`} style={autoplay ? { animationDuration: `${SLIDE_DURATION}ms` } : undefined} />}
+                </span>
+                <span className="lp-rail-num" aria-hidden="true">{pad(index + 1)}</span>
+              </button>
+            </li>)}
+          </ol>
+          {motionAllowed && <button type="button" className="lp-rail-toggle" aria-label={userPaused ? 'Play slideshow' : 'Pause slideshow'} onClick={() => setUserPaused((paused) => !paused)}>
+            {userPaused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
+          </button>}
         </div>
       </div>
     </div>

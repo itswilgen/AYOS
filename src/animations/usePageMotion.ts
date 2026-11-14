@@ -24,7 +24,9 @@ export function usePageMotion() {
         .from(headline.chars, { yPercent: 118, rotate: 9, transformOrigin: '0% 100%', duration: 1, stagger: 0.022 }, 0.12)
         .fromTo('.lp-highlight', { '--sweep': 0 }, { '--sweep': 1, duration: 0.75, ease: 'expo.inOut' }, 0.85)
         .from('.lp-hero-reveal', { y: 14, autoAlpha: 0, duration: 0.7, stagger: 0.07, ease: 'power3.out' }, 0.45)
-        .from('.lp-ticket-wrap', { y: 28, autoAlpha: 0, duration: 0.85 }, 0.9)
+        .from('.lp-hero-status', { y: -10, autoAlpha: 0, duration: 0.6, ease: 'back.out(2)' }, 1)
+        .from('.lp-hero-caption', { y: 18, autoAlpha: 0, duration: 0.8 }, 0.95)
+        .from('.lp-hero-rail li, .lp-rail-toggle', { y: 8, autoAlpha: 0, duration: 0.6, stagger: 0.05, ease: 'power3.out' }, 1.05)
 
       // Section titles rise line by line from a mask; the rest of each block follows.
       gsap.utils.toArray<HTMLElement>('.lp-title, .lp-cta-title').forEach((title) => {

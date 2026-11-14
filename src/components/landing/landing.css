@@ -99,19 +99,30 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-height: min(880px, max(720px, 100svh));
-  padding: 156px 0 96px;
+  padding: calc(84px + clamp(40px, 6vh, 72px)) 0 clamp(56px, 8vh, 96px);
   background: var(--ayos-paper);
+}
+.lp-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  align-items: center;
+  gap: clamp(40px, 5.5vw, 88px);
 }
 .lp-hero-copy {
   position: relative;
   z-index: 2;
-  width: min(54%, 620px);
+  max-width: 640px;
 }
 .lp-hero-title {
   margin: 22px 0 0;
-  font: 700 clamp(3.25rem, 6.6vw, 5.6rem) / 0.92 var(--font-display);
-  letter-spacing: -0.012em;
+  font: 700 clamp(3rem, 5.3vw, 5.25rem) / 0.9 var(--font-display);
+  letter-spacing: -0.015em;
+}
+/* Each line of the promise stays whole; the size scales instead of wrapping. */
+@media (min-width: 601px) {
+  .lp-line > span {
+    white-space: nowrap;
+  }
 }
 .lp-line {
   display: block;
@@ -246,34 +257,59 @@
 .lp-chip:active {
   transform: translateY(0);
 }
-.lp-hero-assurance {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 30px 0 0;
-  color: var(--ayos-text);
-  font-size: 0.9375rem;
+/* Three plain product facts, set like a spec line rather than cards. */
+.lp-hero-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 40px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--ayos-hairline);
+  list-style: none;
 }
-.lp-hero-assurance svg {
+.lp-hero-facts li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-right: 16px;
+}
+.lp-hero-facts li + li {
+  padding-left: 16px;
+  border-left: 1px solid var(--ayos-hairline);
+}
+.lp-hero-facts svg {
   flex: none;
+  margin-top: 2px;
   color: var(--ayos-sky-deep);
 }
+.lp-hero-facts span {
+  display: grid;
+  gap: 2px;
+  color: var(--ayos-text);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.lp-hero-facts strong {
+  color: var(--ayos-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
 
-/* The photo fills the hero's full height, flush with the header above and the next section below. */
+/* The photo sits in a rounded frame; a job-status pill and caption ride on it, the progress rail sits below. */
 .lp-hero-visual {
-  position: absolute;
+  position: relative;
   z-index: 1;
-  top: 84px;
-  right: 0;
-  bottom: 0;
-  width: min(45vw, 780px);
+  min-width: 0;
 }
 .lp-hero-frame {
-  position: absolute;
-  inset: 0;
+  position: relative;
   overflow: hidden;
-  clip-path: polygon(16% 0, 100% 0, 100% 100%, 0 100%);
+  aspect-ratio: 4 / 5;
+  max-height: min(640px, calc(100svh - 230px));
+  min-height: 460px;
+  width: 100%;
+  border-radius: var(--radius-xl);
   background: var(--ayos-deep-sky);
+  box-shadow: 0 1px 2px rgb(14 27 36 / 8%), 0 30px 60px -30px rgb(11 58 90 / 45%);
 }
 .lp-hero-media {
   position: absolute;
@@ -286,138 +322,170 @@
   height: 100%;
   display: block;
   object-fit: cover;
+  object-position: center 30%;
   opacity: 0;
-  transform: scale(1.06);
+  transform: scale(1.05);
   transition:
     opacity 900ms var(--ease-standard),
-    transform 1600ms var(--ease-out-expo);
+    transform 2400ms var(--ease-out-expo);
 }
 .lp-hero-media img.is-active {
   opacity: 1;
   transform: scale(1);
 }
+/* Shade only the lower third, where the caption sits, so the photo stays bright. */
 .lp-hero-frame::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(11 58 90 / 0%) 55%, rgb(11 58 90 / 40%) 100%);
+  background: linear-gradient(180deg, rgb(8 30 46 / 0%) 52%, rgb(8 30 46 / 78%) 100%);
   pointer-events: none;
 }
 .lp-hero-curtain {
   position: absolute;
-  z-index: 1;
+  z-index: 4;
   inset: 0;
   background: var(--ayos-sky);
   visibility: hidden;
   pointer-events: none;
 }
 
-/* The work-order ticket: notched sides, a tear line, and a progress bar timing each slide. */
-.lp-ticket-wrap {
+/* Signature: the status a customer would see in AYOS at this step. */
+.lp-hero-status {
+  --dot: var(--ayos-sky);
   position: absolute;
   z-index: 3;
-  left: -48px;
-  bottom: 44px;
-  width: min(372px, 82%);
-  filter: drop-shadow(0 1px 1px rgb(14 27 36 / 8%)) drop-shadow(0 22px 30px rgb(14 27 36 / 22%));
-}
-.lp-ticket {
-  --notch: 11px;
-  --foot: 58px;
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  background: var(--ayos-white);
-  -webkit-mask:
-    radial-gradient(circle var(--notch) at 0 calc(100% - var(--foot)), #0000 97%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% calc(100% - var(--foot)), #0000 97%, #000) right / 51% 100% no-repeat;
-  mask:
-    radial-gradient(circle var(--notch) at 0 calc(100% - var(--foot)), #0000 97%, #000) left / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% calc(100% - var(--foot)), #0000 97%, #000) right / 51% 100% no-repeat;
-}
-.lp-ticket-body {
-  padding: 20px 24px 18px;
-}
-.lp-ticket-head {
-  display: flex;
+  top: 20px;
+  left: 20px;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--ayos-orange);
-  font-size: 0.72rem;
+  gap: 9px;
+  margin: 0;
+  padding: 8px 14px 8px 12px;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 94%);
+  color: var(--ayos-ink);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgb(14 27 36 / 10%), 0 10px 24px -12px rgb(14 27 36 / 40%);
+}
+.lp-hero-status.is-green { --dot: var(--ayos-success); }
+.lp-hero-status.is-orange { --dot: var(--ayos-orange-bright); }
+.lp-hero-status-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot);
+}
+.lp-hero-caption {
+  position: absolute;
+  z-index: 3;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 28px clamp(20px, 2.4vw, 32px) clamp(22px, 2.4vw, 30px);
+  color: var(--ayos-white);
+}
+.lp-hero-caption-step {
+  color: var(--ayos-on-brand-accent);
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
-.lp-ticket-count {
-  color: var(--ayos-ink);
-  font-variant-numeric: tabular-nums;
-}
-.lp-ticket-count span {
-  color: var(--ayos-text-soft);
-}
-.lp-ticket-copy h2 {
-  margin: 10px 0 0;
-  font: 700 1.625rem / 1.05 var(--font-display);
-  letter-spacing: 0;
-}
-.lp-ticket-copy p {
+.lp-hero-caption h2 {
   margin: 8px 0 0;
-  color: var(--ayos-text);
+  font: 700 clamp(1.75rem, 2.4vw, 2.25rem) / 1 var(--font-display);
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+.lp-hero-caption p {
+  max-width: 38ch;
+  margin: 8px 0 0;
+  color: var(--ayos-on-deep-sky);
   font-size: 0.9375rem;
   line-height: 1.55;
   text-wrap: pretty;
 }
-.lp-ticket-foot {
-  position: relative;
+
+/* Progress rail: one numbered segment per slide (the caption names the step); the active one fills while it plays. */
+.lp-hero-rail {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: var(--foot);
-  padding: 0 14px 0 16px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 14px;
 }
-.lp-ticket-foot::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: calc(var(--notch) + 8px);
-  right: calc(var(--notch) + 8px);
-  border-top: 1.5px dashed rgb(24 35 43 / 20%);
-}
-.lp-ticket-dots {
-  display: flex;
-  align-items: center;
-}
-.lp-ticket-dots button {
+.lp-hero-rail ol {
   display: grid;
-  width: 36px;
-  height: 44px;
+  flex: 1;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
   padding: 0;
-  place-items: center;
+  list-style: none;
+}
+.lp-hero-rail ol button {
+  display: grid;
+  width: 100%;
+  min-height: 44px;
+  align-content: start;
+  gap: 9px;
+  padding: 8px 0 0;
   border: 0;
   background: transparent;
+  color: var(--ayos-text-soft);
+  text-align: left;
   cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard);
 }
-.lp-ticket-dots button span {
-  width: 12px;
-  height: 4px;
-  border-radius: 4px;
-  background: rgb(24 35 43 / 22%);
-  transition:
-    width var(--duration-medium) var(--ease-out-expo),
-    background var(--duration-medium) var(--ease-standard);
+.lp-hero-rail ol button:hover,
+.lp-hero-rail ol button.is-active {
+  color: var(--ayos-ink);
 }
-.lp-ticket-dots button:hover span {
-  background: rgb(24 35 43 / 45%);
+.lp-hero-rail ol button:focus-visible,
+.lp-rail-toggle:focus-visible {
+  outline: 2px solid var(--ayos-sky-action);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
 }
-.lp-ticket-dots button.is-active span {
-  width: 24px;
+.lp-rail-track {
+  position: relative;
+  overflow: hidden;
+  height: 3px;
+  border-radius: 3px;
+  background: rgb(24 35 43 / 14%);
+}
+.lp-hero-rail ol button:hover .lp-rail-track {
+  background: rgb(24 35 43 / 26%);
+}
+.lp-hero-rail ol button.is-past .lp-rail-track {
+  background: rgb(21 125 182 / 45%);
+}
+.lp-rail-fill {
+  position: absolute;
+  inset: 0;
   background: var(--ayos-sky-action);
+  transform-origin: left center;
 }
-.lp-ticket-toggle {
+.lp-rail-fill.is-running {
+  animation: lp-rail-fill linear both;
+}
+@keyframes lp-rail-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.lp-rail-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+.lp-rail-toggle {
   display: grid;
-  width: 40px;
-  height: 40px;
+  flex: none;
+  width: 44px;
+  height: 44px;
   place-items: center;
   border: 1px solid var(--ayos-hairline);
   border-radius: 50%;
@@ -426,40 +494,52 @@
   cursor: pointer;
   transition:
     border-color var(--duration-fast) var(--ease-standard),
-    color var(--duration-fast) var(--ease-standard);
+    color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
 }
-.lp-ticket-toggle:hover {
+.lp-rail-toggle:hover {
   border-color: var(--ayos-sky);
   color: var(--ayos-sky-deep);
 }
-.lp-ticket-progress {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  background: var(--ayos-sky);
-  transform-origin: left center;
-  animation: lp-ticket-progress linear both;
+.lp-rail-toggle:active {
+  transform: scale(0.96);
 }
-@keyframes lp-ticket-progress {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
-}
+
 @media (prefers-reduced-motion: no-preference) {
-  .lp-ticket-copy p {
-    animation: lp-ticket-copy-in var(--duration-slow) var(--ease-out-expo) 160ms both;
+  .lp-hero-status {
+    animation: lp-status-in 420ms var(--ease-out-expo) both;
+  }
+  .lp-hero-status-dot::after {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: var(--dot);
+    opacity: 0;
+    animation: lp-status-ping 900ms var(--ease-out-expo) 200ms 1 both;
+  }
+  .lp-hero-caption p,
+  .lp-hero-caption-step {
+    animation: lp-caption-in var(--duration-slow) var(--ease-out-expo) 120ms both;
   }
   .lp-word {
     display: inline-block;
     animation: lp-word-in 560ms var(--ease-out-expo) both;
   }
 }
+@keyframes lp-status-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes lp-status-ping {
+  0% { opacity: 0.45; transform: scale(0.6); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
 @keyframes lp-word-in {
   from { opacity: 0; transform: translateY(0.5em) rotate(3deg); filter: blur(4px); }
   to { opacity: 1; transform: none; filter: none; }
 }
-@keyframes lp-ticket-copy-in {
+@keyframes lp-caption-in {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
@@ -987,22 +1067,20 @@
   outline-color: var(--ayos-white);
 }
 
-/* Small laptops: the ticket stays inside the photo so it never crowds the search. */
+/* Small laptops: the facts stack so the copy column stays roomy. */
 @media (max-width: 1240px) {
-  .lp-ticket-wrap {
-    left: 24px;
-    width: min(340px, calc(100% - 48px));
+  .lp-hero-facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .lp-hero-facts li + li {
+    padding-left: 0;
+    border-left: 0;
   }
 }
 
 /* Large tablets */
 @media (max-width: 1100px) {
-  .lp-hero-copy {
-    width: min(54%, 540px);
-  }
-  .lp-hero-visual {
-    width: 44vw;
-  }
   .lp-service-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-auto-rows: clamp(200px, 24vw, 240px);
@@ -1019,34 +1097,24 @@
 /* Tablets and phones */
 @media (max-width: 860px) {
   .lp-hero {
-    min-height: 0;
-    padding: 124px 0 0;
+    padding: 124px 0 64px;
   }
-  .lp-hero-copy {
-    width: 100%;
-    max-width: 620px;
+  .lp-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 48px;
   }
-  .lp-hero-visual {
-    position: relative;
-    top: auto;
-    right: auto;
-    bottom: auto;
-    width: auto;
-    height: clamp(500px, 128vw, 720px);
-    margin-top: 48px;
+  .lp-hero-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+  .lp-hero-facts li + li {
+    padding-left: 16px;
+    border-left: 1px solid var(--ayos-hairline);
   }
   .lp-hero-frame {
-    clip-path: polygon(0 8%, 100% 0, 100% 100%, 0 100%);
-  }
-  .lp-hero-media img {
-    object-position: center 22%;
-  }
-  .lp-ticket-wrap {
-    right: var(--lp-gutter);
-    bottom: var(--lp-gutter);
-    left: var(--lp-gutter);
-    width: auto;
-    max-width: 440px;
+    aspect-ratio: 5 / 4;
+    max-height: none;
+    min-height: 0;
   }
   .lp-steps {
     grid-template-columns: minmax(0, 1fr);
@@ -1136,8 +1204,28 @@
   .lp-search .button {
     width: 100%;
   }
-  .lp-ticket-copy h2 {
-    font-size: 1.4rem;
+  .lp-hero {
+    padding-bottom: 48px;
+  }
+  .lp-hero-facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    margin-top: 32px;
+  }
+  .lp-hero-facts li + li {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .lp-hero-frame {
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-lg);
+  }
+  .lp-hero-status {
+    top: 14px;
+    left: 14px;
+  }
+  .lp-hero-caption h2 {
+    font-size: 1.6rem;
   }
   .lp-service-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
