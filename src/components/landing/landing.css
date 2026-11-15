@@ -95,12 +95,19 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: calc(84px + clamp(40px, 6vh, 72px)) 0 clamp(56px, 8vh, 96px);
-  background: var(--ayos-wash), var(--ayos-paper);
+  display: flex;
+  align-items: stretch;
+  min-height: min(900px, max(680px, 100svh));
+  padding: calc(84px + clamp(40px, 6vh, 72px)) 0 clamp(40px, 6vh, 64px);
+  background: var(--ayos-paper);
+}
+.lp-hero > .lp-container {
+  position: relative;
+  z-index: 2;
 }
 .lp-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   align-items: center;
   gap: clamp(40px, 5.5vw, 88px);
 }
@@ -290,26 +297,25 @@
   font-weight: 700;
 }
 
-/* The photo sits in a rounded frame; a job-status pill and caption ride on it, the progress rail sits below. */
-.lp-hero-visual {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-.lp-hero-frame {
-  position: relative;
+/* Full-bleed slideshow behind the whole hero. The shade is the readability layer:
+   solid sky-white behind the copy, fading to clear by ~70%, plus a soft top band under the header links. */
+.lp-hero-scene {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
   overflow: hidden;
-  aspect-ratio: 4 / 5;
-  max-height: min(640px, calc(100svh - 230px));
-  min-height: 460px;
-  width: 100%;
-  border-radius: var(--radius-xl);
   background: var(--ayos-deep-sky);
-  box-shadow: 0 1px 2px rgb(14 27 36 / 8%), 0 30px 60px -30px rgb(11 58 90 / 45%);
 }
 .lp-hero-media {
   position: absolute;
   inset: 0;
+}
+/* Desktop: the photos are portrait, so a full-width photo puts its subject mid-screen, under the headline.
+   Starting the photo at 28% (still under the solid part of the shade) moves people to the right and crops less. */
+@media (min-width: 861px) {
+  .lp-hero-media {
+    left: 28%;
+  }
 }
 .lp-hero-media img {
   position: absolute;
@@ -318,9 +324,9 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: center 30%;
+  object-position: 70% 30%;
   opacity: 0;
-  transform: scale(1.05);
+  transform: scale(1.04);
   transition:
     opacity 900ms var(--ease-standard),
     transform 2400ms var(--ease-out-expo);
@@ -329,30 +335,43 @@
   opacity: 1;
   transform: scale(1);
 }
-/* Shade only the lower third, where the caption sits, so the photo stays bright. */
-.lp-hero-frame::after {
-  content: "";
+.lp-hero-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(8 30 46 / 0%) 52%, rgb(8 30 46 / 78%) 100%);
+  background:
+    linear-gradient(180deg, rgb(231 241 248 / 78%) 0, rgb(231 241 248 / 0%) 150px),
+    linear-gradient(90deg,
+      rgb(231 241 248 / 97%) 0%,
+      rgb(231 241 248 / 94%) 34%,
+      rgb(231 241 248 / 72%) 46%,
+      rgb(231 241 248 / 28%) 58%,
+      rgb(231 241 248 / 0%) 70%);
   pointer-events: none;
 }
-.lp-hero-curtain {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  background: var(--ayos-sky);
-  visibility: hidden;
-  pointer-events: none;
+
+/* Right column over the photo: the job status at the top, the slide card at the bottom. */
+.lp-hero-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  align-self: stretch;
+  min-width: 0;
+  padding-block: 8px 0;
+}
+.lp-hero-card {
+  width: min(400px, 100%);
+  padding: 20px 22px 14px;
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: var(--radius-lg);
+  background: var(--ayos-white);
+  box-shadow: 0 1px 2px rgb(14 27 36 / 8%), 0 24px 48px -20px rgb(11 58 90 / 45%);
 }
 
 /* Signature: the status a customer would see in AYOS at this step. */
 .lp-hero-status {
   --dot: var(--ayos-sky);
-  position: absolute;
-  z-index: 3;
-  top: 20px;
-  left: 20px;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -375,16 +394,10 @@
   background: var(--dot);
 }
 .lp-hero-caption {
-  position: absolute;
-  z-index: 3;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  padding: 28px clamp(20px, 2.4vw, 32px) clamp(22px, 2.4vw, 30px);
-  color: var(--ayos-white);
+  color: var(--ayos-ink);
 }
 .lp-hero-caption-step {
-  color: var(--ayos-on-brand-accent);
+  color: var(--ayos-sky-deep);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -392,14 +405,14 @@
 }
 .lp-hero-caption h2 {
   margin: 8px 0 0;
-  font: 700 clamp(1.75rem, 2.4vw, 2.25rem) / 1 var(--font-display);
+  font: 700 clamp(1.6rem, 2.2vw, 2rem) / 1 var(--font-display);
   letter-spacing: -0.005em;
   text-wrap: balance;
 }
 .lp-hero-caption p {
   max-width: 38ch;
   margin: 8px 0 0;
-  color: var(--ayos-on-deep-sky);
+  color: var(--ayos-text);
   font-size: 0.9375rem;
   line-height: 1.55;
   text-wrap: pretty;
@@ -1090,11 +1103,31 @@
 /* Tablets and phones */
 @media (max-width: 860px) {
   .lp-hero {
-    padding: 124px 0 64px;
+    min-height: 0;
+    padding: 124px 0 24px;
   }
   .lp-hero-grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 48px;
+    gap: 40px;
+  }
+  /* The photo becomes a band under the copy; the shade fades it in from the canvas above. */
+  .lp-hero-scene {
+    top: auto;
+    height: clamp(420px, 70vw, 560px);
+  }
+  .lp-hero-shade {
+    background: linear-gradient(180deg, var(--ayos-paper) 0%, rgb(231 241 248 / 0%) 34%);
+  }
+  .lp-hero-visual {
+    min-height: clamp(360px, 62vw, 500px);
+    align-items: stretch;
+    padding-block: 72px 0;
+  }
+  .lp-hero-status {
+    align-self: flex-start;
+  }
+  .lp-hero-card {
+    width: auto;
   }
   .lp-hero-facts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1103,11 +1136,6 @@
   .lp-hero-facts li + li {
     padding-left: 16px;
     border-left: 1px solid var(--ayos-hairline);
-  }
-  .lp-hero-frame {
-    aspect-ratio: 5 / 4;
-    max-height: none;
-    min-height: 0;
   }
   .lp-steps {
     grid-template-columns: minmax(0, 1fr);
@@ -1209,16 +1237,11 @@
     padding-left: 0;
     border-left: 0;
   }
-  .lp-hero-frame {
-    aspect-ratio: 4 / 5;
-    border-radius: var(--radius-lg);
-  }
-  .lp-hero-status {
-    top: 14px;
-    left: 14px;
+  .lp-hero-card {
+    padding: 18px 18px 12px;
   }
   .lp-hero-caption h2 {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
   .lp-service-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

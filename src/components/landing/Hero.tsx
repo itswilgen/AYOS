@@ -6,10 +6,12 @@ import { serviceSearchPath } from './landing-links'
 
 const SLIDE_DURATION = 5600
 
-/* Each slide pairs a photo with the job status a customer would see in AYOS at that step. */
-const heroSlides: { image: string; alt: string; step: string; status: string; tone: 'sky' | 'green' | 'orange'; title: string; detail: string }[] = [
+/* Each slide pairs a photo with the job status a customer would see in AYOS at that step.
+   `focus` is the photo's crop point as a full-bleed background (portrait photos on a wide hero), so faces stay in frame. */
+const heroSlides: { image: string; alt: string; focus: string; step: string; status: string; tone: 'sky' | 'green' | 'orange'; title: string; detail: string }[] = [
   {
     image: '/images/hero/01-find-local-help.webp',
+    focus: '70% 30%',
     alt: 'A homeowner reviewing a local technician on her phone',
     step: 'Find help',
     status: 'Searching near you',
@@ -19,6 +21,7 @@ const heroSlides: { image: string; alt: string; step: string; status: string; to
   },
   {
     image: '/images/hero/02-describe-the-job.webp',
+    focus: '70% 40%',
     alt: 'A homeowner taking a photo of a leaking pipe to explain a repair',
     step: 'Describe the job',
     status: 'Request sent',
@@ -28,6 +31,7 @@ const heroSlides: { image: string; alt: string; step: string; status: string; to
   },
   {
     image: '/images/hero/03-choose-with-confidence.webp',
+    focus: '70% 35%',
     alt: 'A customer and family member reviewing service profiles together',
     step: 'Choose a pro',
     status: 'Accepted by provider',
@@ -37,6 +41,7 @@ const heroSlides: { image: string; alt: string; step: string; status: string; to
   },
   {
     image: '/images/hero/04-get-the-work-done.webp',
+    focus: '70% 0%',
     alt: 'An air-conditioning technician carefully servicing a home unit',
     step: 'Get it done',
     status: 'Work in progress',
@@ -46,6 +51,7 @@ const heroSlides: { image: string; alt: string; step: string; status: string; to
   },
   {
     image: '/images/hero/05-offer-your-skills.webp',
+    focus: '70% 6%',
     alt: 'A local electrician checking a service request at his workbench',
     step: 'For providers',
     status: 'New request nearby',
@@ -158,6 +164,23 @@ export default function Hero() {
   }
 
   return <section className="lp-hero" aria-labelledby="hero-title">
+    {/* The slideshow fills the whole hero; a light gradient from the left keeps the copy readable. */}
+    <div className="lp-hero-scene">
+      <div className="lp-hero-media">{heroSlides.map((slide, index) => (carousel.visited.includes(index) || index === nextIndex) && <img
+        key={slide.image}
+        className={index === activeIndex ? 'is-active' : undefined}
+        src={slide.image}
+        style={{ objectPosition: slide.focus }}
+        alt={index === activeIndex ? slide.alt : ''}
+        aria-hidden={index === activeIndex ? undefined : true}
+        width="1200"
+        height="1500"
+        fetchPriority={index === 0 ? 'high' : 'low'}
+        decoding="async"
+      />)}</div>
+      <span className="lp-hero-shade" aria-hidden="true" />
+    </div>
+
     <div className="lp-container lp-hero-grid">
       <div className="lp-hero-copy">
         <p className="lp-kicker lp-hero-kicker">Skilled help, close to home</p>
@@ -192,45 +215,30 @@ export default function Hero() {
       <div className="lp-hero-visual" role="region" aria-roledescription="carousel" aria-label="How AYOS works" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onFocusCapture={() => setHasFocus(true)} onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setHasFocus(false)
       }}>
-        <div className="lp-hero-frame">
-          <div className="lp-hero-media">{heroSlides.map((slide, index) => (carousel.visited.includes(index) || index === nextIndex) && <img
-            key={slide.image}
-            className={index === activeIndex ? 'is-active' : undefined}
-            src={slide.image}
-            alt={index === activeIndex ? slide.alt : ''}
-            aria-hidden={index === activeIndex ? undefined : true}
-            width="1200"
-            height="1500"
-            fetchPriority={index === 0 ? 'high' : 'low'}
-            decoding="async"
-          />)}</div>
-
-          <p className={`lp-hero-status is-${activeSlide.tone}`} key={`status-${activeIndex}`} aria-hidden="true">
-            <span className="lp-hero-status-dot" />{activeSlide.status}
-          </p>
-
+        <p className={`lp-hero-status is-${activeSlide.tone}`} key={`status-${activeIndex}`} aria-hidden="true">
+          <span className="lp-hero-status-dot" />{activeSlide.status}
+        </p>
+        <div className="lp-hero-card">
           <div className="lp-hero-caption" key={`caption-${activeIndex}`} aria-live={autoplay ? 'off' : 'polite'} aria-atomic="true">
             <span className="lp-hero-caption-step">{pad(activeIndex + 1)} — {activeSlide.step}</span>
             <h2>{activeSlide.title.split(' ').map((word, index) => <Fragment key={`${word}-${index}`}>{index > 0 && ' '}<span className="lp-word" style={{ animationDelay: `${index * 55}ms` }}>{word}</span></Fragment>)}</h2>
             <p>{activeSlide.detail}</p>
           </div>
-          <span className="lp-hero-curtain" aria-hidden="true" />
-        </div>
-
-        <div className="lp-hero-rail">
-          <ol role="group" aria-label="Choose a slide">
-            {heroSlides.map((slide, index) => <li key={slide.step}>
-              <button type="button" className={index === activeIndex ? 'is-active' : index < activeIndex ? 'is-past' : undefined} aria-label={`Show slide ${index + 1}: ${slide.title}`} aria-current={index === activeIndex ? 'true' : undefined} onClick={() => showSlide(index)}>
-                <span className="lp-rail-track" aria-hidden="true">
-                  {index === activeIndex && <span className={`lp-rail-fill${autoplay ? ' is-running' : ''}`} key={`fill-${activeIndex}-${autoplay}`} style={autoplay ? { animationDuration: `${SLIDE_DURATION}ms` } : undefined} />}
-                </span>
-                <span className="lp-rail-num" aria-hidden="true">{pad(index + 1)}</span>
-              </button>
-            </li>)}
-          </ol>
-          {motionAllowed && <button type="button" className="lp-rail-toggle" aria-label={userPaused ? 'Play slideshow' : 'Pause slideshow'} onClick={() => setUserPaused((paused) => !paused)}>
-            {userPaused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
-          </button>}
+          <div className="lp-hero-rail">
+            <ol role="group" aria-label="Choose a slide">
+              {heroSlides.map((slide, index) => <li key={slide.step}>
+                <button type="button" className={index === activeIndex ? 'is-active' : index < activeIndex ? 'is-past' : undefined} aria-label={`Show slide ${index + 1}: ${slide.title}`} aria-current={index === activeIndex ? 'true' : undefined} onClick={() => showSlide(index)}>
+                  <span className="lp-rail-track" aria-hidden="true">
+                    {index === activeIndex && <span className={`lp-rail-fill${autoplay ? ' is-running' : ''}`} key={`fill-${activeIndex}-${autoplay}`} style={autoplay ? { animationDuration: `${SLIDE_DURATION}ms` } : undefined} />}
+                  </span>
+                  <span className="lp-rail-num" aria-hidden="true">{pad(index + 1)}</span>
+                </button>
+              </li>)}
+            </ol>
+            {motionAllowed && <button type="button" className="lp-rail-toggle" aria-label={userPaused ? 'Play slideshow' : 'Pause slideshow'} onClick={() => setUserPaused((paused) => !paused)}>
+              {userPaused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
+            </button>}
+          </div>
         </div>
       </div>
     </div>
