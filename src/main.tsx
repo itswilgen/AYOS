@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
 import { AuthProvider } from './lib/auth/AuthProvider'
+// Starts listening for the browser's one-time install offer as early as possible (see InstallAppButton).
+import './lib/install/installPrompt'
 import './styles/tokens.css'
 import './styles/global.css'
 

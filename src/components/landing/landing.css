@@ -173,51 +173,17 @@
   line-height: 1.7;
   text-wrap: pretty;
 }
-.lp-search {
+/* Get started + Install app: the two next steps under the lede. */
+.lp-hero-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  max-width: 560px;
+  gap: 12px;
   margin-top: 34px;
-  padding: 8px 8px 8px 18px;
-  border: 1px solid var(--ayos-hairline);
-  border-radius: var(--radius-lg);
-  background: var(--ayos-white);
-  box-shadow: var(--shadow-lift);
-  transition:
-    border-color var(--duration-medium) var(--ease-standard),
-    box-shadow var(--duration-medium) var(--ease-standard);
 }
-.lp-search:focus-within {
-  border-color: var(--ayos-sky);
-  box-shadow: 0 0 0 4px rgb(22 130 189 / 16%), var(--shadow-lift);
-}
-.lp-search > svg {
-  flex: none;
-  color: var(--ayos-text-soft);
-}
-.lp-search input {
-  flex: 1;
-  min-width: 0;
-  height: 48px;
-  border: 0;
-  background: transparent;
-  color: var(--ayos-ink);
-  font: 500 1rem var(--font-body);
-}
-.lp-search input::placeholder {
-  color: var(--ayos-text-soft);
-}
-.lp-search input:focus-visible {
-  outline: none;
-}
-.lp-search input::-webkit-search-cancel-button {
-  display: none;
-}
-.lp-search .button {
-  flex: none;
-  min-height: 48px;
-  border-radius: var(--radius-md);
+.lp-hero-actions .button {
+  min-height: 52px;
+  padding-inline: 26px;
 }
 .lp-popular {
   display: flex;
@@ -1274,15 +1240,8 @@
   .lp-hero-lede {
     font-size: 1.0625rem;
   }
-  .lp-search {
-    flex-wrap: wrap;
-    padding: 6px 6px 6px 14px;
-  }
-  .lp-search input {
-    flex-basis: calc(100% - 40px);
-  }
-  .lp-search .button {
-    width: 100%;
+  .lp-hero-actions .button {
+    flex: 1 1 100%;
   }
   .lp-hero {
     padding-bottom: 48px;

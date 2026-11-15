@@ -1,7 +1,8 @@
-import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, HandCoins, LockKeyhole, Pause, Play, Search } from 'lucide-react'
+import { Fragment, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, BadgeCheck, HandCoins, LockKeyhole, Pause, Play } from 'lucide-react'
 import Button from '../ui/Button'
+import InstallAppButton from '../common/InstallAppButton'
 import { serviceSearchPath } from './landing-links'
 
 const SLIDE_DURATION = 5600
@@ -74,17 +75,10 @@ const heroFacts = [
   { icon: LockKeyhole, title: 'Private contact', detail: 'Hidden until you book' },
 ]
 
-const DEFAULT_PLACEHOLDER = 'What needs fixing? Try “aircon”'
-const typedExamples = ['aircon cleaning', 'a leaking pipe', 'faulty wiring', 'a cracked phone screen', 'solar panels']
-
 const pad = (value: number) => String(value).padStart(2, '0')
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 export default function Hero() {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [inputFocused, setInputFocused] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
   const [carousel, setCarousel] = useState({ index: 0, visited: [0] })
   const [userPaused, setUserPaused] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -122,47 +116,6 @@ export default function Hero() {
     return () => window.clearTimeout(timeoutId)
   }, [autoplay, activeIndex])
 
-  /* Types real example searches into the placeholder. Written to the DOM directly so the hero doesn't re-render per keystroke. */
-  const typePlaceholder = motionAllowed && !inputFocused && !query
-  useEffect(() => {
-    const input = inputRef.current
-    if (!typePlaceholder || !input) return
-    let timeoutId = 0
-    let example = 0
-    let length = 0
-    let deleting = false
-    const tick = () => {
-      const phrase = typedExamples[example]
-      length += deleting ? -1 : 1
-      input.placeholder = length > 0 ? `Try “${phrase.slice(0, length)}”` : 'What needs fixing?'
-      let delay = deleting ? 26 : 64
-      if (!deleting && length === phrase.length) {
-        deleting = true
-        delay = 1700
-      } else if (deleting && length === 0) {
-        deleting = false
-        example = (example + 1) % typedExamples.length
-        delay = 700
-      }
-      timeoutId = window.setTimeout(tick, delay)
-    }
-    timeoutId = window.setTimeout(tick, 2600)
-    return () => {
-      window.clearTimeout(timeoutId)
-      input.placeholder = DEFAULT_PLACEHOLDER
-    }
-  }, [typePlaceholder])
-
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const service = query.trim()
-    if (service) {
-      navigate(serviceSearchPath(service))
-      return
-    }
-    document.getElementById('services')?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' })
-  }
-
   return <section className="lp-hero" aria-labelledby="hero-title">
     {/* The slideshow fills the whole hero; a light gradient from the left keeps the copy readable. */}
     <div className="lp-hero-scene">
@@ -190,12 +143,11 @@ export default function Hero() {
         </h1>
         <p className="lp-hero-lede lp-hero-reveal">From a leaking tap to a laptop that won’t start, find skilled people in your community who can get it sorted.</p>
 
-        <form className="lp-search lp-hero-reveal" role="search" aria-label="Find a service" onSubmit={submit}>
-          <Search size={20} aria-hidden="true" />
-          <label className="sr-only" htmlFor="hero-service">What needs fixing?</label>
-          <input ref={inputRef} id="hero-service" type="search" autoComplete="off" enterKeyHint="search" placeholder={DEFAULT_PLACEHOLDER} value={query} onChange={(event) => setQuery(event.target.value)} onFocus={() => setInputFocused(true)} onBlur={() => setInputFocused(false)} />
-          <Button type="submit">Find help <ArrowRight size={17} aria-hidden="true" /></Button>
-        </form>
+        {/* Two clear next steps: create an account, or install AYOS like an app (full PWA support is planned). */}
+        <div className="lp-hero-actions lp-hero-reveal">
+          <Button href="/signup">Get started <ArrowRight size={17} aria-hidden="true" /></Button>
+          <InstallAppButton />
+        </div>
 
         <div className="lp-popular lp-hero-reveal">
           <span className="lp-popular-label" id="popular-label">Popular</span>
