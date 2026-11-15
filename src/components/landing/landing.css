@@ -105,9 +105,10 @@
   position: relative;
   z-index: 2;
 }
-/* Large screens: the hero content uses the same wider column as the landing header, so they stay aligned. */
+/* Large screens: every landing section uses the same wider column as the landing header and footer,
+   so all edges line up down the page. Text keeps its own readable line lengths (max-width in ch). */
 @media (min-width: 1101px) {
-  .lp-hero > .lp-container {
+  .lp .lp-container {
     width: min(calc(100% - 2 * var(--gutter-wide)), var(--container-wide));
   }
 }

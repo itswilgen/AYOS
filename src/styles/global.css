@@ -178,7 +178,8 @@ button {
   justify-content: space-between;
 }
 @media (min-width: 1101px) {
-  .site-header.is-wide .nav-shell {
+  .site-header.is-wide .nav-shell,
+  .site-footer.is-wide .container {
     width: min(calc(100% - 2 * var(--gutter-wide)), var(--container-wide));
   }
 }
