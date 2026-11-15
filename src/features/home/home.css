@@ -232,8 +232,7 @@
 .search-results-heading { margin: 0 0 19px; }
 /* My requests: heading on the left, the way to start another request on the right. */
 .requests-heading { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
-.requests-browse.button-primary { flex: none; min-height: 46px; background: var(--ayos-sky-action); box-shadow: 0 8px 20px -10px rgb(21 125 182 / 70%); }
-.requests-browse.button-primary:hover { background: var(--ayos-sky-deep); }
+.requests-browse.button-primary { flex: none; min-height: 46px; box-shadow: var(--ayos-action-shadow); }
 .requests-browse:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 3px; }
 .requests-empty { display: grid; justify-items: start; gap: 4px; }
 .requests-empty h2 { margin: 0; }

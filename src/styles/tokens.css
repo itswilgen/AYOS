@@ -38,6 +38,10 @@
   --ayos-sky-panel: #d6e8f4;
   --ayos-sky-highlight: #c4e3f5;
   --ayos-orange-hover: #b2441a;
+  /* Main action buttons (filled) across the whole system. Change the brand action colour here. White text on it is 4.6:1 (AA). */
+  --ayos-action: var(--ayos-orange);
+  --ayos-action-hover: var(--ayos-orange-hover);
+  --ayos-action-shadow: 0 10px 22px -12px rgb(200 79 25 / 70%);
   --ayos-on-brand-soft: #d4e9f4;
   --ayos-on-brand-accent: #bfe6fa;
   --ayos-white-hover: #e9f4fa;

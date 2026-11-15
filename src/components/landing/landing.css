@@ -85,13 +85,9 @@
   color: var(--ayos-sky-deep);
 }
 
-/* Sky blue is the primary action color; orange stays a small accent. */
+/* Main actions use the shared orange action colour (tokens.css); sky stays the brand and highlight colour. */
 .lp .button-primary {
-  background: var(--ayos-sky-action);
-  box-shadow: 0 8px 20px -10px rgb(21 125 182 / 70%);
-}
-.lp .button-primary:hover {
-  background: var(--ayos-sky-deep);
+  box-shadow: var(--ayos-action-shadow);
 }
 
 /* Hero */
@@ -1050,12 +1046,9 @@
   align-items: center;
   gap: 12px 16px;
 }
+/* The closing call to action uses the same orange as every main button; it stands out strongly on the blue band. */
 .lp-cta .button-primary {
-  background: var(--ayos-white);
-  color: var(--ayos-ink);
-}
-.lp-cta .button-primary:hover {
-  background: var(--ayos-white-hover);
+  box-shadow: 0 10px 24px -12px rgb(0 0 0 / 45%);
 }
 .lp-cta .button-text {
   color: var(--ayos-white);

@@ -125,10 +125,10 @@ button {
 }
 .button-primary {
   color: white;
-  background: var(--ayos-orange);
+  background: var(--ayos-action);
 }
 .button-primary:hover {
-  background: #b94719;
+  background: var(--ayos-action-hover);
 }
 .button-secondary {
   background: var(--ayos-white);
@@ -221,13 +221,6 @@ button {
   min-height: 44px;
   padding: 0 16px;
   font-size: 0.84rem;
-}
-/* The public site leads with sky blue for its primary actions. */
-.site-header .button-primary {
-  background: var(--ayos-sky-action);
-}
-.site-header .button-primary:hover {
-  background: var(--ayos-sky-deep);
 }
 .menu-toggle,
 .mobile-nav-layer {
@@ -701,13 +694,8 @@ button {
 .login-shell .social-auth-divider {
   margin: clamp(14px, 2.2vh, 19px) 0 clamp(10px, 1.6vh, 12px);
 }
-/* Sign-in uses the same sky action colour as the landing hero; orange stays a small accent. */
 .auth-page .button-primary {
-  background: var(--ayos-sky-action);
-  box-shadow: 0 8px 20px -10px rgb(21 125 182 / 70%);
-}
-.auth-page .button-primary:hover {
-  background: var(--ayos-sky-deep);
+  box-shadow: var(--ayos-action-shadow);
 }
 .is-login .auth-legal {
   margin: 16px 0 0;
@@ -1154,6 +1142,14 @@ button {
 }
 .security-page {
   max-width: 700px;
+}
+/* Sign-in & security inside View profile: the panel heading already draws the top rule. */
+.account-security-panel {
+  margin-top: 18px;
+  scroll-margin-top: 90px;
+}
+.account-security > .security-section:first-of-type {
+  border-top: 0;
 }
 .security-back {
   display: inline-flex;

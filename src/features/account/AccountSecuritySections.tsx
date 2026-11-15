@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowLeft, Check, Copy, KeyRound, Laptop, Shield, ShieldCheck, Trash2 } from 'lucide-react'
-import FormField from '../components/auth/FormField'
-import PasswordField from '../components/auth/PasswordField'
-import Button from '../components/ui/Button'
-import { apiRequest, authRequest } from '../lib/api/client'
-import { useAuth } from '../lib/auth/useAuth'
-import AccountDataSection from '../features/account/AccountDataSection'
+import { Check, Copy, KeyRound, Laptop, Shield, ShieldCheck, Trash2 } from 'lucide-react'
+import FormField from '../../components/auth/FormField'
+import PasswordField from '../../components/auth/PasswordField'
+import Button from '../../components/ui/Button'
+import { apiRequest, authRequest } from '../../lib/api/client'
+import { useAuth } from '../../lib/auth/useAuth'
+import AccountDataSection from './AccountDataSection'
 
 type AccountSession = { id: string; current: boolean; device: string; ip_address: string | null; last_active_at: string }
 type QrCode = { svg: string; url: string }
 
-export default function AccountSecurityPage() {
+/** Password, two-step login, signed-in devices, and Your data: shown at the bottom of View profile. */
+export default function AccountSecuritySections() {
   const { user, refreshUser } = useAuth()
   const [sessions, setSessions] = useState<AccountSession[]>([])
   const [message, setMessage] = useState('')
@@ -130,9 +130,7 @@ export default function AccountSecurityPage() {
     setCopied(true); window.setTimeout(() => setCopied(false), 1600)
   }
 
-  return <div className="auth-form-shell phase2-page security-page">
-    <Link className="security-back" to="/home"><ArrowLeft size={16} /> Home</Link>
-    <span className="auth-kicker">Take care of your account</span><h1>Sign-in &amp; security.</h1><p className="auth-intro">Update your password, add an authenticator, and review the devices signed in to AYOS.</p>
+  return <div className="account-security">
     {message && <p className="form-notice" role="status">{message}</p>}{error && <p className="form-notice security-error" role="alert">{error}</p>}
 
     <section className="security-section"><div className="security-section-heading"><span className="account-summary-icon"><KeyRound size={18} /></span><div><h2>Password</h2><p>Choose a unique passphrase with 12 or more characters.</p></div></div>
