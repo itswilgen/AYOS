@@ -1,0 +1,212 @@
+/* Home address prompt: a native <dialog> for a fresh account with no saved address.
+   Desktop: a centred card. Phones: a bottom sheet. Header and footer stay put; only the form scrolls. */
+
+.address-prompt {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--ayos-line);
+  border-radius: var(--radius-xl);
+  background: var(--ayos-white);
+  color: var(--ayos-ink);
+  box-shadow: 0 1px 2px rgb(14 27 36 / 8%), 0 32px 64px -24px rgb(11 58 90 / 45%);
+}
+.address-prompt::backdrop {
+  background: rgb(8 30 46 / 48%);
+}
+.address-prompt[open] {
+  display: flex;
+}
+.address-prompt-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+}
+
+.address-prompt-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid var(--ayos-line);
+  background: var(--ayos-wash), var(--ayos-canvas);
+}
+.address-prompt-mark {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--ayos-white);
+  color: var(--ayos-sky-deep);
+  box-shadow: 0 1px 2px rgb(14 27 36 / 8%);
+}
+.address-prompt-kicker {
+  margin: 0;
+  color: var(--ayos-sky-deep);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.address-prompt-head h2 {
+  margin: 4px 0 6px;
+  font: 700 clamp(1.5rem, 3vw, 1.875rem) / 1 var(--font-display);
+  text-transform: uppercase;
+}
+.address-prompt-head p:not(.address-prompt-kicker) {
+  max-width: 50ch;
+  margin: 0;
+  color: var(--ayos-body);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+.address-prompt-close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ayos-muted);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.address-prompt-close:hover {
+  background: var(--ayos-white);
+  color: var(--ayos-ink);
+}
+
+.address-prompt-body {
+  display: grid;
+  gap: 4px;
+  min-height: 0;
+  padding: 8px 24px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.address-prompt-status {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  margin: 0;
+  padding: 32px 0;
+  color: var(--ayos-text-soft);
+}
+.address-prompt-status p {
+  margin: 0;
+}
+.address-prompt-retry,
+.address-prompt-later {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--ayos-line);
+  border-radius: var(--radius-md);
+  background: var(--ayos-white);
+  color: var(--ayos-sky-deep);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+.address-prompt-retry:hover,
+.address-prompt-later:hover {
+  border-color: var(--ayos-sky);
+  background: var(--ayos-sky-soft);
+}
+
+.address-prompt-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--ayos-line);
+  background: var(--ayos-white);
+}
+.address-prompt-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ayos-muted);
+  font-size: 0.8125rem;
+}
+.address-prompt-note svg {
+  flex: none;
+  color: var(--ayos-sky-deep);
+}
+.address-prompt-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+.address-prompt .address-prompt-save.button-primary {
+  min-height: 44px;
+  background: var(--ayos-sky-action);
+  box-shadow: 0 10px 22px -12px rgb(21 125 182 / 80%);
+}
+.address-prompt .address-prompt-save.button-primary:hover:not(:disabled) {
+  background: var(--ayos-sky-deep);
+}
+.address-prompt :is(button, select, input):focus-visible {
+  outline: 2px solid var(--ayos-sky-action);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .address-prompt[open] {
+    animation: address-prompt-in var(--duration-slow) var(--ease-out-expo) both;
+  }
+  .address-prompt[open]::backdrop {
+    animation: address-prompt-fade var(--duration-medium) var(--ease-standard) both;
+  }
+}
+@keyframes address-prompt-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes address-prompt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Phones: a bottom sheet with full-width buttons. */
+@media (max-width: 600px) {
+  .address-prompt {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    margin: auto 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+  .address-prompt-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 20px 18px 14px;
+  }
+  .address-prompt-mark {
+    display: none;
+  }
+  .address-prompt-body {
+    padding: 4px 18px 12px;
+  }
+  .address-prompt-foot {
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+  }
+  .address-prompt-actions {
+    width: 100%;
+  }
+  .address-prompt-actions > * {
+    flex: 1;
+    justify-content: center;
+  }
+}

@@ -5,6 +5,7 @@ import Button from '../../components/ui/Button'
 import HomeSearch from './components/HomeSearch'
 import RequestTicket from './components/RequestTicket'
 import ServiceCategories from './components/ServiceCategories'
+import AddressPrompt from './components/AddressPrompt'
 import { locationLabel, serviceSearchPath } from './home-links'
 import { useAuth } from '../../lib/auth/useAuth'
 import { locationsService } from '../../services/locations.service'
@@ -28,6 +29,8 @@ export default function HomePage() {
   const [categoryState, setCategoryState] = useState<LoadState>('loading')
   const [locations, setLocations] = useState<ServiceLocationSummary[]>([])
   const [locationsLoaded, setLocationsLoaded] = useState(false)
+  /** True only when saved locations loaded successfully, so a failed request never looks like "no address yet". */
+  const [locationsKnown, setLocationsKnown] = useState(false)
   const [requests, setRequests] = useState<CustomerRequest[]>([])
   const [requestState, setRequestState] = useState<LoadState>('loading')
   const { hash } = useLocation()
@@ -42,7 +45,10 @@ export default function HomePage() {
       if (!active) return
       if (categoryResult.status === 'fulfilled') setCategories(categoryResult.value)
       setCategoryState(categoryResult.status === 'fulfilled' ? 'ready' : 'error')
-      if (locationResult.status === 'fulfilled') setLocations(locationResult.value)
+      if (locationResult.status === 'fulfilled') {
+        setLocations(locationResult.value)
+        setLocationsKnown(true)
+      }
       setLocationsLoaded(true)
       if (requestResult.status === 'fulfilled') setRequests(requestResult.value)
       setRequestState(requestResult.status === 'fulfilled' ? 'ready' : 'error')
@@ -103,6 +109,9 @@ export default function HomePage() {
       <button type="button" onClick={retryCategories}>Try again</button>
     </section>}
     {categoryState === 'ready' && categories.length > 0 && <ServiceCategories categories={categories} location={location} />}
+
+    {/* A fresh account has no saved address yet: ask for it right away. */}
+    {locationsKnown && locations.length === 0 && <AddressPrompt onSaved={(saved) => setLocations([saved])} />}
 
     <section className="home-invite" aria-labelledby="home-invite-title">
       <div>
