@@ -304,7 +304,8 @@
   z-index: 0;
   inset: 0;
   overflow: hidden;
-  background: var(--ayos-deep-sky);
+  /* Same canvas as the shade, so nothing darker shows through where the photo doesn't reach. */
+  background: var(--ayos-paper);
 }
 .lp-hero-media {
   position: absolute;
@@ -315,6 +316,9 @@
 @media (min-width: 861px) {
   .lp-hero-media {
     left: 28%;
+    /* Fade the photo's left edge in, so its start never shows as a line through the shade. */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 22%);
   }
 }
 .lp-hero-media img {
