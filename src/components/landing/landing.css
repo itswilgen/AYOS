@@ -356,7 +356,9 @@
       rgb(231 241 248 / 94%) 34%,
       rgb(231 241 248 / 72%) 46%,
       rgb(231 241 248 / 28%) 58%,
-      rgb(231 241 248 / 0%) 70%);
+      rgb(231 241 248 / 0%) 70%),
+    /* Under the light gradient: the photo darkens toward the bottom, behind the slide caption on the right. */
+    linear-gradient(180deg, rgb(8 30 46 / 0%) 42%, rgb(8 30 46 / 45%) 68%, rgb(8 30 46 / 82%) 100%);
   pointer-events: none;
 }
 
@@ -371,13 +373,57 @@
   min-width: 0;
   padding-block: 8px 0;
 }
+/* The slide text sits straight on the photo (no card). The shade's dark corner, plus a soft text shadow,
+   keeps white text readable on bright photos; the rail and pause button are white and see-through to match. */
 .lp-hero-card {
-  width: min(400px, 100%);
-  padding: 20px 22px 14px;
-  border: 1px solid rgb(255 255 255 / 60%);
-  border-radius: var(--radius-lg);
+  position: relative;
+  isolation: isolate;
+  width: min(420px, 100%);
+  padding: 0 0 4px;
+  color: var(--ayos-white);
+  text-shadow: 0 1px 2px rgb(8 30 46 / 55%), 0 2px 18px rgb(8 30 46 / 45%);
+}
+
+.lp-hero-card .lp-hero-caption {
+  color: var(--ayos-white);
+}
+.lp-hero-card .lp-hero-caption-step {
+  color: var(--ayos-on-brand-accent);
+}
+.lp-hero-card .lp-hero-caption p {
+  color: rgb(255 255 255 / 92%);
+}
+.lp-hero-card .lp-hero-rail ol button {
+  color: rgb(255 255 255 / 72%);
+}
+.lp-hero-card .lp-hero-rail ol button:hover,
+.lp-hero-card .lp-hero-rail ol button.is-active {
+  color: var(--ayos-white);
+}
+.lp-hero-card .lp-rail-track {
+  background: rgb(255 255 255 / 30%);
+}
+.lp-hero-card .lp-hero-rail ol button:hover .lp-rail-track {
+  background: rgb(255 255 255 / 50%);
+}
+.lp-hero-card .lp-hero-rail ol button.is-past .lp-rail-track {
+  background: rgb(255 255 255 / 70%);
+}
+.lp-hero-card .lp-rail-fill {
   background: var(--ayos-white);
-  box-shadow: 0 1px 2px rgb(14 27 36 / 8%), 0 24px 48px -20px rgb(11 58 90 / 45%);
+}
+.lp-hero-card .lp-rail-toggle {
+  border-color: rgb(255 255 255 / 55%);
+  background: rgb(8 30 46 / 30%);
+  color: var(--ayos-white);
+}
+.lp-hero-card .lp-rail-toggle:hover {
+  border-color: var(--ayos-white);
+  background: rgb(8 30 46 / 50%);
+  color: var(--ayos-white);
+}
+.lp-hero-card :is(button):focus-visible {
+  outline-color: var(--ayos-white);
 }
 
 /* Signature: the status a customer would see in AYOS at this step. */
@@ -1127,7 +1173,9 @@
     height: clamp(420px, 70vw, 560px);
   }
   .lp-hero-shade {
-    background: linear-gradient(180deg, var(--ayos-paper) 0%, rgb(231 241 248 / 0%) 34%);
+    background:
+      linear-gradient(180deg, rgb(8 30 46 / 0%) 22%, rgb(8 30 46 / 58%) 50%, rgb(8 30 46 / 86%) 100%),
+      linear-gradient(180deg, var(--ayos-paper) 0%, rgb(231 241 248 / 0%) 34%);
   }
   .lp-hero-visual {
     min-height: clamp(360px, 62vw, 500px);
@@ -1249,7 +1297,7 @@
     border-left: 0;
   }
   .lp-hero-card {
-    padding: 18px 18px 12px;
+    padding: 0 0 4px;
   }
   .lp-hero-caption h2 {
     font-size: 1.5rem;
