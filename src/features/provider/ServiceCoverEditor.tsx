@@ -80,7 +80,7 @@ export default function ServiceCoverEditor({ existing, draft, onChange, preview,
     <CoverStatus existing={existing} draft={draft} serviceActive={serviceActive} hiddenReason={hiddenReason} />
 
     {image
-      ? <figure className="provider-cover-preview"><figcaption>Preview: how customers see it on Home</figcaption><ServiceCoverCard service={{ ...preview, cover: { image, ...draft.layout } }} /></figure>
+      ? <figure className="provider-cover-preview"><figcaption>Preview: how customers see your service</figcaption><ServiceCoverCard service={{ ...preview, cover: { image, ...draft.layout } }} /></figure>
       : <label className={dragging ? 'provider-cover-drop is-dragging' : 'provider-cover-drop'} onDragOver={(event) => { event.preventDefault(); setDragging(true) }} onDragLeave={() => setDragging(false)} onDrop={drop}>
         <ImagePlus size={26} aria-hidden="true" />
         <strong>{preparing ? 'Preparing image…' : 'Upload a photo or poster'}</strong>

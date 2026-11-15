@@ -1,6 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { ArrowRight, LockKeyhole, Mail } from 'lucide-react'
 import ReCAPTCHA from 'react-google-recaptcha'
 import FormField from '../components/auth/FormField'
 import GoogleAuthButton from '../components/auth/GoogleAuthButton'
@@ -103,7 +103,7 @@ export default function LoginPage() {
     <div className="auth-form-shell login-shell">
       <span className="auth-kicker">Welcome back</span>
       <h1>Good to see you again.</h1>
-      <p className="auth-intro">Sign in to pick up where you left off. Your account stays yours on every device.</p>
+      <p className="auth-intro">Sign in to pick up where you left off.</p>
 
       {googleMessage && <p className="form-notice" role="alert">{googleMessage}</p>}
 
@@ -148,28 +148,14 @@ export default function LoginPage() {
 
       {notice && <p className="form-notice" role="alert">{notice}</p>}
 
-       <Button type="submit" className="form-submit"
-          disabled={busy || !captchaToken}
-          aria-busy={busy}
-        >
-          {busy ? 'Signing you in…' : 'Sign in'} {!busy && <ArrowRight size={17} />}
+        {/* Kept clickable: a missing CAPTCHA is reported next to it on submit instead of silently disabling the button. */}
+        <Button type="submit" className="form-submit" disabled={busy} aria-busy={busy}>
+          {busy ? 'Signing you in…' : 'Sign in'} {!busy && <ArrowRight size={17} aria-hidden="true" />}
         </Button>
-
-        {!captchaToken && (
-          <p className="captcha-hint">
-            {recaptchaSiteKey
-              ? 'Complete the CAPTCHA above to enable sign-in options.'
-              : 'Sign-in is unavailable until CAPTCHA verification is configured.'}
-          </p>
-        )}
       </form>
 
       <GoogleAuthButton captchaVerified={Boolean(captchaToken)} />
       <p className="auth-switch">New to AYOS? <Link to="/signup">Create an account</Link></p>
-      <div className="auth-security-note login-security-note">
-        <ShieldCheck size={16} aria-hidden="true" />
-        <p>Your sign-in is protected with a secure AYOS session. We never save your password in your browser.</p>
-      </div>
     </div>
   )
 }

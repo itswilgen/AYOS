@@ -1,5 +1,5 @@
 import { apiRequest, backendUrl } from '../lib/api/client'
-import type { CustomerRequest, FeaturedService, NotificationSummary, ProviderSummary, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
+import type { CustomerRequest, NotificationSummary, ProviderSummary, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
 
 type ApiCategory = { id: number; slug: string; name: string; description: string }
 type ApiProvider = { id: string; displayName: string; specialties: string[]; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
@@ -31,7 +31,6 @@ const mapProvider = (provider: ApiProvider): ProviderSummary => ({
   verificationStatus: provider.verified ? 'verified' : 'unverified', availability: 'available',
   initials: provider.displayName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(),
   photo: provider.photo ? absoluteMedia(provider.photo) : null,
-  sample: false,
 })
 
 export const servicesService = {
@@ -47,10 +46,6 @@ export const providersService = {
     const result = await apiRequest<{ data: ApiProvider[] }>(`/providers?${new URLSearchParams({ providerId: id })}`)
     return result.data[0] ? mapProvider(result.data[0]) : null
   },
-  async getFeaturedProviders(): Promise<ProviderSummary[]> {
-    const result = await apiRequest<{ data: ApiProvider[] }>('/providers')
-    return result.data.map(mapProvider)
-  },
   async searchProviders(filters: ServiceSearchFilters & { locationLabel?: string; cityCode?: string }): Promise<ProviderSummary[]> {
     const params = new URLSearchParams()
     const term = filters.query?.trim().toLowerCase()
@@ -64,13 +59,6 @@ export const providersService = {
     if (filters.cityCode) params.set('cityCode', filters.cityCode)
     const result = await apiRequest<{ data: ApiProvider[] }>(`/providers?${params}`)
     return result.data.map(mapProvider)
-  },
-}
-
-export const featuredServicesService = {
-  async getFeatured(cityCode?: string): Promise<FeaturedService[]> {
-    const result = await apiRequest<{ data: FeaturedService[] }>(`/featured-services${cityCode ? `?${new URLSearchParams({ cityCode })}` : ''}`)
-    return result.data.map((item) => ({ ...item, cover: { ...item.cover, image: absoluteMedia(item.cover.image) } }))
   },
 }
 

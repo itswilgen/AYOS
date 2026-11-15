@@ -161,8 +161,10 @@
 .legal-summary {
   margin: 0 0 var(--space-5);
   padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--ayos-line);
+  border-left: 3px solid var(--ayos-sky-action);
   border-radius: var(--radius-md);
-  background: var(--ayos-sky-soft);
+  background: var(--ayos-white);
   color: var(--ayos-ink);
   font-size: 0.9375rem;
   font-weight: 500;

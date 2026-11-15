@@ -17,7 +17,7 @@
   --admin-orange-hover: #ac3f11;
   --admin-red: #b43f32;
   --admin-green: #1f8a5b;
-  --admin-canvas: #e7f1f8;
+  --admin-canvas: var(--ayos-canvas);
   --admin-topbar: rgb(231 241 248 / 86%);
   --admin-wash: var(--ayos-sky-panel);
   --admin-tile: #f6fafd;

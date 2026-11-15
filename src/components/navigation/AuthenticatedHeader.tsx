@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { Bell, ChevronDown, CircleUserRound, LogOut, MapPin, Settings2, UserRound, X } from 'lucide-react'
 import Brand from '../common/Brand'
+import ServicesMenu from './ServicesMenu'
 import { useAuth } from '../../lib/auth/useAuth'
 import { useInboxUnread } from '../../lib/hooks/useInboxUnread'
 import { notificationsService } from '../../services/home.service'
@@ -10,7 +11,6 @@ import type { NotificationSummary } from '../../types/marketplace'
 export default function AuthenticatedHeader() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
   const [profileOpen, setProfileOpen] = useState(false)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationSummary[]>([])
@@ -61,13 +61,7 @@ export default function AuthenticatedHeader() {
       <Brand />
       <nav className="app-primary-nav" aria-label="Customer navigation">
         <NavLink to="/home" end>Home</NavLink>
-        <Link className={location.pathname === '/home' && location.hash === '#services' ? 'active' : ''} to="/home#services" onClick={(event) => {
-          if (location.pathname === '/home') {
-            event.preventDefault()
-            navigate('/home#services')
-            document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }
-        }}>Services</Link>
+        <ServicesMenu />
         <NavLink to="/my-requests">My requests</NavLink>
         <NavLink to="/messages" aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : undefined}>Messages{unreadMessages > 0 && <span className="app-nav-count" aria-hidden="true">{unreadMessages > 99 ? '99+' : unreadMessages}</span>}</NavLink>
       </nav>

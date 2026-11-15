@@ -9,7 +9,7 @@
   --pv-night: var(--ayos-deep-sky); --pv-night-deep: #072a43; --pv-night-line: var(--ayos-deep-sky-hairline); --pv-night-hover: rgb(232 238 241 / 8%);
   --pv-on-night: var(--ayos-on-deep-sky); --pv-on-night-soft: var(--ayos-on-deep-sky-soft); --pv-on-night-quiet: #8db0c4; --pv-night-accent: var(--ayos-sky-light);
   --pv-frame: radial-gradient(120% 34% at 0% 0%, rgb(124 199 234 / 11%), transparent 70%), linear-gradient(180deg, var(--pv-night) 0%, #08304d 55%, var(--pv-night-deep) 100%);
-  --pv-canvas: #e7f1f8; --pv-topbar: rgb(231 241 248 / 86%); --pv-band: #dbebf5; --pv-wash: var(--ayos-sky-panel); --pv-divider: #e3edf3; --pv-line-strong: #b9d6e7;
+  --pv-canvas: var(--ayos-canvas); --pv-topbar: rgb(231 241 248 / 86%); --pv-band: #dbebf5; --pv-wash: var(--ayos-sky-panel); --pv-divider: #e3edf3; --pv-line-strong: #b9d6e7;
   --pv-kicker: #5f7684; --pv-pill-blue: #dbecf7; --pv-pill-blue-ink: #0f5a82;
   /* Zero metrics read as "nothing yet": 3.7:1 on white, used only at display size. Live = the switch's on-track, 3.9:1 on the navy. */
   --pv-zero: #6f8899; --pv-attention-wash: var(--ayos-orange-soft); --pv-live: #2fa774; --pv-slot: linear-gradient(180deg, #f7fbfd, #f1f7fb);

@@ -1,12 +1,10 @@
 import { useEffect, useState, type CSSProperties } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowRight, MapPin } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import HomeSearch from './components/HomeSearch'
 import RequestTicket from './components/RequestTicket'
 import ServiceCategories from './components/ServiceCategories'
-import FeaturedServices from './components/FeaturedServices'
-import ProviderShowcase from './components/ProviderShowcase'
 import { locationLabel, serviceSearchPath } from './home-links'
 import { useAuth } from '../../lib/auth/useAuth'
 import { locationsService } from '../../services/locations.service'
@@ -32,6 +30,7 @@ export default function HomePage() {
   const [locationsLoaded, setLocationsLoaded] = useState(false)
   const [requests, setRequests] = useState<CustomerRequest[]>([])
   const [requestState, setRequestState] = useState<LoadState>('loading')
+  const { hash } = useLocation()
 
   useEffect(() => {
     let active = true
@@ -50,6 +49,13 @@ export default function HomePage() {
     })
     return () => { active = false }
   }, [])
+
+  // The bottom nav's Services tab links to /home#services; scroll there once the grid has rendered.
+  useEffect(() => {
+    if (hash !== '#services' || categoryState !== 'ready') return
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    document.getElementById('services')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+  }, [hash, categoryState])
 
   const retryCategories = () => {
     setCategoryState('loading')
@@ -97,10 +103,6 @@ export default function HomePage() {
       <button type="button" onClick={retryCategories}>Try again</button>
     </section>}
     {categoryState === 'ready' && categories.length > 0 && <ServiceCategories categories={categories} location={location} />}
-
-    <FeaturedServices location={location} ready={locationsLoaded} />
-
-    <ProviderShowcase location={location} />
 
     <section className="home-invite" aria-labelledby="home-invite-title">
       <div>

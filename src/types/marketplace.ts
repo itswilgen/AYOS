@@ -29,7 +29,6 @@ export interface ProviderSummary {
   verificationStatus: 'verified' | 'unverified'
   availability: 'available' | 'busy' | 'offline'
   initials: string
-  sample: boolean
   photo?: string | null
 }
 

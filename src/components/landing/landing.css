@@ -1,4 +1,4 @@
-/* AYOS landing page — warm paper base, ink type, sky brand, orange reserved for the primary action. */
+/* AYOS landing page — sky canvas base, ink type, sky brand, orange reserved for small accents. */
 .lp {
   --lp-gutter: clamp(20px, 4vw, 32px);
   --lp-section-space: clamp(80px, 10vw, 128px);
@@ -100,7 +100,7 @@
   isolation: isolate;
   overflow: hidden;
   padding: calc(84px + clamp(40px, 6vh, 72px)) 0 clamp(56px, 8vh, 96px);
-  background: var(--ayos-paper);
+  background: var(--ayos-wash), var(--ayos-paper);
 }
 .lp-hero-grid {
   display: grid;

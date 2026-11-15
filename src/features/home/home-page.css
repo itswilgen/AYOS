@@ -1,4 +1,4 @@
-/* Customer home: a deep-sky search band, the request ticket breaking out of it, photo-led trades, and local pros. */
+/* Customer home: a deep-sky search band, the request ticket breaking out of it, and photo-led trades. */
 .app-main:has(.home-page) {
   background: var(--ayos-paper);
 }
@@ -525,10 +525,6 @@
   line-height: 1.6;
   text-wrap: pretty;
 }
-.home-lede .home-sample-label {
-  margin-right: 6px;
-  vertical-align: 1px;
-}
 .home-services-loading {
   min-height: 160px;
   display: grid;
@@ -622,159 +618,6 @@
   transform: none;
 }
 
-/* Providers */
-.home-pro-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.home-pro {
-  position: relative;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--ayos-hairline);
-  border-radius: var(--radius-lg);
-  background: var(--ayos-white);
-  transition:
-    transform var(--duration-medium) var(--ease-out-expo),
-    box-shadow var(--duration-medium) var(--ease-standard);
-}
-.home-pro:hover {
-  box-shadow: var(--shadow-lift);
-  transform: translateY(-2px);
-}
-.home-pro:has(.home-pro-link:focus-visible) {
-  outline: 3px solid var(--ayos-orange);
-  outline-offset: 3px;
-}
-.home-pro-photo {
-  position: relative;
-  flex: none;
-  aspect-ratio: 3 / 2;
-  overflow: hidden;
-  background: var(--ayos-sky-panel);
-}
-.home-pro-photo img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  transition: transform var(--duration-slow) var(--ease-out-expo);
-}
-.home-pro:hover .home-pro-photo img {
-  transform: scale(1.04);
-}
-.home-pro-initials {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--ayos-sky-deep);
-  font: 700 2.25rem var(--font-display);
-}
-.home-pro-body {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-  padding: 16px 16px 0;
-}
-.home-pro-info {
-  display: grid;
-  gap: 6px;
-}
-.home-pro-info p {
-  margin: 0;
-}
-.home-pro-trade {
-  color: var(--ayos-sky-deep);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-.home-pro h3 {
-  margin: 0;
-  font: 700 1rem / 1.3 var(--font-body);
-  text-transform: none;
-}
-.home-pro-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  color: var(--ayos-text);
-  font-size: 0.8125rem;
-}
-.home-pro-stats > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.home-pro-rating svg {
-  color: var(--ayos-orange-bright);
-}
-.home-pro-rating strong {
-  color: var(--ayos-ink);
-}
-.home-pro-verified,
-.home-pro-area {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8125rem;
-}
-.home-pro-verified {
-  color: var(--ayos-success);
-  font-weight: 600;
-}
-.home-pro-area {
-  color: var(--ayos-text-soft);
-}
-.home-pro-area svg {
-  flex: none;
-}
-.home-pro-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 52px;
-  border-top: 1px solid var(--ayos-hairline);
-  color: var(--ayos-sky-deep);
-  font-size: 0.875rem;
-  font-weight: 700;
-}
-.home-pro-link::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
-.home-pro-link:focus-visible {
-  outline: 0;
-}
-.home-pro-link svg {
-  transition: transform var(--duration-fast) var(--ease-standard);
-}
-.home-pro:hover .home-pro-link svg {
-  transform: translateX(3px);
-}
-
-/* Featured covers: reviewed photos and posters from providers in the customer's city */
-.home-featured-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 /* Provider invitation */
 .home-invite {
   display: flex;
@@ -840,36 +683,6 @@
   .home-service-grid {
     gap: 12px;
   }
-  .home-pro-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .home-pro-grid > li:nth-child(n + 7) {
-    display: none;
-  }
-  .home-featured-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-/* On phones the featured row swipes sideways so each poster stays large enough to read. */
-@media (max-width: 840px) {
-  .home-featured-grid {
-    display: flex;
-    gap: 12px;
-    margin-inline: -16px;
-    padding: 4px 16px 12px;
-    overflow-x: auto;
-    scroll-padding-inline: 16px;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-  .home-featured-grid::-webkit-scrollbar {
-    display: none;
-  }
-  .home-featured-grid > li {
-    flex: 0 0 min(80%, 320px);
-    scroll-snap-align: start;
-  }
 }
 
 @media (max-width: 860px) {
@@ -925,12 +738,6 @@
   .home-service-go {
     display: none;
   }
-  .home-pro-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .home-pro-grid > li:nth-child(n + 5) {
-    display: none;
-  }
 }
 
 @media (max-width: 600px) {
@@ -955,27 +762,6 @@
   }
   .home-section-head {
     margin-bottom: 18px;
-  }
-  .home-pro-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-  .home-pro {
-    flex-direction: row;
-  }
-  .home-pro-photo {
-    width: 112px;
-    aspect-ratio: auto;
-  }
-  .home-pro-body {
-    gap: 8px;
-    padding: 14px 14px 0;
-  }
-  .home-pro-info {
-    gap: 4px;
-  }
-  .home-pro-link {
-    min-height: 44px;
   }
   .home-invite .button {
     width: 100%;

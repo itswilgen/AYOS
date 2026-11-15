@@ -12,14 +12,19 @@
   --ayos-gradient-soft-surface: linear-gradient(145deg, #fff 4%, #f3faff 100%);
   --ayos-ink: #18232b;
   --ayos-body: #56636c;
-  --ayos-muted: #626e76;
-  --ayos-line: #e2e6e6;
-  --ayos-canvas: #f8f9f8;
+  /* Darkened from #626e76 so small muted text keeps AA contrast on the deeper sky wash. */
+  --ayos-muted: #5a666e;
+  /* Blue-grey hairline: neutral grey looks dirty on the sky canvas. */
+  --ayos-line: #d6e4ee;
+  /* One sky canvas for the whole system (public site, sign-in, customer app, provider, admin); cards stay white. */
+  --ayos-canvas: #e7f1f8;
+  /* Signature: a slightly deeper sky at the top of every page that fades into the canvas, like a morning sky. */
+  --ayos-wash: linear-gradient(180deg, #d5e8f5 0, rgb(231 241 248 / 0%) 640px);
   --ayos-white: #fff;
   --ayos-success: #18785c;
   --ayos-error: #b43f32;
-  --ayos-paper: #eef5f9;
-  --ayos-paper-deep: #e2edf4;
+  --ayos-paper: var(--ayos-canvas);
+  --ayos-paper-deep: #d9e7f1;
   --ayos-text: #4f5b63;
   --ayos-text-soft: #5d6870;
   --ayos-hairline: rgb(24 35 43 / 12%);
@@ -29,7 +34,8 @@
   --ayos-on-deep-sky-soft: #b6cad6;
   --ayos-deep-sky-hairline: rgb(232 238 241 / 16%);
   --ayos-sky-light: #7cc7ea;
-  --ayos-sky-panel: #e3f0f7;
+  /* A step deeper than the canvas so panels and placeholders still read on it. */
+  --ayos-sky-panel: #d6e8f4;
   --ayos-sky-highlight: #c4e3f5;
   --ayos-orange-hover: #b2441a;
   --ayos-on-brand-soft: #d4e9f4;
