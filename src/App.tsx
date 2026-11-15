@@ -18,7 +18,6 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'))
 const MfaChallengePage = lazy(() => import('./pages/MfaChallengePage'))
-const AccountSecurityPage = lazy(() => import('./pages/AccountSecurityPage'))
 const AddressSetupPage = lazy(() => import('./pages/AddressSetupPage'))
 const HomePage = lazy(() => import('./features/home/HomePage'))
 const SearchResultsPage = lazy(() => import('./features/services/SearchResultsPage'))
@@ -86,7 +85,7 @@ export default function App() {
           <Route path="/account/address" element={<Suspense fallback={routeFallback}><AddressSetupPage /></Suspense>} />
           <Route path="/provider/apply" element={<Suspense fallback={routeFallback}><ProviderApplyPage /></Suspense>} />
         </Route>
-        <Route path="/account/security" element={<Suspense fallback={routeFallback}><AccountSecurityPage /></Suspense>} />
+        <Route path="/account/security" element={<Navigate to="/account/profile#security" replace />} />
       </Route>
       <Route element={<RequireAuth verified />}>
         <Route path="/provider" element={<Suspense fallback={routeFallback}><ProviderLayout /></Suspense>}>

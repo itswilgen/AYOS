@@ -85,13 +85,9 @@
   color: var(--ayos-sky-deep);
 }
 
-/* Sky blue is the primary action color; orange stays a small accent. */
+/* Main actions use the shared orange action colour (tokens.css); sky stays the brand and highlight colour. */
 .lp .button-primary {
-  background: var(--ayos-sky-action);
-  box-shadow: 0 8px 20px -10px rgb(21 125 182 / 70%);
-}
-.lp .button-primary:hover {
-  background: var(--ayos-sky-deep);
+  box-shadow: var(--ayos-action-shadow);
 }
 
 /* Hero */
@@ -99,12 +95,26 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: calc(84px + clamp(40px, 6vh, 72px)) 0 clamp(56px, 8vh, 96px);
-  background: var(--ayos-wash), var(--ayos-paper);
+  display: flex;
+  align-items: stretch;
+  min-height: min(900px, max(680px, 100svh));
+  padding: calc(84px + clamp(40px, 6vh, 72px)) 0 clamp(40px, 6vh, 64px);
+  background: var(--ayos-paper);
+}
+.lp-hero > .lp-container {
+  position: relative;
+  z-index: 2;
+}
+/* Large screens: every landing section uses the same wider column as the landing header and footer,
+   so all edges line up down the page. Text keeps its own readable line lengths (max-width in ch). */
+@media (min-width: 1101px) {
+  .lp .lp-container {
+    width: min(calc(100% - 2 * var(--gutter-wide)), var(--container-wide));
+  }
 }
 .lp-hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   align-items: center;
   gap: clamp(40px, 5.5vw, 88px);
 }
@@ -163,51 +173,17 @@
   line-height: 1.7;
   text-wrap: pretty;
 }
-.lp-search {
+/* Get started + Install app: the two next steps under the lede. */
+.lp-hero-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  max-width: 560px;
+  gap: 12px;
   margin-top: 34px;
-  padding: 8px 8px 8px 18px;
-  border: 1px solid var(--ayos-hairline);
-  border-radius: var(--radius-lg);
-  background: var(--ayos-white);
-  box-shadow: var(--shadow-lift);
-  transition:
-    border-color var(--duration-medium) var(--ease-standard),
-    box-shadow var(--duration-medium) var(--ease-standard);
 }
-.lp-search:focus-within {
-  border-color: var(--ayos-sky);
-  box-shadow: 0 0 0 4px rgb(22 130 189 / 16%), var(--shadow-lift);
-}
-.lp-search > svg {
-  flex: none;
-  color: var(--ayos-text-soft);
-}
-.lp-search input {
-  flex: 1;
-  min-width: 0;
-  height: 48px;
-  border: 0;
-  background: transparent;
-  color: var(--ayos-ink);
-  font: 500 1rem var(--font-body);
-}
-.lp-search input::placeholder {
-  color: var(--ayos-text-soft);
-}
-.lp-search input:focus-visible {
-  outline: none;
-}
-.lp-search input::-webkit-search-cancel-button {
-  display: none;
-}
-.lp-search .button {
-  flex: none;
-  min-height: 48px;
-  border-radius: var(--radius-md);
+.lp-hero-actions .button {
+  min-height: 52px;
+  padding-inline: 26px;
 }
 .lp-popular {
   display: flex;
@@ -294,26 +270,29 @@
   font-weight: 700;
 }
 
-/* The photo sits in a rounded frame; a job-status pill and caption ride on it, the progress rail sits below. */
-.lp-hero-visual {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-.lp-hero-frame {
-  position: relative;
+/* Full-bleed slideshow behind the whole hero. The shade is the readability layer:
+   solid sky-white behind the copy, fading to clear by ~70%, plus a soft top band under the header links. */
+.lp-hero-scene {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
   overflow: hidden;
-  aspect-ratio: 4 / 5;
-  max-height: min(640px, calc(100svh - 230px));
-  min-height: 460px;
-  width: 100%;
-  border-radius: var(--radius-xl);
-  background: var(--ayos-deep-sky);
-  box-shadow: 0 1px 2px rgb(14 27 36 / 8%), 0 30px 60px -30px rgb(11 58 90 / 45%);
+  /* Same canvas as the shade, so nothing darker shows through where the photo doesn't reach. */
+  background: var(--ayos-paper);
 }
 .lp-hero-media {
   position: absolute;
   inset: 0;
+}
+/* Desktop: the photos are portrait, so a full-width photo puts its subject mid-screen, under the headline.
+   Starting the photo at 28% (still under the solid part of the shade) moves people to the right and crops less. */
+@media (min-width: 861px) {
+  .lp-hero-media {
+    left: 28%;
+    /* Fade the photo's left edge in, so its start never shows as a line through the shade. */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 22%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 22%);
+  }
 }
 .lp-hero-media img {
   position: absolute;
@@ -322,9 +301,9 @@
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: center 30%;
+  object-position: 70% 30%;
   opacity: 0;
-  transform: scale(1.05);
+  transform: scale(1.04);
   transition:
     opacity 900ms var(--ease-standard),
     transform 2400ms var(--ease-out-expo);
@@ -333,30 +312,89 @@
   opacity: 1;
   transform: scale(1);
 }
-/* Shade only the lower third, where the caption sits, so the photo stays bright. */
-.lp-hero-frame::after {
-  content: "";
+.lp-hero-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgb(8 30 46 / 0%) 52%, rgb(8 30 46 / 78%) 100%);
+  background:
+    linear-gradient(180deg, rgb(231 241 248 / 78%) 0, rgb(231 241 248 / 0%) 150px),
+    linear-gradient(90deg,
+      rgb(231 241 248 / 97%) 0%,
+      rgb(231 241 248 / 94%) 34%,
+      rgb(231 241 248 / 72%) 46%,
+      rgb(231 241 248 / 28%) 58%,
+      rgb(231 241 248 / 0%) 70%),
+    /* Under the light gradient: the photo darkens toward the bottom, behind the slide caption on the right. */
+    linear-gradient(180deg, rgb(8 30 46 / 0%) 42%, rgb(8 30 46 / 45%) 68%, rgb(8 30 46 / 82%) 100%);
   pointer-events: none;
 }
-.lp-hero-curtain {
-  position: absolute;
-  z-index: 4;
-  inset: 0;
-  background: var(--ayos-sky);
-  visibility: hidden;
-  pointer-events: none;
+
+/* Right column over the photo: the job status at the top, the slide card at the bottom. */
+.lp-hero-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  align-self: stretch;
+  min-width: 0;
+  padding-block: 8px 0;
+}
+/* The slide text sits straight on the photo (no card). The shade's dark corner, plus a soft text shadow,
+   keeps white text readable on bright photos; the rail and pause button are white and see-through to match. */
+.lp-hero-card {
+  position: relative;
+  isolation: isolate;
+  width: min(420px, 100%);
+  padding: 0 0 4px;
+  color: var(--ayos-white);
+  text-shadow: 0 1px 2px rgb(8 30 46 / 55%), 0 2px 18px rgb(8 30 46 / 45%);
+}
+
+.lp-hero-card .lp-hero-caption {
+  color: var(--ayos-white);
+}
+.lp-hero-card .lp-hero-caption-step {
+  color: var(--ayos-on-brand-accent);
+}
+.lp-hero-card .lp-hero-caption p {
+  color: rgb(255 255 255 / 92%);
+}
+.lp-hero-card .lp-hero-rail ol button {
+  color: rgb(255 255 255 / 72%);
+}
+.lp-hero-card .lp-hero-rail ol button:hover,
+.lp-hero-card .lp-hero-rail ol button.is-active {
+  color: var(--ayos-white);
+}
+.lp-hero-card .lp-rail-track {
+  background: rgb(255 255 255 / 30%);
+}
+.lp-hero-card .lp-hero-rail ol button:hover .lp-rail-track {
+  background: rgb(255 255 255 / 50%);
+}
+.lp-hero-card .lp-hero-rail ol button.is-past .lp-rail-track {
+  background: rgb(255 255 255 / 70%);
+}
+.lp-hero-card .lp-rail-fill {
+  background: var(--ayos-white);
+}
+.lp-hero-card .lp-rail-toggle {
+  border-color: rgb(255 255 255 / 55%);
+  background: rgb(8 30 46 / 30%);
+  color: var(--ayos-white);
+}
+.lp-hero-card .lp-rail-toggle:hover {
+  border-color: var(--ayos-white);
+  background: rgb(8 30 46 / 50%);
+  color: var(--ayos-white);
+}
+.lp-hero-card :is(button):focus-visible {
+  outline-color: var(--ayos-white);
 }
 
 /* Signature: the status a customer would see in AYOS at this step. */
 .lp-hero-status {
   --dot: var(--ayos-sky);
-  position: absolute;
-  z-index: 3;
-  top: 20px;
-  left: 20px;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -379,16 +417,10 @@
   background: var(--dot);
 }
 .lp-hero-caption {
-  position: absolute;
-  z-index: 3;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  padding: 28px clamp(20px, 2.4vw, 32px) clamp(22px, 2.4vw, 30px);
-  color: var(--ayos-white);
+  color: var(--ayos-ink);
 }
 .lp-hero-caption-step {
-  color: var(--ayos-on-brand-accent);
+  color: var(--ayos-sky-deep);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -396,14 +428,14 @@
 }
 .lp-hero-caption h2 {
   margin: 8px 0 0;
-  font: 700 clamp(1.75rem, 2.4vw, 2.25rem) / 1 var(--font-display);
+  font: 700 clamp(1.6rem, 2.2vw, 2rem) / 1 var(--font-display);
   letter-spacing: -0.005em;
   text-wrap: balance;
 }
 .lp-hero-caption p {
   max-width: 38ch;
   margin: 8px 0 0;
-  color: var(--ayos-on-deep-sky);
+  color: var(--ayos-text);
   font-size: 0.9375rem;
   line-height: 1.55;
   text-wrap: pretty;
@@ -1050,12 +1082,9 @@
   align-items: center;
   gap: 12px 16px;
 }
+/* The closing call to action uses the same orange as every main button; it stands out strongly on the blue band. */
 .lp-cta .button-primary {
-  background: var(--ayos-white);
-  color: var(--ayos-ink);
-}
-.lp-cta .button-primary:hover {
-  background: var(--ayos-white-hover);
+  box-shadow: 0 10px 24px -12px rgb(0 0 0 / 45%);
 }
 .lp-cta .button-text {
   color: var(--ayos-white);
@@ -1097,11 +1126,33 @@
 /* Tablets and phones */
 @media (max-width: 860px) {
   .lp-hero {
-    padding: 124px 0 64px;
+    min-height: 0;
+    padding: 124px 0 24px;
   }
   .lp-hero-grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 48px;
+    gap: 40px;
+  }
+  /* The photo becomes a band under the copy; the shade fades it in from the canvas above. */
+  .lp-hero-scene {
+    top: auto;
+    height: clamp(420px, 70vw, 560px);
+  }
+  .lp-hero-shade {
+    background:
+      linear-gradient(180deg, rgb(8 30 46 / 0%) 22%, rgb(8 30 46 / 58%) 50%, rgb(8 30 46 / 86%) 100%),
+      linear-gradient(180deg, var(--ayos-paper) 0%, rgb(231 241 248 / 0%) 34%);
+  }
+  .lp-hero-visual {
+    min-height: clamp(360px, 62vw, 500px);
+    align-items: stretch;
+    padding-block: 72px 0;
+  }
+  .lp-hero-status {
+    align-self: flex-start;
+  }
+  .lp-hero-card {
+    width: auto;
   }
   .lp-hero-facts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1110,11 +1161,6 @@
   .lp-hero-facts li + li {
     padding-left: 16px;
     border-left: 1px solid var(--ayos-hairline);
-  }
-  .lp-hero-frame {
-    aspect-ratio: 5 / 4;
-    max-height: none;
-    min-height: 0;
   }
   .lp-steps {
     grid-template-columns: minmax(0, 1fr);
@@ -1194,15 +1240,8 @@
   .lp-hero-lede {
     font-size: 1.0625rem;
   }
-  .lp-search {
-    flex-wrap: wrap;
-    padding: 6px 6px 6px 14px;
-  }
-  .lp-search input {
-    flex-basis: calc(100% - 40px);
-  }
-  .lp-search .button {
-    width: 100%;
+  .lp-hero-actions .button {
+    flex: 1 1 100%;
   }
   .lp-hero {
     padding-bottom: 48px;
@@ -1216,16 +1255,11 @@
     padding-left: 0;
     border-left: 0;
   }
-  .lp-hero-frame {
-    aspect-ratio: 4 / 5;
-    border-radius: var(--radius-lg);
-  }
-  .lp-hero-status {
-    top: 14px;
-    left: 14px;
+  .lp-hero-card {
+    padding: 0 0 4px;
   }
   .lp-hero-caption h2 {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
   }
   .lp-service-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

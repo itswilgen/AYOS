@@ -38,6 +38,10 @@
   --ayos-sky-panel: #d6e8f4;
   --ayos-sky-highlight: #c4e3f5;
   --ayos-orange-hover: #b2441a;
+  /* Main action buttons (filled) across the whole system. Change the brand action colour here. White text on it is 4.6:1 (AA). */
+  --ayos-action: var(--ayos-orange);
+  --ayos-action-hover: var(--ayos-orange-hover);
+  --ayos-action-shadow: 0 10px 22px -12px rgb(200 79 25 / 70%);
   --ayos-on-brand-soft: #d4e9f4;
   --ayos-on-brand-accent: #bfe6fa;
   --ayos-white-hover: #e9f4fa;
@@ -54,4 +58,7 @@
   --ease-out-expo: cubic-bezier(.16,1,.3,1);
   --duration-fast: 160ms; --duration-medium: 240ms; --duration-slow: 420ms;
   --container: 1180px;
+  /* The landing page's header and hero use more of a wide screen; the photo runs edge to edge behind them. */
+  --container-wide: 1520px;
+  --gutter-wide: clamp(32px, 4vw, 72px);
 }

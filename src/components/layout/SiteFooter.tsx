@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import Brand from '../common/Brand'
 
 export default function SiteFooter() {
-  return <footer id="about" className="site-footer">
+  // On the landing page the footer matches the wider landing column; other public pages keep the normal width.
+  const wide = useLocation().pathname === '/'
+  return <footer id="about" className={`site-footer${wide ? ' is-wide' : ''}`}>
     <div className="footer-main container">
       <div className="footer-brand"><Brand /><p>Good work starts with good people.<br />Find local help, the AYOS way.</p></div>
       <div className="footer-column"><h3>Services</h3><a href="/#services">Home services</a><a href="/#services">Repair services</a><a href="/#services">Installation</a><a href="/#services">Technical services</a></div>

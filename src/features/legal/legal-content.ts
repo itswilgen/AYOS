@@ -165,10 +165,10 @@ export const termsOfService: LegalDocument = {
     {
       id: 'suspension',
       title: 'Suspension and closing your account',
-      summary: 'We may limit accounts that break these terms. You can ask us to close your account at any time.',
+      summary: 'We may limit accounts that break these terms. You can delete your account at any time.',
       body: [
         'We may warn, limit, suspend, or close an account, or hide a listing, if we reasonably believe it broke these terms, put people at risk, or is required by law. Where it is safe to do so, we will tell you why.',
-        'You can ask us to close your account by emailing ' + email + ' from your account email. Open jobs should be finished or cancelled first. Some records may be kept after closing, as explained in our Privacy Policy.',
+        'You can delete your account yourself in Sign-in & security, or ask us by emailing ' + email + ' from your account email. Open jobs and disputes must be finished first. Finished jobs and reviews stay without your name, so the other person keeps their records, as explained in our Privacy Policy.',
         'We may also pause AYOS for maintenance or updates.',
       ],
     },
@@ -320,7 +320,7 @@ export const privacyPolicy: LegalDocument = {
           'Claim damages if you are harmed by misuse of your data.',
           'File a complaint with the National Privacy Commission (privacy.gov.ph).',
         ] },
-        'To use these rights, email ' + email + ' from your account email. We may ask you to confirm your identity. We aim to reply within 15 days.',
+        'You can download your data and delete your account yourself in Sign-in & security. For any other request, email ' + email + ' from your account email. We may ask you to confirm your identity. We aim to reply within 15 days.',
       ],
     },
     {

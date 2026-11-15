@@ -1,0 +1,86 @@
+/* "Install AYOS" help dialog: short steps for adding AYOS to the home screen. */
+.install-help {
+  width: min(420px, calc(100vw - 32px));
+  margin: auto;
+  padding: 22px 22px 20px;
+  border: 1px solid var(--ayos-line);
+  border-radius: var(--radius-lg);
+  background: var(--ayos-white);
+  color: var(--ayos-ink);
+  box-shadow: 0 1px 2px rgb(14 27 36 / 8%), 0 28px 56px -24px rgb(11 58 90 / 45%);
+}
+.install-help::backdrop {
+  background: rgb(8 30 46 / 45%);
+}
+.install-help-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.install-help-head h2 {
+  margin: 0;
+  font: 700 1.5rem / 1 var(--font-display);
+  text-transform: uppercase;
+}
+.install-help-close {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ayos-muted);
+  cursor: pointer;
+}
+.install-help-close:hover {
+  background: var(--ayos-sky-soft);
+  color: var(--ayos-ink);
+}
+.install-help-lede {
+  margin: 8px 0 16px;
+  color: var(--ayos-text);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.install-help-steps {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+.install-help-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.install-help-icon {
+  display: grid;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--ayos-sky-soft);
+  color: var(--ayos-sky-deep);
+}
+.install-help-done {
+  width: 100%;
+}
+.install-help :is(button):focus-visible {
+  outline: 2px solid var(--ayos-sky-action);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .install-help[open] {
+    animation: install-help-in var(--duration-medium) var(--ease-out-expo) both;
+  }
+}
+@keyframes install-help-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}

@@ -121,8 +121,8 @@
 .chat-composer-tool, .chat-composer-send { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 .chat-composer-tool { color: var(--ayos-body); background: transparent; }
 .chat-composer-tool:hover:not(:disabled) { color: var(--ayos-sky-deep); background: var(--ayos-sky-soft); }
-.chat-composer-send { color: var(--ayos-white); background: var(--ayos-sky-action); }
-.chat-composer-send:hover:not(:disabled) { background: var(--ayos-sky-deep); }
+.chat-composer-send { color: var(--ayos-white); background: var(--ayos-action); }
+.chat-composer-send:hover:not(:disabled) { background: var(--ayos-action-hover); }
 .chat-composer-send:active:not(:disabled) { transform: scale(.94); }
 .chat-composer-tool:focus-visible, .chat-composer-send:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; }
 .chat-composer-tool:disabled, .chat-composer-send:disabled { cursor: not-allowed; opacity: .45; }
@@ -157,8 +157,8 @@
 .chat-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 .chat-button { min-height: 42px; padding: 0 16px; border: 1px solid var(--ayos-line); border-radius: var(--radius-sm); color: var(--ayos-ink); background: var(--ayos-white); font: inherit; font-size: .84rem; font-weight: 750; cursor: pointer; }
 .chat-button:hover:not(:disabled) { border-color: var(--ayos-sky-light); }
-.chat-button-primary { border-color: var(--ayos-sky-action); color: var(--ayos-white); background: var(--ayos-sky-action); }
-.chat-button-primary:hover:not(:disabled) { background: var(--ayos-sky-deep); }
+.chat-button-primary { border-color: var(--ayos-action); color: var(--ayos-white); background: var(--ayos-action); }
+.chat-button-primary:hover:not(:disabled) { border-color: var(--ayos-action-hover); background: var(--ayos-action-hover); }
 .chat-button:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; }
 .chat-button:disabled { cursor: not-allowed; opacity: .6; }
 

@@ -152,11 +152,7 @@
 }
 .address-prompt .address-prompt-save.button-primary {
   min-height: 44px;
-  background: var(--ayos-sky-action);
-  box-shadow: 0 10px 22px -12px rgb(21 125 182 / 80%);
-}
-.address-prompt .address-prompt-save.button-primary:hover:not(:disabled) {
-  background: var(--ayos-sky-deep);
+  box-shadow: var(--ayos-action-shadow);
 }
 .address-prompt :is(button, select, input):focus-visible {
   outline: 2px solid var(--ayos-sky-action);

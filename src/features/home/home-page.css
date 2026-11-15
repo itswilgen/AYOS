@@ -9,11 +9,7 @@
   border-radius: var(--radius-md);
 }
 .home-page .button-primary {
-  background: var(--ayos-sky-action);
-  box-shadow: 0 10px 22px -12px rgb(21 125 182 / 80%);
-}
-.home-page .button-primary:hover {
-  background: var(--ayos-sky-deep);
+  box-shadow: var(--ayos-action-shadow);
 }
 .home-page .button-secondary {
   border-color: var(--ayos-hairline);

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import { ArrowRight, Check, CircleUserRound } from 'lucide-react'
 import { ApiError } from '../../lib/api/client'
 import { profileService } from '../../services/profile.service'
 import { useAuth } from '../../lib/auth/useAuth'
 import type { AccountProfile } from '../../types/marketplace'
+import AccountSecuritySections from './AccountSecuritySections'
 
 export default function ProfilePage() {
   const { refreshUser } = useAuth()
@@ -14,6 +16,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const { hash } = useLocation()
+
+  // Old /account/security links redirect to #security; scroll there once the page has rendered.
+  useEffect(() => {
+    if (!loading && hash === '#security') document.getElementById('security')?.scrollIntoView({ block: 'start' })
+  }, [loading, hash])
 
   const loadProfile = useCallback(async () => {
     try {
@@ -81,6 +89,11 @@ export default function ProfilePage() {
           <label className="app-form-field" htmlFor="profile-mobile"><span>Mobile number</span><input id="profile-mobile" type="tel" value={profile.mobile_number} readOnly /></label>
           <div className="account-form-actions"><button className="button button-primary" type="submit" disabled={saving || !name.trim()}>{saving ? 'Saving changes…' : 'Save changes'} {!saving && <ArrowRight size={16} aria-hidden="true" />}</button><span>Account contact details are managed securely.</span></div>
         </form>}
+    </section>
+
+    <section className="account-panel account-security-panel" id="security" aria-labelledby="security-title">
+      <div className="account-panel-heading"><div><h2 id="security-title">Sign-in &amp; security</h2><p>Your password, two-step login, signed-in devices, and your data.</p></div></div>
+      <AccountSecuritySections />
     </section>
   </div>
 }

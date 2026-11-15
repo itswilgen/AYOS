@@ -125,10 +125,10 @@ button {
 }
 .button-primary {
   color: white;
-  background: var(--ayos-orange);
+  background: var(--ayos-action);
 }
 .button-primary:hover {
-  background: #b94719;
+  background: var(--ayos-action-hover);
 }
 .button-secondary {
   background: var(--ayos-white);
@@ -177,6 +177,12 @@ button {
   align-items: center;
   justify-content: space-between;
 }
+@media (min-width: 1101px) {
+  .site-header.is-wide .nav-shell,
+  .site-footer.is-wide .container {
+    width: min(calc(100% - 2 * var(--gutter-wide)), var(--container-wide));
+  }
+}
 .desktop-nav {
   display: flex;
   align-items: center;
@@ -221,13 +227,6 @@ button {
   min-height: 44px;
   padding: 0 16px;
   font-size: 0.84rem;
-}
-/* The public site leads with sky blue for its primary actions. */
-.site-header .button-primary {
-  background: var(--ayos-sky-action);
-}
-.site-header .button-primary:hover {
-  background: var(--ayos-sky-deep);
 }
 .menu-toggle,
 .mobile-nav-layer {
@@ -701,13 +700,8 @@ button {
 .login-shell .social-auth-divider {
   margin: clamp(14px, 2.2vh, 19px) 0 clamp(10px, 1.6vh, 12px);
 }
-/* Sign-in uses the same sky action colour as the landing hero; orange stays a small accent. */
 .auth-page .button-primary {
-  background: var(--ayos-sky-action);
-  box-shadow: 0 8px 20px -10px rgb(21 125 182 / 70%);
-}
-.auth-page .button-primary:hover {
-  background: var(--ayos-sky-deep);
+  box-shadow: var(--ayos-action-shadow);
 }
 .is-login .auth-legal {
   margin: 16px 0 0;
@@ -1155,6 +1149,14 @@ button {
 .security-page {
   max-width: 700px;
 }
+/* Sign-in & security inside View profile: the panel heading already draws the top rule. */
+.account-security-panel {
+  margin-top: 18px;
+  scroll-margin-top: 90px;
+}
+.account-security > .security-section:first-of-type {
+  border-top: 0;
+}
 .security-back {
   display: inline-flex;
   align-items: center;
@@ -1316,6 +1318,74 @@ button {
   border-color: #e8bbb5 !important;
   background: #fff6f4 !important;
   color: #9e3026 !important;
+}
+/* Your data: download and delete, the second inside a quiet danger zone. */
+.account-data-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+.account-data-row > div {
+  display: grid;
+  gap: 3px;
+  max-width: 46ch;
+}
+.account-data-row strong {
+  font-size: 0.875rem;
+}
+.account-data-row p {
+  margin: 0;
+  color: var(--ayos-muted);
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+.account-data-row .button {
+  width: auto;
+  margin-top: 0;
+}
+.account-data-danger {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #edc9c4;
+  border-radius: var(--radius-md);
+  background: #fffaf9;
+}
+.account-data-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #f1dcd8;
+  font-size: 0.84rem;
+}
+.account-data-panel p {
+  margin: 0;
+}
+.account-data-panel ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ayos-body);
+  line-height: 1.5;
+}
+.account-data-panel .button {
+  width: auto;
+}
+.account-data-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #9e3026;
+  font-weight: 700;
+}
+.account-data-status {
+  margin: 0;
+  color: var(--ayos-muted);
+  font-size: 0.82rem;
 }
 .mfa-qr {
   display: block;

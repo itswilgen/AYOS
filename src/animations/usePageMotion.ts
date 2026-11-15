@@ -18,8 +18,8 @@ export function usePageMotion() {
       // The headline's accessible name lives on the <h1>, so the split letters stay hidden from assistive tech.
       const headline = SplitText.create('.lp-hero-title .lp-line > span', { type: 'words,chars', aria: 'none' })
       gsap.timeline({ defaults: { ease: 'expo.out' } })
-        .fromTo('.lp-hero-curtain', { autoAlpha: 1, xPercent: 0 }, { xPercent: 101, duration: 1.05, ease: 'expo.inOut' }, 0.1)
-        .from('.lp-hero-media', { scale: 1.14, duration: 1.7 }, 0.1)
+        // The full-bleed photo settles in gently behind the copy.
+        .from('.lp-hero-media', { scale: 1.08, autoAlpha: 0, duration: 1.6 }, 0)
         .fromTo('.lp-hero-kicker', { clipPath: 'inset(0% 100% 0% 0%)' }, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.8, ease: 'expo.inOut', clearProps: 'clipPath' }, 0)
         .from(headline.chars, { yPercent: 118, rotate: 9, transformOrigin: '0% 100%', duration: 1, stagger: 0.022 }, 0.12)
         .fromTo('.lp-highlight', { '--sweep': 0 }, { '--sweep': 1, duration: 0.75, ease: 'expo.inOut' }, 0.85)
