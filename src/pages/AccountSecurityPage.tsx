@@ -6,6 +6,7 @@ import PasswordField from '../components/auth/PasswordField'
 import Button from '../components/ui/Button'
 import { apiRequest, authRequest } from '../lib/api/client'
 import { useAuth } from '../lib/auth/useAuth'
+import AccountDataSection from '../features/account/AccountDataSection'
 
 type AccountSession = { id: string; current: boolean; device: string; ip_address: string | null; last_active_at: string }
 type QrCode = { svg: string; url: string }
@@ -130,7 +131,7 @@ export default function AccountSecurityPage() {
   }
 
   return <div className="auth-form-shell phase2-page security-page">
-    <Link className="security-back" to="/account"><ArrowLeft size={16} /> Account</Link>
+    <Link className="security-back" to="/home"><ArrowLeft size={16} /> Home</Link>
     <span className="auth-kicker">Take care of your account</span><h1>Sign-in &amp; security.</h1><p className="auth-intro">Update your password, add an authenticator, and review the devices signed in to AYOS.</p>
     {message && <p className="form-notice" role="status">{message}</p>}{error && <p className="form-notice security-error" role="alert">{error}</p>}
 
@@ -151,6 +152,8 @@ export default function AccountSecurityPage() {
         {sessions.some(session => !session.current) && <>{showRevokeOthers ? <form className="revoke-sessions-form" onSubmit={revokeOthers}><PasswordField label="Confirm your password to sign out other devices" name="revoke_password" autoComplete="current-password" /><div className="security-actions"><Button className="form-submit" type="submit" disabled={busy}>{busy ? 'Signing out…' : 'Confirm sign out'}</Button><Button className="phase2-secondary" type="button" onClick={() => setShowRevokeOthers(false)}>Cancel</Button></div></form> : <Button className="phase2-secondary revoke-others-button" type="button" onClick={() => setShowRevokeOthers(true)}>Sign out all other devices</Button>}</>}
       </> : <p className="security-empty"><Shield size={16} /> No active sessions are available right now.</p>}
     </section>
+
+    <AccountDataSection />
     <p className="auth-switch">AYOS support will never ask you to share a password or recovery code.</p>
   </div>
 }

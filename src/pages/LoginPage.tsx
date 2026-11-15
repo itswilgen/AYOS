@@ -30,6 +30,8 @@ export default function LoginPage() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
 
+  /** Set by account deletion, which ends on this page. */
+  const stateNotice = (location.state as { notice?: string } | null)?.notice ?? ''
   const googleError = searchParams.get('google_error')
   const googleMessage = googleError === 'cancelled'
     ? 'Google sign-in was cancelled. Try again or use your email.'
@@ -105,6 +107,7 @@ export default function LoginPage() {
       <h1>Good to see you again.</h1>
       <p className="auth-intro">Sign in to pick up where you left off.</p>
 
+      {stateNotice && <p className="form-notice" role="status">{stateNotice}</p>}
       {googleMessage && <p className="form-notice" role="alert">{googleMessage}</p>}
 
       <form onSubmit={submit} noValidate>

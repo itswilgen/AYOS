@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AccountAddressController;
+use App\Http\Controllers\Api\AccountDataController;
 use App\Http\Controllers\Api\AccountProfileController;
 use App\Http\Controllers\Api\AccountSecurityController;
 use App\Http\Controllers\Api\AdminController;
@@ -51,6 +52,9 @@ Route::middleware(['auth:sanctum', 'account.active'])->group(function (): void {
     Route::delete('/account/sessions/others', [AccountSecurityController::class, 'revokeOtherSessions']);
     Route::delete('/account/sessions/{id}', [AccountSecurityController::class, 'revokeSession']);
     Route::put('/account/password', [AccountSecurityController::class, 'updatePassword'])->middleware('throttle:6,1');
+    Route::get('/account/export', [AccountDataController::class, 'export'])->middleware('throttle:3,1');
+    Route::get('/account/deletion-check', [AccountDataController::class, 'deletionCheck']);
+    Route::delete('/account', [AccountDataController::class, 'destroy'])->middleware('throttle:5,1');
 });
 
 Route::middleware(['auth:sanctum', 'verified', 'account.active'])->prefix('account')->group(function (): void {

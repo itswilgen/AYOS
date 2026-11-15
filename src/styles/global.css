@@ -1317,6 +1317,74 @@ button {
   background: #fff6f4 !important;
   color: #9e3026 !important;
 }
+/* Your data: download and delete, the second inside a quiet danger zone. */
+.account-data-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+.account-data-row > div {
+  display: grid;
+  gap: 3px;
+  max-width: 46ch;
+}
+.account-data-row strong {
+  font-size: 0.875rem;
+}
+.account-data-row p {
+  margin: 0;
+  color: var(--ayos-muted);
+  font-size: 0.79rem;
+  line-height: 1.5;
+}
+.account-data-row .button {
+  width: auto;
+  margin-top: 0;
+}
+.account-data-danger {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid #edc9c4;
+  border-radius: var(--radius-md);
+  background: #fffaf9;
+}
+.account-data-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #f1dcd8;
+  font-size: 0.84rem;
+}
+.account-data-panel p {
+  margin: 0;
+}
+.account-data-panel ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ayos-body);
+  line-height: 1.5;
+}
+.account-data-panel .button {
+  width: auto;
+}
+.account-data-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #9e3026;
+  font-weight: 700;
+}
+.account-data-status {
+  margin: 0;
+  color: var(--ayos-muted);
+  font-size: 0.82rem;
+}
 .mfa-qr {
   display: block;
   width: 180px;
