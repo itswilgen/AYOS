@@ -98,6 +98,23 @@ class ProviderDirectory
     }
 
     /**
+     * Orders discovery results by proof of good work: most confirmed jobs, then best rating, then identity-checked.
+     * Providers without completed jobs follow, identity-checked first, so the order is stable and never random.
+     *
+     * @param  Collection<int, array{completedServices: int, rating: float|null, verified: bool, id: string}>  $providers
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function rankByTrust(Collection $providers): Collection
+    {
+        return $providers->sortBy([
+            ['completedServices', 'desc'],
+            fn (array $a, array $b): int => ($b['rating'] ?? -1) <=> ($a['rating'] ?? -1),
+            ['verified', 'desc'],
+            fn (array $a, array $b): int => (int) $a['id'] <=> (int) $b['id'],
+        ])->values();
+    }
+
+    /**
      * A provider's public profile. Paused providers stay viewable so customers can follow up on past work,
      * but `acceptingRequests` tells the page whether new requests and messages are possible.
      * Never includes the provider's account id, email or phone.
@@ -209,7 +226,7 @@ class ProviderDirectory
      * @param  array<int, int>  $providerIds
      * @return array<int, string>
      */
-    private function areaLabels(array $providerIds, ?string $cityCode): array
+    public function areaLabels(array $providerIds, ?string $cityCode): array
     {
         return DB::table('provider_service_areas as a')->join('city_municipalities as city', 'city.code', '=', 'a.city_municipality_code')
             ->whereIn('a.provider_profile_id', $providerIds)->where('a.active', true)

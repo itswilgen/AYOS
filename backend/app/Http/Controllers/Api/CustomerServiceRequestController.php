@@ -45,22 +45,23 @@ class CustomerServiceRequestController extends Controller
         $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
             ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
             ->get(['s.provider_profile_id', 'c.name'])->groupBy('provider_profile_id');
-        $areas = DB::table('provider_service_areas as a')->join('city_municipalities as city', 'city.code', '=', 'a.city_municipality_code')
-            ->whereIn('a.provider_profile_id', $ids)->where('a.active', true)->orderBy('city.name')
-            ->get(['a.provider_profile_id', 'city.name'])->groupBy('provider_profile_id');
+        // With a city filter, the label names the customer's own city rather than the provider's first area alphabetically.
+        $areas = $this->directory->areaLabels($ids, $data['cityCode'] ?? null);
         ['reviews' => $reviews, 'completed' => $completed] = $this->directory->stats($ids);
         $providers = $providers->filter(fn ($p) => $this->directory->withinFreeQuota((int) $p->id, $p->access_kind, $completed));
 
-        return response()->json(['data' => $providers->map(function ($p) use ($services, $areas, $reviews, $completed) {
+        $items = $providers->map(function ($p) use ($services, $areas, $reviews, $completed) {
             return ['id' => (string) $p->id, 'displayName' => $p->display_name, 'bio' => $p->bio,
                 'yearsExperience' => $p->years_experience, 'photo' => $p->photo_path ? Storage::disk('public')->url($p->photo_path) : null,
                 'specialties' => ($services->get($p->id) ?? collect())->pluck('name')->all(),
-                'serviceAreaLabel' => $areas->get($p->id)?->first()?->name ?? '',
-                'rating' => $reviews->get($p->id)?->average,
+                'serviceAreaLabel' => $areas[$p->id] ?? '',
+                'rating' => $reviews->has($p->id) ? round((float) $reviews->get($p->id)->average, 1) : null,
                 'reviewCount' => (int) ($reviews->get($p->id)?->total ?? 0),
                 'completedServices' => (int) ($completed->get($p->id)?->total ?? 0),
                 'verified' => (bool) $p->verified];
-        })->values()]);
+        });
+
+        return response()->json(['data' => $this->directory->rankByTrust($items)]);
     }
 
     /**
