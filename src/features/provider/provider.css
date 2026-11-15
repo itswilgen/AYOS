@@ -20,7 +20,7 @@
   --pv-shadow-lift: 0 2px 4px rgb(11 58 90 / 6%), 0 18px 34px -16px rgb(11 58 90 / 34%);
   --pv-shadow-banner: 0 1px 2px rgb(7 42 67 / 16%), 0 14px 30px -22px rgb(7 42 67 / 55%);
   --pv-ease: var(--ease-out-expo);
-  --pv-focus: var(--pv-orange); --pv-focus-on-night: #f5a66f;
+  --pv-focus: var(--pv-orange); --pv-focus-on-night: #f5a66f; --pv-orange-hover: #ac3f11;
   min-height: 100dvh; display: grid; grid-template-columns: 252px minmax(0, 1fr); color: var(--pv-ink); background: var(--pv-canvas);
 }
 .provider-shell-application { display: block; background: var(--pv-canvas); }
@@ -97,17 +97,18 @@
 .provider-shell .provider-eyebrow { font-size: .68rem; letter-spacing: .14em; }
 .provider-page-heading h1 { margin: 8px 0 8px; color: var(--pv-night); font-family: var(--font-display); font-size: clamp(2.1rem, 3.2vw, 2.75rem); font-weight: 700; letter-spacing: -.005em; line-height: .98; }
 .provider-page-heading p { margin: 0; color: var(--pv-muted); font-size: .9rem; }
-.provider-button { min-height: 43px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 15px; border: 1px solid var(--pv-line-strong, #c5dce7); border-radius: var(--pv-radius-sm, 5px); color: var(--pv-blue); background: #fff; font-size: .79rem; font-weight: 750; text-align: center; white-space: normal; }
-.provider-button:hover:not(:disabled) { border-color: var(--pv-blue); background: #f0f8fb; }
-.provider-button-primary { border-color: var(--pv-orange); color: #fff; background: var(--pv-orange); }
-.provider-button-primary:hover:not(:disabled) { border-color: #ac3f11; color: #fff; background: #ac3f11; }
+.provider-button { min-height: 43px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 15px; border: 1px solid var(--pv-line-strong, #c5dce7); border-radius: var(--pv-radius-sm, 5px); color: var(--pv-blue, var(--ayos-sky-deep)); background: #fff; font-size: .79rem; font-weight: 750; text-align: center; white-space: normal; }
+.provider-button:hover:not(:disabled) { border-color: var(--pv-blue, var(--ayos-sky-deep)); background: #f0f8fb; }
+/* Outside the provider shell (customer pages) these fall back to the customer side's sky action colour. */
+.provider-button-primary { border-color: var(--pv-orange, var(--ayos-sky-action)); color: #fff; background: var(--pv-orange, var(--ayos-sky-action)); }
+.provider-button-primary:hover:not(:disabled) { border-color: var(--pv-orange-hover, var(--ayos-sky-deep)); color: #fff; background: var(--pv-orange-hover, var(--ayos-sky-deep)); }
 .provider-shell .provider-button { min-height: 44px; padding: 10px 18px; font-size: .82rem; font-weight: 700; box-shadow: 0 1px 2px rgb(11 58 90 / 6%); transition: background-color 160ms, border-color 160ms, box-shadow 160ms, transform 160ms var(--pv-ease); }
 .provider-shell .provider-button:active:not(:disabled) { transform: translateY(1px); }
 .provider-shell .provider-button-primary { box-shadow: 0 1px 2px rgb(158 55 14 / 28%), 0 10px 20px -12px rgb(200 79 25 / 75%), inset 0 1px 0 rgb(255 255 255 / 14%); }
 .provider-shell .provider-button-primary:hover:not(:disabled) { box-shadow: 0 1px 2px rgb(158 55 14 / 30%), 0 14px 24px -12px rgb(200 79 25 / 80%), inset 0 1px 0 rgb(255 255 255 / 14%); }
 .provider-heading-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
 .provider-heading-actions small { flex-basis: 100%; color: #b43f32; font-size: .74rem; text-align: right; }
-.provider-panel { min-width: 0; padding: var(--pv-panel-pad, 22px); border: 1px solid var(--pv-line); border-radius: var(--pv-radius-lg, 7px); background: #fff; box-shadow: var(--pv-shadow-card, none); }
+.provider-panel { min-width: 0; padding: var(--pv-panel-pad, 22px); border: 1px solid var(--pv-line, var(--ayos-line)); border-radius: var(--pv-radius-lg, 7px); background: #fff; box-shadow: var(--pv-shadow-card, none); }
 .provider-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
 .provider-panel-head h2 { margin: 0; color: var(--pv-ink); font-size: 1.02rem; font-weight: 750; letter-spacing: -.005em; }
 .provider-panel-head > a { display: inline-flex; align-items: center; gap: 5px; margin: -6px -10px; padding: 6px 10px; border-radius: var(--pv-radius-pill); color: var(--pv-blue); font-size: .76rem; font-weight: 750; transition: background-color 160ms; }
@@ -204,7 +205,7 @@
 .provider-tabs span { min-width: 22px; padding: 1px 7px; border-radius: var(--pv-radius-pill); color: var(--pv-muted); background: var(--pv-divider); font-size: .7rem; font-weight: 750; font-variant-numeric: tabular-nums; text-align: center; }
 .provider-tabs button.is-active span { color: var(--pv-night); background: var(--pv-night-accent); }
 .provider-card-stack { display: grid; gap: 12px; }
-.provider-request-card, .provider-job-card, .provider-review { min-width: 0; padding: 20px 23px; border: 1px solid var(--pv-line); border-radius: var(--pv-radius-lg, 6px); background: #fff; box-shadow: var(--pv-shadow-card, none); }
+.provider-request-card, .provider-job-card, .provider-review { min-width: 0; padding: 20px 23px; border: 1px solid var(--pv-line, var(--ayos-line)); border-radius: var(--pv-radius-lg, 6px); background: #fff; box-shadow: var(--pv-shadow-card, none); }
 .provider-shell :is(.provider-request-card, .provider-job-card, .provider-review) { padding: 22px 24px; transition: border-color 200ms, box-shadow 200ms; }
 .provider-shell :is(.provider-request-card, .provider-job-card):hover { border-color: var(--pv-line-strong); box-shadow: var(--pv-shadow-lift); }
 .provider-request-card-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
@@ -214,7 +215,7 @@
 .provider-request-card > p { max-width: 720px; margin: 11px 0; color: #445b67; font-size: .82rem; }
 .provider-card-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 12px 0; color: #60727c; font-size: .73rem; }
 .provider-card-meta span { display: inline-flex; align-items: center; gap: 6px; }
-.provider-card-meta svg { color: var(--pv-blue); flex: 0 0 auto; }
+.provider-card-meta svg { color: var(--pv-blue, var(--ayos-sky-deep)); flex: 0 0 auto; }
 .provider-request-card .provider-text-link { margin-top: 4px; }
 .provider-privacy-note { display: flex; align-items: flex-start; gap: 7px; margin: 18px 0 0; color: var(--pv-muted); font-size: .74rem; }
 .provider-privacy-note svg { flex: 0 0 auto; color: var(--pv-blue); }
