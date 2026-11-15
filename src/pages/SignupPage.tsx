@@ -89,7 +89,9 @@ export default function SignupPage() {
 
     if (!/^\+?[\d\s().-]{7,32}$/.test(mobile)) { next.mobile = 'Enter a valid mobile number.' }
 
+    // Mirrors the server's Password::min(12)->symbols(), so the CAPTCHA isn't spent on a password it would reject.
     if (password.length < 12) { next.password = 'Use at least 12 characters.' }
+    else if (!/[^\p{L}\p{N}]/u.test(password)) { next.password = 'Add at least one special character, such as @, #, ! or $.' }
 
     if (confirm !== password || !confirm) { next.confirm = 'Your passwords don’t match.' }
 
@@ -286,10 +288,11 @@ export default function SignupPage() {
           </p>
         )}
 
-       <Button
+        {/* Kept clickable: missing terms or CAPTCHA are reported beside them on submit instead of silently disabling the button. */}
+        <Button
           type="submit"
           className="form-submit"
-          disabled={busy || authLoading || !captchaToken || !accepted}
+          disabled={busy || authLoading}
           aria-busy={busy}>
           {busy ? 'Creating your account…' : 'Create account'}
           {!busy && <ArrowRight size={17} />}
@@ -297,14 +300,6 @@ export default function SignupPage() {
       </form>
 
       <GoogleAuthButton captchaVerified={Boolean(captchaToken)} />
-
-      {!captchaToken && (
-      <p className="captcha-hint">
-          {recaptchaSiteKey
-            ? 'Complete the CAPTCHA above to enable account creation and Google sign-in.'
-            : 'Account creation is unavailable until CAPTCHA verification is configured.'}
-      </p>
-    )}
 
       <p className="auth-switch">
         Already have an account? <Link to="/login">Sign in</Link>
