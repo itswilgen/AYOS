@@ -7,6 +7,7 @@ use App\Services\Conversations;
 use App\Services\PlatformSettings;
 use App\Services\ProviderDirectory;
 use App\Services\ProviderWorkspace;
+use App\Services\ServiceEmails;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,7 @@ use Illuminate\Validation\Rule;
 
 class CustomerServiceRequestController extends Controller
 {
-    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private ProviderDirectory $directory, private Conversations $conversations) {}
+    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private ProviderDirectory $directory, private Conversations $conversations, private ServiceEmails $emails) {}
 
     public function providers(Request $request): JsonResponse
     {
@@ -170,6 +171,7 @@ class CustomerServiceRequestController extends Controller
             $path = $photo->store('service-requests/'.$requestId, 'local');
             DB::table('service_request_photos')->insert(['service_request_id' => $requestId, 'image_path' => $path, 'created_at' => now(), 'updated_at' => now()]);
         }
+        $this->emails->newRequest($requestId);
 
         return response()->json(['id' => $requestId, 'status' => 'new'], 201);
     }

@@ -9,6 +9,7 @@ use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
 use App\Services\PublicImageStore;
 use App\Services\SecurityAuditLogger;
+use App\Services\ServiceEmails;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ use Throwable;
 
 class ProviderController extends Controller
 {
-    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private SecurityAuditLogger $audit, private PublicImageStore $images, private Conversations $conversations) {}
+    public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private SecurityAuditLogger $audit, private PublicImageStore $images, private Conversations $conversations, private ServiceEmails $emails) {}
 
     public function submitActivationPayment(SubmitActivationPaymentRequest $request): JsonResponse
     {
@@ -173,6 +174,7 @@ class ProviderController extends Controller
             $this->workspace->notifyCustomer($item->customer_id, 'Request accepted', 'Your provider accepted your service request.');
             $this->conversations->note($item->customer_id, $profile->id, 'Request #'.$requestId.' accepted. You can now share contact details here.');
         });
+        $this->emails->requestAccepted($requestId);
 
         return $this->workspace($request);
     }
@@ -188,6 +190,7 @@ class ProviderController extends Controller
             $this->workspace->notifyCustomer($item->customer_id, 'Request declined', 'This provider is unavailable for your request.');
             $this->conversations->note($item->customer_id, $profile->id, 'Request #'.$requestId.' declined.');
         });
+        $this->emails->requestDeclined($requestId);
 
         return $this->workspace($request);
     }
@@ -225,6 +228,12 @@ class ProviderController extends Controller
             $this->conversations->note($job->customer_id, $profile->id, 'Request #'.$job->service_request_id.': '
                 .['schedule' => 'visit scheduled.', 'start' => 'work started.', 'finish' => 'work marked finished. Waiting for the customer to confirm.'][$action]);
         });
+        // "Started" stays in-app only; scheduling and finishing are the steps a customer acts on.
+        match ($action) {
+            'schedule' => $this->emails->visitScheduled($jobId),
+            'finish' => $this->emails->workFinished($jobId),
+            default => null,
+        };
 
         return $this->workspace($request);
     }
