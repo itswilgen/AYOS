@@ -177,6 +177,11 @@ button {
   align-items: center;
   justify-content: space-between;
 }
+@media (min-width: 1101px) {
+  .site-header.is-wide .nav-shell {
+    width: min(calc(100% - 2 * var(--gutter-wide)), var(--container-wide));
+  }
+}
 .desktop-nav {
   display: flex;
   align-items: center;

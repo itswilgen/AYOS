@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import Brand from '../common/Brand'
 import Button from '../ui/Button'
@@ -7,6 +7,8 @@ import Button from '../ui/Button'
 export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  // On the landing page the header matches the wider hero; other public pages keep the normal width.
+  const wide = useLocation().pathname === '/'
   const menuToggleRef = useRef<HTMLButtonElement>(null)
   const drawerRef = useRef<HTMLElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -49,7 +51,7 @@ export default function SiteHeader() {
     setMenuOpen(false)
     menuToggleRef.current?.focus()
   }
-  return <header className={`site-header${scrolled ? ' is-scrolled' : ''}`}>
+  return <header className={`site-header${scrolled ? ' is-scrolled' : ''}${wide ? ' is-wide' : ''}`}>
     <div className="nav-shell">
       <Brand />
       <nav className="desktop-nav" aria-label="Main navigation">
