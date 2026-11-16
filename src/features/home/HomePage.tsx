@@ -4,12 +4,17 @@ import { ArrowRight, MapPin } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import HomeSearch from './components/HomeSearch'
 import RequestTicket from './components/RequestTicket'
+import NeedsYou from './components/NeedsYou'
+import OpenRequests from './components/OpenRequests'
 import ServiceCategories from './components/ServiceCategories'
 import AddressPrompt from './components/AddressPrompt'
 import { locationLabel, serviceSearchPath } from './home-links'
+import { needsYouItems } from './request-progress'
 import { useAuth } from '../../lib/auth/useAuth'
 import { locationsService } from '../../services/locations.service'
 import { requestsService, servicesService } from '../../services/home.service'
+import { messagesService } from '../../services/messages.service'
+import type { ConversationSummary } from '../../types/messages'
 import type { CustomerRequest, ServiceCategory, ServiceLocationSummary } from '../../types/marketplace'
 import './home-page.css'
 
@@ -33,6 +38,8 @@ export default function HomePage() {
   const [locationsKnown, setLocationsKnown] = useState(false)
   const [requests, setRequests] = useState<CustomerRequest[]>([])
   const [requestState, setRequestState] = useState<LoadState>('loading')
+  /** Customer chats, for unread messages in "Needs you". If they fail to load, Home simply shows no message to-dos. */
+  const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const { hash } = useLocation()
 
   useEffect(() => {
@@ -41,7 +48,8 @@ export default function HomePage() {
       servicesService.getCategories(),
       locationsService.getSavedLocations(),
       requestsService.getRequests(),
-    ]).then(([categoryResult, locationResult, requestResult]) => {
+      messagesService.list('customer'),
+    ]).then(([categoryResult, locationResult, requestResult, conversationResult]) => {
       if (!active) return
       if (categoryResult.status === 'fulfilled') setCategories(categoryResult.value)
       setCategoryState(categoryResult.status === 'fulfilled' ? 'ready' : 'error')
@@ -52,6 +60,7 @@ export default function HomePage() {
       setLocationsLoaded(true)
       if (requestResult.status === 'fulfilled') setRequests(requestResult.value)
       setRequestState(requestResult.status === 'fulfilled' ? 'ready' : 'error')
+      if (conversationResult.status === 'fulfilled') setConversations(conversationResult.value)
     })
     return () => { active = false }
   }, [])
@@ -74,6 +83,7 @@ export default function HomePage() {
 
   const location = locations.find((item) => item.is_default) ?? locations[0]
   const firstName = user?.name.trim().split(/\s+/)[0]
+  const todo = requestState === 'ready' ? needsYouItems(requests, conversations) : []
   const popular = POPULAR_SLUGS.map((slug) => categories.find((category) => category.slug === slug)).filter((category) => category !== undefined)
 
   return <div className="app-page home-page">
@@ -101,6 +111,9 @@ export default function HomePage() {
         <RequestTicket requests={requests} state={requestState} onRetry={retryRequests} />
       </div>
     </section>
+
+    <NeedsYou items={todo} />
+    <OpenRequests requests={requests} />
 
     {categoryState === 'loading' && <div className="home-section home-services-loading" role="status">Loading services…</div>}
     {categoryState === 'error' && <section className="home-section home-section-error" role="alert">
