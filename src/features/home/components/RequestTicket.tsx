@@ -4,6 +4,7 @@ import { ArrowRight, CalendarClock, RotateCw } from 'lucide-react'
 import Button from '../../../components/ui/Button'
 import type { CustomerRequest } from '../../../types/marketplace'
 import { openRequests, REQUEST_STEPS } from '../request-progress'
+import { apiTime } from '../../../lib/time/api-time'
 
 type Props = {
   requests: CustomerRequest[]
@@ -81,6 +82,6 @@ export default function RequestTicket({ requests, state, onRetry }: Props) {
     <p className="home-ticket-provider">with {request.provider_name}</p>
     <p className="home-ticket-status"><strong>{progress.status}</strong> {progress.note}</p>
     <Rail step={progress.step} />
-    <p className="home-ticket-time"><CalendarClock size={16} aria-hidden="true" /> Your preferred time: {preferredTime.format(new Date(request.preferred_at))}</p>
+    <p className="home-ticket-time"><CalendarClock size={16} aria-hidden="true" /> Your preferred time: {preferredTime.format(apiTime(request.preferred_at))}</p>
   </Ticket>
 }

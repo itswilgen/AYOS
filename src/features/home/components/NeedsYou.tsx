@@ -1,9 +1,9 @@
 import type { CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, CheckCircle2, MessageCircle, Star, type LucideIcon } from 'lucide-react'
+import { ArrowRight, CalendarClock, CheckCircle2, MessageCircle, Star, type LucideIcon } from 'lucide-react'
 import type { NeedsYouItem, NeedsYouKind } from '../request-progress'
 
-const icons: Record<NeedsYouKind, LucideIcon> = { confirm: CheckCircle2, message: MessageCircle, review: Star }
+const icons: Record<NeedsYouKind, LucideIcon> = { confirm: CheckCircle2, reschedule: CalendarClock, message: MessageCircle, review: Star }
 
 /**
  * "Needs you": every to-do waiting on the customer, as tear-off stubs of the request ticket.

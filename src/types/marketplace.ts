@@ -96,6 +96,12 @@ export interface CustomerRequest {
   review_rating: number | null
   /** The earlier request this one repeats, when the customer booked the same provider again after a finished job. */
   repeat_of: number | null
+  /** The agreed visit time (UTC), once the provider has scheduled it. */
+  scheduled_at: string | null
+  /** An open request to move the visit: who asked, the new time, and their reason. */
+  reschedule_by: 'customer' | 'provider' | null
+  reschedule_at: string | null
+  reschedule_reason: string | null
 }
 
 export interface NotificationSummary {

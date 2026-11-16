@@ -105,3 +105,12 @@ The response shapes below are frontend expectations, not existing server routes.
 - `GET /api/customer/requests` items now also return `completed_at` (UTC, null until the customer confirms the job), `review_rating` (1–5, null without a review) and `repeat_of` (the earlier request id, or null). Items are ordered newest first, ties broken by id.
 - Home builds "Book again" from these items: providers with a completed job, newest first, once each, up to 4. "Request again" opens `/services/request/{providerId}?service={name}&again=1`, which preselects the service and shows the "Book again" heading.
 - Measuring the Phase 2 gate: `select count(*) filter (where repeat_of_request_id is not null) * 1.0 / count(*) from service_requests` gives the share of repeat bookings.
+
+### Moving a scheduled visit (reschedule) — Phase 2
+
+- Customer: `POST /api/customer/jobs/{jobId}/reschedule` `{ proposedAt, reason? }` → `201`; `POST /api/customer/jobs/{jobId}/reschedule/{accept|decline|withdraw}` → `200`.
+- Provider: the same paths under `/api/provider/jobs/{jobId}/…`, returning the provider workspace. Registered before the catch-all `/provider/jobs/{jobId}/{action}` route.
+- Rules (in `App\Services\JobReschedules`): only a `scheduled` job (before work starts); one open request per job (also a partial unique index); `proposedAt` must be in the future and differ from the current time; `reason` ≤ 240 characters. Only the other side may accept or decline (`403` otherwise); only the asker may withdraw. The old time stands until a request is accepted. Starting work or cancelling the booking closes an open request (`cancelled`). Rows stay as history in `job_reschedule_requests`.
+- Each step notifies the other side in-app and adds a note to their chat; an accepted time re-sends the customer's "Visit scheduled" email with the new time.
+- Reads: `GET /api/customer/requests` items add `scheduled_at`, `reschedule_by`, `reschedule_at`, `reschedule_reason`; provider workspace jobs add `reschedule: { requestedBy, proposedAt, reason } | null`.
+- Times: the database stores UTC without a zone. The frontend reads every request/job time through `src/lib/time/api-time.ts` (`apiTime`), which treats such values as UTC.

@@ -69,7 +69,7 @@ class DemoMarketplaceSeeder extends Seeder
                 'rating' => 5, 'comment' => 'Limpyo ug paspas ang trabaho. Mobalik ko ni Kuya Jun.', 'created_at' => now()->subDays(44), 'updated_at' => now()->subDays(44)]);
 
             // Lea's leak: accepted and scheduled for tomorrow morning (the customer tracker and the provider schedule).
-            $this->job($lea, $jun, 'Nag-leak ang tubo sa ilawom sa lababo. Basa na ang salog.', 'scheduled', now()->subHours(3), now()->addDay()->setTime(9, 0), true);
+            $this->job($lea, $jun, 'Nag-leak ang tubo sa ilawom sa lababo. Basa na ang salog.', 'scheduled', now()->subHours(3), now('Asia/Manila')->addDay()->setTime(9, 0)->utc(), true);
 
             // A new request still waiting for Jun (the provider's Requests inbox).
             $this->request($grace, $jun, 'Guba ang gripo sa kusina, padayon ang tulo.', 'new', now()->subMinutes(40), true);
@@ -122,7 +122,7 @@ class DemoMarketplaceSeeder extends Seeder
             'customer_id' => $customer->id, 'provider_profile_id' => $providerId,
             'service_category_id' => DB::table('service_categories')->where('slug', $category)->value('id'),
             'service_location_id' => $customer->serviceLocations()->value('id'), 'description' => $description, 'notes' => '',
-            'preferred_at' => now()->addDay()->setTime(9, 0), 'status' => $status, 'created_at' => $at, 'updated_at' => $at,
+            'preferred_at' => now('Asia/Manila')->addDay()->setTime(9, 0)->utc(), 'status' => $status, 'created_at' => $at, 'updated_at' => $at,
         ]);
         if ($withPhoto && Storage::disk('local')->exists('demo/leak.jpg')) {
             $path = 'service-requests/'.$requestId.'/leak.jpg';

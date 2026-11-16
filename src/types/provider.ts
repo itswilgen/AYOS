@@ -24,6 +24,8 @@ export interface ProviderJob {
   scheduledAt: string | null
   address: string | null
   status: JobStatus
+  /** An open request to move the visit, from either side. */
+  reschedule: { requestedBy: 'customer' | 'provider'; proposedAt: string; reason: string | null } | null
 }
 
 export type CoverReviewStatus = 'pending' | 'approved' | 'rejected'

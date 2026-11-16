@@ -1130,3 +1130,12 @@
     transform: none;
   }
 }
+
+/* A provider asked to move a visit: warm like "confirm", because the old time is on hold until the customer answers */
+.home-needs-item.is-reschedule .home-needs-icon {
+  background: var(--ayos-orange-soft);
+  color: var(--ayos-orange);
+}
+.home-needs-item.is-reschedule .home-needs-label {
+  color: var(--ayos-orange);
+}

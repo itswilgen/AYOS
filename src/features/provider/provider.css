@@ -559,3 +559,19 @@
   .provider-form .star-rating-option label { transition: none; }
   .provider-form .star-rating-option label:active { transform: none; }
 }
+
+/* Moving a visit (RescheduleBox), on customer request cards and the provider's job page.
+   Orange when you must answer, sky while you wait; the new time is the loudest thing in the box. */
+.reschedule-box { margin-top: 16px; padding: 14px 16px; border: 1px solid var(--ayos-line); border-radius: var(--radius-md); background: var(--ayos-sky-soft); }
+.reschedule-box.is-asked { border-color: color-mix(in srgb, var(--ayos-orange-bright) 40%, transparent); background: var(--ayos-orange-soft); }
+.reschedule-kicker { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--ayos-sky-deep); font-size: .72rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.reschedule-box.is-asked .reschedule-kicker { color: var(--ayos-orange); }
+.reschedule-times { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 8px 0 0; }
+.reschedule-times s { color: var(--ayos-muted); font-size: .86rem; }
+.reschedule-times svg { flex: none; color: var(--ayos-muted); }
+.reschedule-times strong { color: var(--ayos-ink); font: 700 1.35rem / 1.1 var(--font-display); text-transform: uppercase; }
+.reschedule-reason { max-width: 60ch; margin: 6px 0 0; color: var(--ayos-text); font-size: .85rem; font-style: italic; }
+.reschedule-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.reschedule-note { margin: 8px 0 0; color: var(--ayos-muted); font-size: .75rem; }
+.request-card-actions + .reschedule-form, .request-card-actions + .reschedule-box { margin-top: 16px; }
+.reschedule-form .reschedule-actions { margin-top: 0; }

@@ -1,4 +1,5 @@
 import type { CustomerRequest } from '../../types/marketplace'
+import { visitTime } from '../jobs/reschedule'
 
 export const REQUEST_STEPS = ['Sent', 'Accepted', 'Scheduled', 'In progress', 'Done'] as const
 
@@ -16,6 +17,11 @@ export function requestProgress(request: CustomerRequest): RequestProgress | nul
     case 'accepted':
       return { step: 1, status: 'Accepted', note: `${provider} accepted your request and will confirm a visit time.`, action: null }
     case 'scheduled':
+      if (request.reschedule_by && request.reschedule_at) {
+        return request.reschedule_by === 'provider'
+          ? { step: 2, status: 'New time asked', note: `${provider} asked to move the visit to ${visitTime(request.reschedule_at)}.`, action: 'Answer new time' }
+          : { step: 2, status: 'Visit scheduled', note: `You asked to move the visit to ${visitTime(request.reschedule_at)}. Waiting for ${provider}.`, action: null }
+      }
       return { step: 2, status: 'Visit scheduled', note: `${provider} has scheduled the visit.`, action: null }
     case 'in_progress':
       return { step: 3, status: 'Work in progress', note: `${provider} is working on it now.`, action: null }
@@ -40,7 +46,7 @@ export function openRequests(requests: CustomerRequest[]) {
     .sort((a, b) => PRIORITY.indexOf(a.request.job_status ?? a.request.request_status) - PRIORITY.indexOf(b.request.job_status ?? b.request.request_status))
 }
 
-export type NeedsYouKind = 'confirm' | 'message' | 'review'
+export type NeedsYouKind = 'confirm' | 'reschedule' | 'message' | 'review'
 
 export type NeedsYouItem = {
   key: string
@@ -67,6 +73,14 @@ export function needsYouItems(requests: CustomerRequest[], conversations: Unread
     detail: 'Marked finished. Check the work, then confirm it.',
     action: 'Confirm work', href: `/my-requests#request-${request.id}`,
   }))
+  // The provider asked to move a visit: the old time stands until the customer answers, so this comes early.
+  const reschedules = requests.filter((request) => request.job_status === 'scheduled' && request.reschedule_by === 'provider' && request.reschedule_at)
+    .map((request): NeedsYouItem => ({
+      key: `reschedule-${request.id}`, kind: 'reschedule', label: 'New time asked',
+      title: `${request.service} · ${request.provider_name}`,
+      detail: `Move the visit to ${visitTime(request.reschedule_at!)}?`,
+      action: 'Answer', href: `/my-requests#request-${request.id}`,
+    }))
   const messages = conversations.filter((conversation) => conversation.unread > 0).map((conversation): NeedsYouItem => ({
     key: `message-${conversation.id}`, kind: 'message',
     label: conversation.unread === 1 ? 'New message' : `${conversation.unread} new messages`,
@@ -81,7 +95,7 @@ export function needsYouItems(requests: CustomerRequest[], conversations: Unread
     action: 'Write a review', href: `/my-requests#request-${request.id}`,
   }))
 
-  return [...confirm, ...messages, ...reviews]
+  return [...confirm, ...reschedules, ...messages, ...reviews]
 }
 
 export type PastProvider = {

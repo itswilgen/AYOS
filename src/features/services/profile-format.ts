@@ -1,5 +1,4 @@
-/** API times are UTC, either ISO or `Y-m-d H:i:s`. */
-const parse = (value: string) => new Date(value.includes('T') ? value : `${value.replace(' ', 'T')}Z`)
+import { apiTime as parse } from '../../lib/time/api-time'
 
 export const monthYear = (value: string) => parse(value).toLocaleDateString('en-PH', { month: 'long', year: 'numeric' })
 export const initials = (name: string) => name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()

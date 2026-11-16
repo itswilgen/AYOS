@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\SubmitActivationPaymentRequest;
 use App\Services\ActivationPayments;
 use App\Services\Conversations;
+use App\Services\JobReschedules;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
 use App\Services\PublicImageStore;
@@ -234,19 +235,22 @@ class ProviderController extends Controller
         return Storage::disk('local')->response($photo->image_path, null, ['Cache-Control' => 'private, no-store']);
     }
 
-    public function jobAction(Request $request, int $jobId, string $action): JsonResponse
+    public function jobAction(Request $request, JobReschedules $reschedules, int $jobId, string $action): JsonResponse
     {
         $profile = $this->workspace->approved($request->user()->id);
         $transitions = ['schedule' => ['accepted', 'scheduled'], 'start' => ['scheduled', 'in_progress'], 'finish' => ['in_progress', 'provider_finished']];
         abort_unless(isset($transitions[$action]), 404);
         $data = $action === 'schedule' ? $request->validate(['scheduledAt' => ['required', 'date', 'after:now']]) : [];
-        DB::transaction(function () use ($jobId, $profile, $action, $transitions, $data): void {
+        DB::transaction(function () use ($jobId, $profile, $action, $transitions, $data, $reschedules): void {
             $job = DB::table('provider_jobs')->where('id', $jobId)->where('provider_profile_id', $profile->id)->lockForUpdate()->first();
             abort_unless($job, 404);
             abort_unless($job->status === $transitions[$action][0], 409, 'This job cannot move to that step.');
             DB::table('provider_jobs')->where('id', $jobId)->update(array_filter([
                 'status' => $transitions[$action][1], 'scheduled_at' => $data['scheduledAt'] ?? null, 'updated_at' => now(),
             ], fn ($value) => $value !== null));
+            if ($action === 'start') {
+                $reschedules->closeOpen($jobId);
+            }
             if ($action === 'finish') {
                 $this->workspace->notify($profile->id, 'Work marked finished', 'Waiting for the customer to confirm completion.', '/provider/jobs/'.$jobId);
             }

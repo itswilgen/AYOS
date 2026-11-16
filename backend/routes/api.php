@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AccountSecurityController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\CustomerServiceRequestController;
+use App\Http\Controllers\Api\JobRescheduleController;
 use App\Http\Controllers\Api\LocationReferenceController;
 use App\Http\Controllers\Api\PayMongoWebhookController;
 use App\Http\Controllers\Api\ProviderController;
@@ -89,6 +90,8 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
     Route::post('/customer/requests', [CustomerServiceRequestController::class, 'store'])->middleware(['account.active', 'throttle:12,1']);
     Route::post('/customer/jobs/{jobId}/confirm', [CustomerServiceRequestController::class, 'confirm'])->middleware('throttle:20,1');
     Route::post('/customer/jobs/{jobId}/cancel', [CustomerServiceRequestController::class, 'cancel']);
+    Route::post('/customer/jobs/{jobId}/reschedule', [JobRescheduleController::class, 'customerPropose'])->middleware('throttle:10,1');
+    Route::post('/customer/jobs/{jobId}/reschedule/{answer}', [JobRescheduleController::class, 'customerAnswer'])->middleware('throttle:20,1');
     Route::post('/customer/jobs/{jobId}/review', [CustomerServiceRequestController::class, 'review'])->middleware('throttle:10,1');
 
     Route::get('/inbox/unread', [ConversationController::class, 'unread']);
@@ -121,6 +124,9 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
     Route::post('/provider/requests/{requestId}/accept', [ProviderController::class, 'accept']);
     Route::post('/provider/requests/{requestId}/decline', [ProviderController::class, 'decline']);
     Route::get('/provider/requests/{requestId}/photos/{photoId}', [ProviderController::class, 'requestPhoto']);
+    // Before the catch-all job action route, which would otherwise take "reschedule" as an action.
+    Route::post('/provider/jobs/{jobId}/reschedule', [JobRescheduleController::class, 'providerPropose'])->middleware('throttle:10,1');
+    Route::post('/provider/jobs/{jobId}/reschedule/{answer}', [JobRescheduleController::class, 'providerAnswer'])->middleware('throttle:20,1');
     Route::post('/provider/jobs/{jobId}/{action}', [ProviderController::class, 'jobAction']);
     Route::post('/provider/services', [ProviderController::class, 'saveService']);
     Route::put('/provider/services/{serviceId}', [ProviderController::class, 'saveService']);

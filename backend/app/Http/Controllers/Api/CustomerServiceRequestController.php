@@ -107,10 +107,12 @@ class CustomerServiceRequestController extends Controller
             ->join('service_categories as c', 'c.id', '=', 'r.service_category_id')
             ->leftJoin('provider_jobs as j', 'j.service_request_id', '=', 'r.id')
             ->leftJoin('provider_reviews as rv', 'rv.provider_job_id', '=', 'j.id')
+            ->leftJoin('job_reschedule_requests as rs', fn ($join) => $join->on('rs.provider_job_id', '=', 'j.id')->where('rs.status', '=', 'pending'))
             ->where('r.customer_id', $request->user()->id)->orderByDesc('r.created_at')->orderByDesc('r.id')
             ->get(['r.id', 'r.description', 'r.preferred_at', 'r.status as request_status', 'r.created_at',
                 'p.id as provider_id', 'p.display_name as provider_name', 'c.name as service', 'j.id as job_id', 'j.status as job_status', 'j.completed_at',
-                'rv.id as review_id', 'rv.rating as review_rating', 'r.repeat_of_request_id as repeat_of']);
+                'rv.id as review_id', 'rv.rating as review_rating', 'r.repeat_of_request_id as repeat_of', 'j.scheduled_at',
+                'rs.requested_by as reschedule_by', 'rs.proposed_at as reschedule_at', 'rs.reason as reschedule_reason']);
 
         return response()->json(['data' => $items]);
     }
@@ -209,6 +211,8 @@ class CustomerServiceRequestController extends Controller
             abort_unless($job, 404);
             abort_unless(in_array($job->status, ['accepted', 'scheduled'], true), 409, 'This job can no longer be cancelled online.');
             DB::table('provider_jobs')->where('id', $jobId)->update(['status' => 'cancelled', 'updated_at' => now()]);
+            DB::table('job_reschedule_requests')->where('provider_job_id', $jobId)->where('status', 'pending')
+                ->update(['status' => 'cancelled', 'responded_at' => now(), 'updated_at' => now()]);
             $this->workspace->notify($job->provider_profile_id, 'Job cancelled', 'A customer cancelled a booked service.', '/provider/jobs/'.$jobId);
             $this->conversations->note($job->customer_id, $job->provider_profile_id, 'Request #'.$job->service_request_id.' cancelled by the customer.');
         });

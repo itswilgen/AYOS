@@ -76,7 +76,12 @@ class ProviderWorkspace
         $photos = DB::table('service_request_photos')->whereIn('service_request_id', $requestIds)->get()->groupBy('service_request_id');
         $requestMap = $requests->keyBy('id');
         $locations = ServiceLocation::query()->with('barangay')->whereIn('id', $requests->pluck('service_location_id')->all())->get()->keyBy('id');
-        $jobs = DB::table('provider_jobs')->where('provider_profile_id', $pid)->orderByDesc('created_at')->get()->map(function ($job) use ($requestMap, $locations) {
+        // Open "move the visit" requests, one query for all jobs.
+        $reschedules = DB::table('job_reschedule_requests as rs')->join('provider_jobs as j', 'j.id', '=', 'rs.provider_job_id')
+            ->where('j.provider_profile_id', $pid)->where('rs.status', 'pending')
+            ->get(['rs.provider_job_id', 'rs.requested_by', 'rs.proposed_at', 'rs.reason'])->keyBy('provider_job_id');
+        $jobs = DB::table('provider_jobs')->where('provider_profile_id', $pid)->orderByDesc('created_at')->get()->map(function ($job) use ($requestMap, $locations, $reschedules) {
+            $open = $reschedules->get($job->id);
             $request = $requestMap->get($job->service_request_id);
             $location = $request ? $locations->get($request->service_location_id) : null;
 
@@ -84,7 +89,8 @@ class ProviderWorkspace
                 'service' => $request?->service_name ?? '', 'customerName' => $this->firstName($request?->customer_name),
                 'approximateLocation' => $this->location($request), 'scheduledAt' => $job->scheduled_at,
                 'address' => $location ? implode(', ', array_filter([$location->address_line, $location->barangay?->name, $request?->city_name, $request?->province_name])) : null,
-                'status' => $job->status];
+                'status' => $job->status,
+                'reschedule' => $open ? ['requestedBy' => $open->requested_by, 'proposedAt' => $open->proposed_at, 'reason' => $open->reason] : null];
         })->all();
         $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
             ->where('s.provider_profile_id', $pid)->where('s.is_visible', true)->orderBy('c.name')
