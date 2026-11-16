@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\JobRescheduleController;
 use App\Http\Controllers\Api\LocationReferenceController;
 use App\Http\Controllers\Api\PayMongoWebhookController;
 use App\Http\Controllers\Api\ProviderController;
+use App\Http\Controllers\Api\SavedProviderController;
 use App\Http\Controllers\Api\ServiceDisputeController;
 use App\Http\Controllers\Api\ServiceLocationController;
 use App\Http\Controllers\Api\VerificationController;
@@ -90,6 +91,9 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
     Route::post('/customer/requests', [CustomerServiceRequestController::class, 'store'])->middleware(['account.active', 'throttle:12,1']);
     Route::post('/customer/jobs/{jobId}/confirm', [CustomerServiceRequestController::class, 'confirm'])->middleware('throttle:20,1');
     Route::post('/customer/jobs/{jobId}/cancel', [CustomerServiceRequestController::class, 'cancel']);
+    Route::get('/customer/saved-providers', [SavedProviderController::class, 'index']);
+    Route::put('/customer/saved-providers/{providerId}', [SavedProviderController::class, 'store'])->whereNumber('providerId')->middleware('throttle:30,1');
+    Route::delete('/customer/saved-providers/{providerId}', [SavedProviderController::class, 'destroy'])->whereNumber('providerId')->middleware('throttle:30,1');
     Route::post('/customer/jobs/{jobId}/reschedule', [JobRescheduleController::class, 'customerPropose'])->middleware('throttle:10,1');
     Route::post('/customer/jobs/{jobId}/reschedule/{answer}', [JobRescheduleController::class, 'customerAnswer'])->middleware('throttle:20,1');
     Route::post('/customer/jobs/{jobId}/review', [CustomerServiceRequestController::class, 'review'])->middleware('throttle:10,1');

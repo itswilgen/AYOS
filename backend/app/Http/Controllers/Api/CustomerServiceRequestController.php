@@ -11,7 +11,6 @@ use App\Services\ServiceEmails;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class CustomerServiceRequestController extends Controller
@@ -42,28 +41,14 @@ class CustomerServiceRequestController extends Controller
             $query->where(fn ($q) => $q->whereRaw('LOWER(c.name) LIKE ?', ['%'.mb_strtolower($data['q']).'%'])->orWhereRaw('LOWER(p.display_name) LIKE ?', ['%'.mb_strtolower($data['q']).'%']));
         }
         $providers = $query->limit(100)->get();
-        $ids = $providers->pluck('id')->all();
-        $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
-            ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
-            ->get(['s.provider_profile_id', 'c.name', 's.starting_price'])->groupBy('provider_profile_id');
-        // With a city filter, the label names the customer's own city rather than the provider's first area alphabetically.
-        $areas = $this->directory->areaLabels($ids, $data['cityCode'] ?? null);
-        ['reviews' => $reviews, 'completed' => $completed] = $this->directory->stats($ids);
+        ['reviews' => $reviews, 'completed' => $completed] = $this->directory->stats($providers->pluck('id')->all());
         $providers = $providers->filter(fn ($p) => $this->directory->withinFreeQuota((int) $p->id, $p->access_kind, $completed));
-
-        $items = $providers->map(function ($p) use ($services, $areas, $reviews, $completed) {
-            return ['id' => (string) $p->id, 'displayName' => $p->display_name, 'bio' => $p->bio,
-                'yearsExperience' => $p->years_experience, 'photo' => $p->photo_path ? Storage::disk('public')->url($p->photo_path) : null,
-                'specialties' => ($services->get($p->id) ?? collect())->pluck('name')->all(),
-                // Price guide: "From ₱…" per service name, only for services that have one.
-                'startingPrices' => (object) ($services->get($p->id) ?? collect())->whereNotNull('starting_price')
-                    ->mapWithKeys(fn ($s) => [$s->name => (int) $s->starting_price])->all(),
-                'serviceAreaLabel' => $areas[$p->id] ?? '',
-                'rating' => $reviews->has($p->id) ? round((float) $reviews->get($p->id)->average, 1) : null,
-                'reviewCount' => (int) ($reviews->get($p->id)?->total ?? 0),
-                'completedServices' => (int) ($completed->get($p->id)?->total ?? 0),
-                'verified' => (bool) $p->verified];
-        });
+        $items = $this->directory->summaries($providers, $data['cityCode'] ?? null);
+        // A signed-in customer sees which providers they saved.
+        if ($viewer = $request->user('sanctum')) {
+            $saved = DB::table('saved_providers')->where('user_id', $viewer->id)->whereIn('provider_profile_id', $providers->pluck('id'))->pluck('provider_profile_id')->flip();
+            $items = $items->map(fn (array $item) => [...$item, 'saved' => $saved->has((int) $item['id'])]);
+        }
 
         return response()->json(['data' => $this->directory->rankByTrust($items)]);
     }
@@ -78,7 +63,10 @@ class CustomerServiceRequestController extends Controller
         $profile = $provider ? $this->directory->profile($providerId, $this->workspace->canReceive($provider)) : null;
         abort_unless($profile, 404);
 
-        return response()->json(['data' => [...$profile, 'isOwnProfile' => $request->user('sanctum')?->id === $provider->user_id]]);
+        $viewer = $request->user('sanctum');
+
+        return response()->json(['data' => [...$profile, 'isOwnProfile' => $viewer?->id === $provider->user_id,
+            'isSaved' => $viewer !== null && DB::table('saved_providers')->where('user_id', $viewer->id)->where('provider_profile_id', $provider->id)->exists()]]);
     }
 
     /**

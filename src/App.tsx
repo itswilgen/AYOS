@@ -25,6 +25,7 @@ const CustomerRequestPage = lazy(() => import('./features/services/CustomerReque
 const ProviderProfilePage = lazy(() => import('./features/services/ProviderProfilePage'))
 const MessagesPage = lazy(() => import('./features/messages/MessagesPage'))
 const MyRequestsPage = lazy(() => import('./features/services/MyRequestsPage'))
+const SavedProvidersPage = lazy(() => import('./features/services/SavedProvidersPage'))
 const ProfilePage = lazy(() => import('./features/account/ProfilePage'))
 const SavedLocationsPage = lazy(() => import('./features/account/SavedLocationsPage'))
 const ProviderApplyPage = lazy(() => import('./features/account/ProviderApplyPage'))
@@ -79,6 +80,7 @@ export default function App() {
           <Route path="/messages" element={<Suspense fallback={routeFallback}><MessagesPage side="customer" /></Suspense>} />
           <Route path="/messages/:conversationId" element={<Suspense fallback={routeFallback}><MessagesPage side="customer" /></Suspense>} />
           <Route path="/my-requests" element={<Suspense fallback={routeFallback}><MyRequestsPage /></Suspense>} />
+          <Route path="/saved-providers" element={<Suspense fallback={routeFallback}><SavedProvidersPage /></Suspense>} />
           <Route path="/account" element={<Navigate to="/home" replace />} />
           <Route path="/account/profile" element={<Suspense fallback={routeFallback}><ProfilePage /></Suspense>} />
           <Route path="/account/locations" element={<Suspense fallback={routeFallback}><SavedLocationsPage /></Suspense>} />

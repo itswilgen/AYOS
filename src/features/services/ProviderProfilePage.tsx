@@ -9,6 +9,7 @@ import ProviderReviews, { Stars } from './ProviderReviews'
 import ProviderWorkGallery from './ProviderWorkGallery'
 import { initials, monthYear, plural } from './profile-format'
 import { peso } from '../../lib/format/peso'
+import SaveProviderButton from './SaveProviderButton'
 import './provider-profile.css'
 
 const achievementIcons: Record<ProviderAchievementKey, LucideIcon> = { top_rated: Trophy, jobs_milestone: Award, repeat_customers: Repeat2, experienced: Hammer }
@@ -167,6 +168,7 @@ export default function ProviderProfilePage() {
           <Button variant="secondary" className="pp-message" onClick={() => void openConversation()} disabled={!canStart} loading={opening}>{!opening && <MessageCircle size={17} aria-hidden="true" />}{existingThread ? 'Continue conversation' : 'Message'}</Button>
           {profile.acceptingRequests && <Button href={requestPath}>Request service <ArrowRight size={16} aria-hidden="true" /></Button>}
         </div>
+        <SaveProviderButton providerId={String(profile.id)} providerName={profile.displayName} saved={profile.isSaved} />
         {messageError && <p className="pp-action-error" role="alert">{messageError}</p>}
       </aside>}
     </div>

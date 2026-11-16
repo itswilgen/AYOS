@@ -1,9 +1,9 @@
 import { apiRequest, backendUrl } from '../lib/api/client'
-import type { CustomerRequest, NotificationSummary, ProviderSummary, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
+import type { CustomerRequest, NotificationSummary, ProviderSummary, SavedProvider, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
 import { apiTime } from '../lib/time/api-time'
 
 type ApiCategory = { id: number; slug: string; name: string; description: string }
-type ApiProvider = { id: string; displayName: string; specialties: string[]; startingPrices: Record<string, number>; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
+type ApiProvider = { id: string; displayName: string; specialties: string[]; startingPrices: Record<string, number>; saved?: boolean; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
 
 const icon: Record<string, ServiceIconKey> = {
   electrical: 'electrical', plumbing: 'plumbing', carpentry: 'carpentry', aircon: 'aircon',
@@ -32,7 +32,18 @@ const mapProvider = (provider: ApiProvider): ProviderSummary => ({
   verificationStatus: provider.verified ? 'verified' : 'unverified', availability: 'available',
   initials: provider.displayName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(),
   photo: provider.photo ? absoluteMedia(provider.photo) : null,
+  saved: provider.saved ?? false,
 })
+
+/** The customer's saved providers. Saving and removing are safe to repeat. */
+export const savedProvidersService = {
+  async list(): Promise<SavedProvider[]> {
+    const result = await apiRequest<{ data: (ApiProvider & { acceptingRequests: boolean; savedAt: string })[] }>('/customer/saved-providers')
+    return result.data.map((item) => ({ ...mapProvider(item), saved: true, acceptingRequests: item.acceptingRequests, savedAt: item.savedAt }))
+  },
+  async save(providerId: string): Promise<void> { await apiRequest(`/customer/saved-providers/${providerId}`, { method: 'PUT' }) },
+  async remove(providerId: string): Promise<void> { await apiRequest(`/customer/saved-providers/${providerId}`, { method: 'DELETE' }) },
+}
 
 export const servicesService = {
   async getCategories(): Promise<ServiceCategory[]> {

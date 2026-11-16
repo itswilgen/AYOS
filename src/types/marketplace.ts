@@ -32,6 +32,15 @@ export interface ProviderSummary {
   photo?: string | null
   /** Price guide: "From ₱…" per service name, only for services that have one. */
   startingPrices: Record<string, number>
+  /** Whether the signed-in customer saved this provider. */
+  saved: boolean
+}
+
+/** A provider on the customer's saved list. */
+export interface SavedProvider extends ProviderSummary {
+  /** False while the provider is paused or over their free limit; they stay listed so the customer knows why. */
+  acceptingRequests: boolean
+  savedAt: string
 }
 
 export interface ServiceLocationSummary {

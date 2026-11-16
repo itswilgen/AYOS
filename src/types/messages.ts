@@ -55,6 +55,8 @@ export interface PublicProviderProfile {
   acceptingRequests: boolean
   /** True when the signed-in user owns this profile, so they can preview it but not message or book themselves. */
   isOwnProfile: boolean
+  /** Whether the signed-in customer saved this provider. */
+  isSaved: boolean
   rating: number | null
   reviewCount: number
   ratingBreakdown: { stars: number; count: number }[]

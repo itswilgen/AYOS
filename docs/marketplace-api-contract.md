@@ -121,3 +121,9 @@ The response shapes below are frontend expectations, not existing server routes.
 - Providers set it with `POST /api/provider/services` and `PUT /api/provider/services/{id}` (`startingPrice`, nullable integer); the workspace returns `services[].startingPrice`.
 - Customers read it in `GET /api/providers/{id}` (`services[].startingPrice`) and `GET /api/providers` (`startingPrices`: service name → price, only services that have one).
 - Search shows the price only for the service that was searched, never another service's price. The request form shows it as guidance: "The final price is agreed after they see the job."
+
+### Saved providers — Phase 2
+
+- `GET /api/customer/saved-providers` → `{ data: SavedProvider[] }`: the same card fields as search (`ProviderDirectory::summaries`) plus `acceptingRequests` and `savedAt`, newest first. Suspended or unapproved providers drop off the list; paused ones stay, with `acceptingRequests: false`.
+- `PUT /api/customer/saved-providers/{providerId}` saves, `DELETE` removes. Both are idempotent (`200` every time). Refused: your own provider profile (`422`), an unknown or unapproved provider (`404`), more than 50 saved (`422`), guests (`401`). Limited to 30 a minute.
+- `GET /api/providers/{id}` adds `isSaved`; `GET /api/providers` adds `saved` per provider for a signed-in customer.
