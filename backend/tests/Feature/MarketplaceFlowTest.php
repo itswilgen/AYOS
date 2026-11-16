@@ -150,6 +150,39 @@ class MarketplaceFlowTest extends TestCase
         $this->requestService($secondCustomer, $providerId, $secondLocationId);
     }
 
+    public function test_booking_a_provider_again_after_a_finished_job_is_recorded_as_a_repeat(): void
+    {
+        $this->seedMarketplaceReferenceData();
+        $providerUser = User::factory()->create();
+        $providerId = $this->approvedProvider($providerUser);
+        $customer = User::factory()->create();
+        $locationId = $this->savedLocation($customer);
+
+        $first = $this->requestService($customer, $providerId, $locationId);
+        $this->assertDatabaseHas('service_requests', ['id' => $first, 'repeat_of_request_id' => null]);
+
+        // An accepted job that is not finished yet does not make the next booking a repeat.
+        $jobId = (int) $this->actingAs($providerUser)->postJson("/api/provider/requests/{$first}/accept")->assertOk()->json('jobs.0.id');
+        $early = $this->requestService($customer, $providerId, $locationId);
+        $this->assertDatabaseHas('service_requests', ['id' => $early, 'repeat_of_request_id' => null]);
+
+        foreach (['schedule' => ['scheduledAt' => now()->addDay()->toIso8601String()], 'start' => [], 'finish' => []] as $step => $body) {
+            $this->actingAs($providerUser)->postJson("/api/provider/jobs/{$jobId}/{$step}", $body)->assertOk();
+        }
+        $this->actingAs($customer)->postJson("/api/customer/jobs/{$jobId}/confirm")->assertOk();
+
+        $again = $this->requestService($customer, $providerId, $locationId);
+        $this->assertDatabaseHas('service_requests', ['id' => $again, 'repeat_of_request_id' => $first]);
+        $this->actingAs($customer)->getJson('/api/customer/requests')->assertOk()
+            ->assertJsonPath('data.0.id', $again)
+            ->assertJsonPath('data.0.repeat_of', $first);
+
+        // Another customer booking the same provider for the first time is not a repeat.
+        $other = User::factory()->create();
+        $otherRequest = $this->requestService($other, $providerId, $this->savedLocation($other));
+        $this->assertDatabaseHas('service_requests', ['id' => $otherRequest, 'repeat_of_request_id' => null]);
+    }
+
     private function savedLocation(User $customer): int
     {
         return (int) $this->actingAs($customer)->postJson('/api/me/service-locations', [

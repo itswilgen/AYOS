@@ -63,6 +63,11 @@ class DemoMarketplaceSeeder extends Seeder
                     'rating' => $rating, 'comment' => $comment, 'created_at' => now()->subDays($daysAgo - 1), 'updated_at' => now()->subDays($daysAgo - 1)]);
             }
 
+            // Lea's earlier carpentry job with Jun, reviewed: Jun shows under "Book again" on her Home with her rating.
+            $leaJob = $this->job($lea, $jun, 'Guba ang pultahan sa kabinet sa kusina.', 'completed', now()->subDays(45), null, false, 'carpentry');
+            DB::table('provider_reviews')->insert(['provider_job_id' => $leaJob, 'provider_profile_id' => $jun, 'customer_id' => $lea->id,
+                'rating' => 5, 'comment' => 'Limpyo ug paspas ang trabaho. Mobalik ko ni Kuya Jun.', 'created_at' => now()->subDays(44), 'updated_at' => now()->subDays(44)]);
+
             // Lea's leak: accepted and scheduled for tomorrow morning (the customer tracker and the provider schedule).
             $this->job($lea, $jun, 'Nag-leak ang tubo sa ilawom sa lababo. Basa na ang salog.', 'scheduled', now()->subHours(3), now()->addDay()->setTime(9, 0), true);
 

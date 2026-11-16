@@ -6,6 +6,7 @@ import HomeSearch from './components/HomeSearch'
 import RequestTicket from './components/RequestTicket'
 import NeedsYou from './components/NeedsYou'
 import OpenRequests from './components/OpenRequests'
+import BookAgain from './components/BookAgain'
 import ServiceCategories from './components/ServiceCategories'
 import AddressPrompt from './components/AddressPrompt'
 import { locationLabel, serviceSearchPath } from './home-links'
@@ -114,6 +115,7 @@ export default function HomePage() {
 
     <NeedsYou items={todo} />
     <OpenRequests requests={requests} />
+    <BookAgain requests={requests} />
 
     {categoryState === 'loading' && <div className="home-section home-services-loading" role="status">Loading services…</div>}
     {categoryState === 'error' && <section className="home-section home-section-error" role="alert">
