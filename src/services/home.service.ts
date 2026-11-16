@@ -1,5 +1,6 @@
 import { apiRequest, backendUrl } from '../lib/api/client'
 import type { CustomerRequest, NotificationSummary, ProviderSummary, ServiceCategory, ServiceIconKey, ServiceSearchFilters } from '../types/marketplace'
+import { apiTime } from '../lib/time/api-time'
 
 type ApiCategory = { id: number; slug: string; name: string; description: string }
 type ApiProvider = { id: string; displayName: string; specialties: string[]; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
@@ -72,7 +73,7 @@ export const requestsService = {
 export const notificationsService = {
   async getNotifications(): Promise<NotificationSummary[]> {
     const result = await apiRequest<{ data: NotificationSummary[] }>('/customer/notifications')
-    return result.data.map((item) => ({ ...item, createdAtLabel: new Date(item.createdAtLabel).toLocaleString('en-PH') }))
+    return result.data.map((item) => ({ ...item, createdAtLabel: apiTime(item.createdAtLabel).toLocaleString('en-PH') }))
   },
   async markRead(id: string): Promise<void> { await apiRequest(`/customer/notifications/${id}/read`, { method: 'POST' }) },
 }
