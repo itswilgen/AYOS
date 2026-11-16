@@ -20,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { type AdminRoleOption } from "../../services/admin.service";
+import { apiTime } from "../../lib/time/api-time";
 
 export type RecordValue = Record<string, unknown>;
 /** Sidebar groups, in nav order. Each section names one, so a new section can't silently drop out of the sidebar. */
@@ -170,7 +171,7 @@ export const asText = (value: unknown) =>
 export const asNumber = (value: unknown) => Number(value ?? 0).toLocaleString("en-PH");
 export const dateText = (value: unknown) =>
   value
-    ? new Date(String(value)).toLocaleString("en-PH", {
+    ? apiTime(String(value)).toLocaleString("en-PH", {
         dateStyle: "medium",
         timeStyle: "short",
       })
