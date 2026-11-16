@@ -131,7 +131,8 @@ export default function ProviderProfilePage() {
 
         <section id="pp-reviews" data-section className="pp-section" aria-labelledby="pp-reviews-title">
           <div className="pp-section-head"><h2 id="pp-reviews-title">Customer reviews</h2><p>Only customers with a completed AYOS job can leave a review.</p></div>
-          <ProviderReviews id={profile.id} rating={profile.rating} reviewCount={profile.reviewCount} ratingBreakdown={profile.ratingBreakdown} reviews={profile.reviews} />
+          <ProviderReviews id={profile.id} rating={profile.rating} reviewCount={profile.reviewCount} ratingBreakdown={profile.ratingBreakdown} reviews={profile.reviews}
+            name={profile.displayName} requestPath={profile.acceptingRequests ? requestPath : undefined} />
         </section>
 
         <section id="pp-services" data-section className="pp-section" aria-labelledby="pp-services-title">

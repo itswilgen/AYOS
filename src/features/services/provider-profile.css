@@ -161,6 +161,23 @@
 @keyframes pp-rise { from { opacity: 0; transform: translateY(6px); } }
 @keyframes pp-fade { from { opacity: 0; } }
 
+/* No reviews yet: an honest "New" card beside the path a real review takes (dashed like the Home ticket's perforation). */
+.pp-rating-summary.is-new .pp-rating-score strong { color: var(--ayos-ink); letter-spacing: -.01em; }
+.pp-stars.is-empty { color: var(--ayos-sky-light); }
+.pp-rating-new-note { margin: 0; padding-top: 12px; border-top: 1px solid var(--ayos-hairline); color: var(--ayos-muted); font-size: .8rem; line-height: 1.5; }
+.pp-reviews-how h3 { margin: 2px 0 16px; color: var(--ayos-ink); font-size: .95rem; font-weight: 750; }
+.pp-review-steps { display: grid; margin: 0; padding: 0; list-style: none; }
+.pp-review-steps li { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; padding-bottom: 20px; }
+.pp-review-steps li:not(:last-child)::before { content: ''; position: absolute; top: 32px; bottom: 4px; left: 13px; border-left: 2px dashed var(--ayos-sky-light); }
+.pp-review-steps strong { display: block; color: var(--ayos-ink); font-size: .9rem; line-height: 1.4; }
+.pp-review-steps p { max-width: 52ch; margin: 2px 0 0; color: var(--ayos-muted); font-size: .84rem; line-height: 1.5; }
+.pp-step-dot { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--ayos-line); border-radius: 50%; color: var(--ayos-sky-deep); background: var(--ayos-white); font-size: .78rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.pp-step-dot.is-review { border-color: var(--ayos-orange-bright); color: var(--ayos-orange-bright); background: var(--ayos-orange-soft); }
+.pp-first-review { display: inline-flex; align-items: center; gap: 8px; margin-top: 0; text-decoration: none; }
+.pp-first-review svg { transition: transform var(--duration-fast) var(--ease-standard); }
+.pp-first-review:hover svg { transform: translateX(2px); }
+.pp-first-review:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; }
+
 @media (max-width: 960px) {
   .pp-layout { grid-template-columns: minmax(0, 1fr); }
   /* On phones the actions dock above the bottom navigation so they stay one tap away while reading. */
@@ -196,6 +213,14 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .pp-skeleton, .pp-achievements li, .pp-lightbox[open] { animation: none; }
-  .pp-work-tile img, .pp-section-nav a::after { transition: none; }
+  .pp-work-tile img, .pp-section-nav a::after, .pp-first-review svg { transition: none; }
   .pp-work-tile:hover img { transform: none; }
+}
+
+/* On phones the empty rating card becomes one compact row, so the review path stays near the top. */
+@media (max-width: 840px) {
+  .pp-rating-summary.is-new { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 16px; }
+  .pp-rating-summary.is-new .pp-rating-score { grid-row: span 2; margin: 0; }
+  .pp-rating-summary.is-new .pp-rating-count { margin: 2px 0 0; }
+  .pp-rating-summary.is-new .pp-rating-new-note { grid-column: 1 / -1; margin-top: 12px; }
 }

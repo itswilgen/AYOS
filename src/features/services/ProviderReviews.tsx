@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
-import { Star } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowRight, Star } from 'lucide-react'
 import { providerProfileService } from '../../services/messages.service'
 import type { ProviderReviewPage, PublicProviderProfile } from '../../types/messages'
 import { initials, monthYear, plural } from './profile-format'
@@ -10,10 +11,14 @@ export function Stars({ rating, size = 14 }: { rating: number; size?: number }) 
   </span>
 }
 
-type Props = Pick<PublicProviderProfile, 'id' | 'rating' | 'reviewCount' | 'ratingBreakdown' | 'reviews'>
+type Props = Pick<PublicProviderProfile, 'id' | 'rating' | 'reviewCount' | 'ratingBreakdown' | 'reviews'> & {
+  name: string
+  /** Where to book this provider; left out when they are not taking requests. */
+  requestPath?: string
+}
 
 /** Rating summary with per-star bars that double as filters, beside the newest reviews. */
-export default function ProviderReviews({ id, rating, reviewCount, ratingBreakdown, reviews: firstPage }: Props) {
+export default function ProviderReviews({ id, rating, reviewCount, ratingBreakdown, reviews: firstPage, name, requestPath }: Props) {
   const [filter, setFilter] = useState<number | null>(null)
   const [page, setPage] = useState<ProviderReviewPage>(firstPage)
   const [status, setStatus] = useState<'idle' | 'loading' | 'more' | 'error'>('idle')
@@ -44,7 +49,7 @@ export default function ProviderReviews({ id, rating, reviewCount, ratingBreakdo
   }
 
   if (reviewCount === 0 || rating === null) {
-    return <p className="pp-empty">No reviews yet. Reviews appear here after customers confirm a finished job, so every one comes from real work.</p>
+    return <NoReviewsYet name={name} requestPath={requestPath} />
   }
 
   return <div className="pp-reviews-layout">
@@ -75,6 +80,31 @@ export default function ProviderReviews({ id, rating, reviewCount, ratingBreakdo
         </li>)}</ul>}
       {status === 'error' && <p className="pp-action-error" role="alert">Reviews didn’t load. <button type="button" className="pp-text-button" onClick={() => void load(filter, lastAppend.current)}>Try again</button></p>}
       {status !== 'loading' && page.hasMore && <button type="button" className="pp-more-button" onClick={() => void load(filter, true)} disabled={status === 'more'}>{status === 'more' ? 'Loading…' : 'Show more reviews'}</button>}
+    </div>
+  </div>
+}
+
+/**
+ * A provider with no reviews yet: an honest "New" rating card beside the path a real review takes,
+ * so a first customer sees why the list is empty and how to start it.
+ */
+function NoReviewsYet({ name, requestPath }: { name: string; requestPath?: string }) {
+  return <div className="pp-reviews-layout">
+    <div className="pp-rating-summary is-new">
+      <p className="pp-rating-score"><strong>New</strong></p>
+      <span className="pp-stars is-empty" aria-hidden="true">{[1, 2, 3, 4, 5].map((value) => <Star key={value} size={18} />)}</span>
+      <p className="pp-rating-count">No reviews yet</p>
+      <p className="pp-rating-new-note">Ratings show here once customers confirm a finished job.</p>
+    </div>
+
+    <div className="pp-reviews-how">
+      <h3>How a review gets here</h3>
+      <ol className="pp-review-steps">
+        <li><span className="pp-step-dot" aria-hidden="true">1</span><div><strong>A customer books {name}</strong><p>The request goes straight to them, with photos of the problem.</p></div></li>
+        <li><span className="pp-step-dot" aria-hidden="true">2</span><div><strong>{name} finishes the job</strong><p>They mark the work done in AYOS.</p></div></li>
+        <li><span className="pp-step-dot is-review" aria-hidden="true"><Star size={14} fill="currentColor" /></span><div><strong>The customer confirms, then rates</strong><p>No confirmed job, no review. That keeps every rating real.</p></div></li>
+      </ol>
+      {requestPath && <Link className="pp-more-button pp-first-review" to={requestPath}>Book and be the first to review <ArrowRight size={16} aria-hidden="true" /></Link>}
     </div>
   </div>
 }
