@@ -8,7 +8,7 @@ class PlatformSettings
 {
     private const DEFAULTS = [
         'marketplace_name' => 'AYOS', 'support_email' => 'hello@ayos.ph',
-        'free_successful_client_quota' => 10, 'lifetime_activation_fee' => 0,
+        'free_successful_client_quota' => 20, 'lifetime_activation_fee' => 499,
         'maintenance_mode' => false, 'registrations_enabled' => true,
         'customer_requests_enabled' => true, 'provider_applications_enabled' => true,
         'activation_payments_enabled' => false, 'activation_payment_instructions' => '',

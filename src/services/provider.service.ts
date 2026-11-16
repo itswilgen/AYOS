@@ -30,7 +30,18 @@ export const providerWorkspaceService = {
     documents.forEach(file => form.append('verificationDocuments[]', file))
     return upload('/provider/apply', form)
   },
-  submitActivationPayment: (reference: string) => change('/provider/activation-payments', 'POST', { reference }),
+  // These endpoints answer with a status, not the workspace, so reload the workspace afterwards.
+  submitActivationPayment: async (reference: string) => {
+    await apiRequest('/provider/activation-payments', { method: 'POST', body: json({ reference }) })
+    return workspace()
+  },
+  /** Starts (or resumes) PayMongo hosted checkout for the activation fee. */
+  startActivationCheckout: () => apiRequest<{ checkoutUrl: string }>('/provider/activation-checkout', { method: 'POST' }),
+  /** After returning from PayMongo: asks the server to check the payment with PayMongo, then reloads the workspace. */
+  syncActivationCheckout: async () => {
+    await apiRequest('/provider/activation-checkout/sync', { method: 'POST' })
+    return workspace()
+  },
   setAcceptingRequests: (_id: number, _name: string, accepting: boolean) => updated(change('/provider/accepting', 'PATCH', { accepting })),
   acceptRequest: (_id: number, _name: string, requestId: string) => updated(change(`/provider/requests/${requestId}/accept`, 'POST')),
   declineRequest: (_id: number, _name: string, requestId: string) => updated(change(`/provider/requests/${requestId}/decline`, 'POST')),

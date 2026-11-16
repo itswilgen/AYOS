@@ -47,6 +47,11 @@ export interface ProviderAccess {
   activationFee: number | null
   paymentStatus?: 'pending' | 'confirmed' | 'rejected' | null
   paymentReference?: string | null
+  paymentMethod?: 'manual' | 'paymongo' | null
+  /** The admin's reason, only when the latest payment was rejected. */
+  paymentNote?: string | null
+  /** PayMongo is set up on the server and a fee is configured. */
+  onlinePaymentsEnabled?: boolean
   activationPaymentsEnabled?: boolean
   activationPaymentInstructions?: string
 }

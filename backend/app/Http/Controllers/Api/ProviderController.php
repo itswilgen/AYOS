@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Provider\SubmitActivationPaymentRequest;
+use App\Services\ActivationPayments;
 use App\Services\Conversations;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
@@ -22,7 +23,7 @@ class ProviderController extends Controller
 {
     public function __construct(private ProviderWorkspace $workspace, private PlatformSettings $settings, private SecurityAuditLogger $audit, private PublicImageStore $images, private Conversations $conversations, private ServiceEmails $emails) {}
 
-    public function submitActivationPayment(SubmitActivationPaymentRequest $request): JsonResponse
+    public function submitActivationPayment(SubmitActivationPaymentRequest $request, ActivationPayments $payments): JsonResponse
     {
         abort_unless($this->settings->get('activation_payments_enabled', false), 503, 'Provider activation payments are not available yet.');
         $data = $request->validated();
@@ -41,8 +42,35 @@ class ProviderController extends Controller
 
             return $id;
         });
+        $payments->emailAdmins($id, 'Activation payment to review', 'A provider sent a manual payment reference. Check it against the receiving account, then confirm or reject it.');
 
         return response()->json(['id' => $id, 'status' => 'pending'], 201);
+    }
+
+    /**
+     * Starts (or resumes) a PayMongo hosted checkout for the activation fee and returns its url.
+     */
+    public function startActivationCheckout(Request $request, ActivationPayments $payments): JsonResponse
+    {
+        abort_unless($payments->onlineEnabled(), 503, 'Online payment is not available yet.');
+        $profile = $this->workspace->profile($request->user()->id);
+        abort_unless($profile && $profile->status === 'approved', 403, 'An approved provider account is required.');
+        abort_if($profile->access_kind === 'lifetime', 409, 'Lifetime access is already active.');
+
+        return response()->json(['checkoutUrl' => $payments->startCheckout($profile, $request)]);
+    }
+
+    /**
+     * Called when the provider comes back from PayMongo: checks the checkout with PayMongo and confirms it if paid.
+     */
+    public function syncActivationCheckout(Request $request, ActivationPayments $payments): JsonResponse
+    {
+        $profile = $this->workspace->profile($request->user()->id);
+        abort_unless($profile && $profile->status === 'approved', 403, 'An approved provider account is required.');
+        $status = $payments->syncLatest($profile, $request);
+
+        return response()->json(['paymentStatus' => $status,
+            'accessKind' => DB::table('provider_profiles')->where('id', $profile->id)->value('access_kind')]);
     }
 
     public function workspace(Request $request): JsonResponse

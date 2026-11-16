@@ -11,6 +11,6 @@ class ReviewActivationPaymentRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['status' => ['required', Rule::in(['confirmed', 'rejected'])], 'admin_note' => ['nullable', 'string', 'max:500']];
+        return ['status' => ['required', Rule::in(['confirmed', 'rejected'])], 'admin_note' => ['nullable', 'required_if:status,rejected', 'string', 'max:500']];
     }
 }

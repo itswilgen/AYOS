@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ProviderWorkspace
 {
-    public function __construct(private PlatformSettings $settings) {}
+    public function __construct(private PlatformSettings $settings, private PayMongo $payMongo) {}
 
     public function profile(int $userId): ?object
     {
@@ -59,6 +59,7 @@ class ProviderWorkspace
                 'requests' => [], 'jobs' => [], 'services' => [], 'areas' => [], 'reviews' => [],
                 'profile' => ['displayName' => $profile?->display_name ?? '', 'bio' => '', 'yearsExperience' => 0, 'photo' => null, 'verified' => false, 'portfolio' => []],
                 'access' => ['kind' => 'trial', 'successfulClients' => 0, 'limit' => $this->settings->get('free_successful_client_quota', 10), 'activationFee' => $this->settings->get('lifetime_activation_fee', 0), 'paymentStatus' => null, 'paymentReference' => null,
+                    'paymentMethod' => null, 'paymentNote' => null, 'onlinePaymentsEnabled' => false,
                     'activationPaymentsEnabled' => (bool) $this->settings->get('activation_payments_enabled', false), 'activationPaymentInstructions' => $this->settings->get('activation_payment_instructions', '')],
                 'notifications' => []];
         }
@@ -128,6 +129,9 @@ class ProviderWorkspace
             'access' => ['kind' => $profile->access_kind, 'successfulClients' => $this->completedCount($pid),
                 'limit' => $this->settings->get('free_successful_client_quota', 10), 'activationFee' => $this->settings->get('lifetime_activation_fee', 0),
                 'paymentStatus' => $latestActivationPayment?->status, 'paymentReference' => $latestActivationPayment?->reference,
+                'paymentMethod' => $latestActivationPayment?->method,
+                'paymentNote' => $latestActivationPayment?->status === 'rejected' ? $latestActivationPayment->admin_note : null,
+                'onlinePaymentsEnabled' => $this->payMongo->configured() && (int) $this->settings->get('lifetime_activation_fee', 0) >= 1,
                 'activationPaymentsEnabled' => (bool) $this->settings->get('activation_payments_enabled', false),
                 'activationPaymentInstructions' => $this->settings->get('activation_payment_instructions', '')],
             'notifications' => $notifications,
