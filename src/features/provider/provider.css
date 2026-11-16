@@ -361,6 +361,13 @@
 .provider-quota-message.is-warning { padding: 15px; border-left: 3px solid var(--pv-orange); border-radius: 0 var(--pv-radius-sm) var(--pv-radius-sm) 0; background: #fff4eb; }
 .provider-quota-message h3 { margin: 0 0 4px; font-size: .87rem; }
 .provider-quota-message p { margin: 0; font-size: .77rem; }
+/* Lifetime activation: PayMongo checkout and the manual-reference fallback */
+.provider-quota-message.is-success { padding: 15px; border-left: 3px solid #1f8a4c; border-radius: 0 var(--pv-radius-sm) var(--pv-radius-sm) 0; background: #eaf6ee; }
+.provider-pay-button { width: 100%; justify-content: center; margin-top: 14px; }
+.provider-pay-other { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--pv-line, #dbe7ef); }
+.provider-pay-other summary { cursor: pointer; color: var(--pv-blue); font-size: .8rem; font-weight: 750; }
+.provider-pay-other summary:focus-visible { outline: 2px solid var(--pv-blue); outline-offset: 3px; border-radius: 4px; }
+.provider-pay-other[open] summary { margin-bottom: 12px; }
 .provider-access-lifetime { padding: 25px 5px; text-align: center; }
 .provider-access-lifetime svg { color: #148363; }
 .provider-access-lifetime h3 { margin: 9px 0 3px; font-size: 1.18rem; }

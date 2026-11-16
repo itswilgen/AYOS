@@ -15,6 +15,7 @@ use App\Http\Requests\Admin\SetUserStatusRequest;
 use App\Http\Requests\Admin\UpdatePlatformSettingsRequest;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\ActivationPayments;
 use App\Services\PlatformNoticeBroadcaster;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
@@ -545,25 +546,27 @@ class AdminController extends Controller
         return response()->json($query->orderByDesc('a.created_at')->paginate($this->pageSize($request)));
     }
 
-    public function reviewPayment(ReviewActivationPaymentRequest $request, int $paymentId): JsonResponse
+    public function reviewPayment(ReviewActivationPaymentRequest $request, int $paymentId, ActivationPayments $payments): JsonResponse
     {
         $data = $request->validated();
+        if ($data['status'] === 'confirmed') {
+            abort_unless($payments->confirm($paymentId, $request->user()->id, $data['admin_note'] ?? null, $request), 409, 'This payment is already confirmed.');
+
+            return response()->json(['id' => $paymentId, 'status' => 'confirmed']);
+        }
         DB::transaction(function () use ($request, $paymentId, $data): void {
             $payment = DB::table('activation_payments')->where('id', $paymentId)->lockForUpdate()->first();
             abort_unless($payment, 404);
             abort_if($payment->status !== 'pending', 409, 'Only pending payments can be reviewed.');
-            $provider = DB::table('provider_profiles')->where('id', $payment->provider_profile_id)->lockForUpdate()->first();
-            if ($data['status'] === 'confirmed') {
-                DB::table('provider_profiles')->where('id', $provider->id)->update(['access_kind' => 'lifetime', 'updated_at' => now()]);
-                $this->workspace->notify((int) $provider->id, 'Lifetime access active', 'Your activation payment was confirmed.', '/provider/access');
-            }
-            DB::table('activation_payments')->where('id', $paymentId)->update(['status' => $data['status'], 'admin_note' => $data['admin_note'] ?? null,
+            DB::table('activation_payments')->where('id', $paymentId)->update(['status' => 'rejected', 'admin_note' => $data['admin_note'] ?? null,
                 'reviewed_by' => $request->user()->id, 'reviewed_at' => now(), 'updated_at' => now()]);
-            $this->audit->record($data['status'] === 'confirmed' ? 'PAYMENT_CONFIRMED' : 'PAYMENT_REJECTED', $request->user()->id, $request,
-                ['payment_id' => $paymentId, 'provider_id' => (int) $provider->id, 'amount' => (int) $payment->amount]);
+            $this->workspace->notify((int) $payment->provider_profile_id, 'Activation payment not confirmed',
+                filled($data['admin_note'] ?? null) ? 'Reason: '.mb_substr((string) $data['admin_note'], 0, 180) : 'Check the payment details and submit it again.', '/provider/access');
+            $this->audit->record('PAYMENT_REJECTED', $request->user()->id, $request,
+                ['payment_id' => $paymentId, 'provider_id' => (int) $payment->provider_profile_id, 'amount' => (int) $payment->amount]);
         });
 
-        return response()->json(['id' => $paymentId, 'status' => $data['status']]);
+        return response()->json(['id' => $paymentId, 'status' => 'rejected']);
     }
 
     public function settings(): JsonResponse

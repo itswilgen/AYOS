@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Bell, BriefcaseBusiness, CalendarDays, Check, CheckCircle2, ClipboardList, Clock3, Image as ImageIcon, Inbox, MapPin, MessageCircle, Plus, ShieldCheck, Star, Trash2, Upload, UserRound, Users, Wrench, type LucideIcon } from 'lucide-react'
 import { apiRequest } from '../../lib/api/client'
 import { messagesService } from '../../services/messages.service'
@@ -245,17 +245,78 @@ export function ProviderProfilePage() {
   return <><Heading eyebrow="PUBLIC PROVIDER IDENTITY" title="Profile" description="Show customers what you do and the experience you bring." /><div className="provider-detail-grid"><Panel title="Professional details"><div className="provider-profile-intro"><span className="provider-profile-photo">{data.profile.photo ? <img src={data.profile.photo} alt="Your profile" /> : <UserRound size={29} aria-hidden="true" />}</span><div><strong>{data.profile.displayName}</strong><small>{data.profile.verified ? <><ShieldCheck size={15} /> Identity verified</> : 'Verification pending'}</small><label className="provider-upload-link"><Upload size={16} /> Change photo<input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void uploadPhoto(event)} /></label></div></div><form className="provider-form" onSubmit={save}><label>Provider display name<input required maxLength={80} value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label><label>Professional bio<textarea rows={5} maxLength={500} value={bio} onChange={(event) => setBio(event.target.value)} placeholder="Briefly describe your skills and experience" /></label><label>Years of experience<input type="number" min="0" max="70" required value={yearsExperience} onChange={(event) => setYearsExperience(event.target.value)} /></label><button className="provider-button provider-button-primary" type="submit" disabled={busy}>Save profile</button></form><p className="provider-privacy-note"><ShieldCheck size={16} /> Your residential address and identity documents are never part of this public profile.</p></Panel><div className="provider-detail-aside"><Panel title="At a glance"><dl className="provider-detail-list"><div><dt>Services</dt><dd>{data.services.filter((item) => item.active).map((item) => item.category).join(', ') || 'None yet'}</dd></div><div><dt>Service areas</dt><dd>{data.areas.map((item) => item.city).join(', ') || 'None yet'}</dd></div><div><dt>Verification</dt><dd>{data.profile.verified ? 'Identity verified' : 'Pending'}</dd></div></dl><div className="provider-link-pair"><Link to="/provider/services">Edit services <ArrowRight size={15} /></Link><Link to="/provider/service-areas">Edit coverage <ArrowRight size={15} /></Link></div></Panel></div></div><Panel title="Work portfolio" className="provider-portfolio-panel"><p className="provider-muted">Show examples of completed work. Uploaded images appear on your public provider profile.</p>{data.profile.portfolio.length ? <div className="provider-portfolio-grid">{data.profile.portfolio.map((item) => <article key={item.id}><a href={item.image} target="_blank" rel="noreferrer" aria-label={`Preview ${item.title}`}><img src={item.image} alt={item.title} /><span>Preview work</span></a><div><small>{item.category}</small><strong>{item.title}</strong><button type="button" disabled={busy} onClick={() => void run((id, name) => providerWorkspaceService.removePortfolioItem(id, name, item.id), 'Work sample removed.')}><Trash2 size={15} /> Remove</button></div></article>)}</div> : <Empty icon={ImageIcon} title="No work samples" detail="Add an example of the work you have done." />}<form className="provider-form provider-portfolio-form" onSubmit={(event) => void addWork(event)}><h3>Add work sample</h3><label>Project title<input required maxLength={70} value={portfolioTitle} onChange={(event) => setPortfolioTitle(event.target.value)} placeholder="e.g. Residential wiring" /></label><label>Service category<input required maxLength={50} value={portfolioCategory} onChange={(event) => setPortfolioCategory(event.target.value)} placeholder="e.g. Electrical" /></label><label className="provider-file-input">Work image<input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void selectWork(event)} /></label>{portfolioImage && <img className="provider-image-preview" src={portfolioImage} alt="New work sample preview" />}{fileError && <p className="provider-inline-warning" role="alert">{fileError}</p>}<button className="provider-button provider-button-primary" type="submit" disabled={busy || !portfolioImage}><Upload size={17} /> Add work</button></form></Panel></>
 }
 
+const PAYMONGO_CHECKOUT = 'https://checkout.paymongo.com/'
+
 export function ProviderAccessPage() {
   const { data, busy, run } = useProviderWorkspace()
+  const [searchParams] = useSearchParams()
   const [reference, setReference] = useState('')
+  const [paying, setPaying] = useState(false)
+  const [payError, setPayError] = useState('')
+  const returned = searchParams.get('payment')
   const access = data.access
   const remaining = Math.max(0, access.limit - access.successfulClients)
   const percentage = Math.min(100, Math.round(access.successfulClients / access.limit * 100))
+  const fee = access.activationFee !== null ? `₱${access.activationFee.toLocaleString('en-PH')}` : ''
+  const manualPending = access.paymentStatus === 'pending' && access.paymentMethod !== 'paymongo'
+  const onlinePending = access.paymentStatus === 'pending' && access.paymentMethod === 'paymongo'
+
+  // Back from PayMongo: ask the server to check the payment now (the webhook may not have arrived yet).
+  useEffect(() => {
+    if (returned === 'success') void run(() => providerWorkspaceService.syncActivationCheckout())
+    // Run once when the provider lands back here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [returned])
+
   const submitReference = async (event: FormEvent) => {
     event.preventDefault()
     if (await run(() => providerWorkspaceService.submitActivationPayment(reference.trim()), 'Payment reference submitted for AYOS review.')) setReference('')
   }
-  return <><Heading eyebrow="PROVIDER ACCESS" title="Quota & Access" description="Understand when new customer opportunities are available to you." /><div className="provider-detail-grid"><Panel title={access.kind === 'lifetime' ? 'Lifetime provider access' : 'Free client access'} className="provider-access-panel">{access.kind === 'lifetime' ? <div className="provider-access-lifetime"><CheckCircle2 size={38} /><h3>Lifetime access active</h3><p>You can continue receiving standard customer opportunities.</p></div> : <><div className="provider-quota-number"><strong>{access.successfulClients} <span>/ {access.limit}</span></strong><p>Successfully completed clients</p></div><div className="provider-progress" role="progressbar" aria-label="Successful client quota" aria-valuenow={access.successfulClients} aria-valuemin={0} aria-valuemax={access.limit}><span style={{ width: `${percentage}%` }} /></div>{remaining === 0 ? <div className="provider-quota-message is-warning"><h3>New customer opportunities paused</h3><p>You’ve completed your free successful client quota. Your existing jobs, reviews, profile and customer account remain available.</p></div> : remaining === 1 ? <div className="provider-quota-message is-warning"><h3>Almost at your free client limit</h3><p>After your next successful client, new customer opportunities will pause until lifetime provider access is activated.</p></div> : <p className="provider-quota-message">{remaining} successful clients remaining before new opportunities pause.</p>}<p className="provider-muted">Only completed services confirmed by a customer count toward your quota.</p></>}</Panel><div className="provider-detail-aside"><Panel title="Lifetime activation">{access.activationFee !== null && <div className="provider-activation-fee"><span>Activation fee</span><strong>₱{access.activationFee.toLocaleString('en-PH')}</strong></div>}{access.kind === 'lifetime' ? <p className="provider-muted">Lifetime provider access is active on your account.</p> : !access.activationPaymentsEnabled ? <p className="provider-muted">Lifetime activation is not available right now. Your free provider access remains active.</p> : access.paymentStatus === 'pending' ? <div className="provider-quota-message"><h3>Reference submitted</h3><p>Reference <strong>{access.paymentReference}</strong> is waiting for AYOS to verify it against the receiving account.</p></div> : <><p className="provider-muted">Follow these verified manual payment instructions. AYOS will review the reference before enabling lifetime access.</p><div className="provider-payment-instructions">{access.activationPaymentInstructions}</div>{access.paymentStatus === 'rejected' && <p className="provider-inline-warning">Your previous reference was rejected. Check the payment details and submit a new reference.</p>}<form className="provider-form" onSubmit={event => void submitReference(event)}><label>Payment reference<input required minLength={4} maxLength={120} value={reference} onChange={event => setReference(event.target.value)} placeholder="Enter the transfer reference" /></label><button type="submit" className="provider-button provider-button-primary" disabled={busy}>Submit reference <ArrowRight size={16} /></button></form><p className="provider-privacy-note"><ShieldCheck size={16} /> Do not enter bank login details, passwords or card numbers.</p></>}</Panel></div></div></>
+
+  const payOnline = async () => {
+    setPaying(true)
+    setPayError('')
+    try {
+      const { checkoutUrl } = await providerWorkspaceService.startActivationCheckout()
+      if (!checkoutUrl.startsWith(PAYMONGO_CHECKOUT)) throw new Error('We couldn’t open the payment page. Please try again.')
+      window.location.assign(checkoutUrl)
+    } catch (cause) {
+      setPayError(cause instanceof Error ? cause.message : 'We couldn’t open the payment page. Please try again.')
+      setPaying(false)
+    }
+  }
+
+  const manualForm = <><div className="provider-payment-instructions">{access.activationPaymentInstructions}</div><form className="provider-form" onSubmit={event => void submitReference(event)}><label>Payment reference<input required minLength={4} maxLength={120} value={reference} onChange={event => setReference(event.target.value)} placeholder="Enter the transfer reference" /></label><button type="submit" className="provider-button" disabled={busy}>Submit reference <ArrowRight size={16} /></button></form><p className="provider-privacy-note"><ShieldCheck size={16} /> Do not enter bank login details, passwords or card numbers.</p></>
+
+  let activation: ReactNode
+  if (access.kind === 'lifetime') {
+    activation = returned === 'success'
+      ? <div className="provider-quota-message is-success"><h3>Payment received</h3><p>Thank you! Lifetime access is active. New customer requests keep coming.</p></div>
+      : <p className="provider-muted">Lifetime provider access is active on your account.</p>
+  } else if (manualPending) {
+    activation = <div className="provider-quota-message"><h3>Reference submitted</h3><p>Reference <strong>{access.paymentReference}</strong> is waiting for AYOS to verify it against the receiving account.</p></div>
+  } else if (access.onlinePaymentsEnabled) {
+    activation = <>
+      {returned === 'success' && <div className="provider-quota-message" role="status"><h3>Confirming your payment</h3><p>PayMongo is confirming it. This page updates in a moment; you can also refresh it.</p></div>}
+      {returned === 'cancelled' && <p className="provider-inline-warning" role="status">Payment cancelled. Nothing was charged. You can pay anytime.</p>}
+      {access.paymentStatus === 'rejected' && <p className="provider-inline-warning">Your previous payment was not confirmed.{access.paymentNote ? <> Reason: {access.paymentNote}</> : null}</p>}
+      <p className="provider-muted">Pay once and keep receiving new customers after your free clients. Pay with GCash, Maya or your bank app.</p>
+      <button type="button" className="provider-button provider-button-primary provider-pay-button" onClick={() => void payOnline()} disabled={paying || busy}>{paying ? 'Opening secure payment…' : <>{onlinePending ? 'Continue payment' : `Pay ${fee}`} <ArrowRight size={16} /></>}</button>
+      {payError && <p className="provider-inline-warning" role="alert">{payError}</p>}
+      <p className="provider-privacy-note"><ShieldCheck size={16} /> Secure checkout by PayMongo. AYOS never sees your card or wallet details.</p>
+      {access.activationPaymentsEnabled && <details className="provider-pay-other"><summary>Paid another way? Submit a reference</summary>{manualForm}</details>}
+    </>
+  } else if (access.activationPaymentsEnabled) {
+    activation = <>
+      {access.paymentStatus === 'rejected' && <p className="provider-inline-warning">Your previous reference was not confirmed.{access.paymentNote ? <> Reason: {access.paymentNote}</> : <> Check the payment details and submit a new reference.</>}</p>}
+      <p className="provider-muted">Follow these verified manual payment instructions. AYOS will review the reference before enabling lifetime access.</p>
+      {manualForm}
+    </>
+  } else {
+    activation = <p className="provider-muted">Lifetime activation is not available right now. Your free provider access remains active.</p>
+  }
+
+  return <><Heading eyebrow="PROVIDER ACCESS" title="Quota & Access" description="Understand when new customer opportunities are available to you." /><div className="provider-detail-grid"><Panel title={access.kind === 'lifetime' ? 'Lifetime provider access' : 'Free client access'} className="provider-access-panel">{access.kind === 'lifetime' ? <div className="provider-access-lifetime"><CheckCircle2 size={38} /><h3>Lifetime access active</h3><p>You can continue receiving standard customer opportunities.</p></div> : <><div className="provider-quota-number"><strong>{access.successfulClients} <span>/ {access.limit}</span></strong><p>Successfully completed clients</p></div><div className="provider-progress" role="progressbar" aria-label="Successful client quota" aria-valuenow={access.successfulClients} aria-valuemin={0} aria-valuemax={access.limit}><span style={{ width: `${percentage}%` }} /></div>{remaining === 0 ? <div className="provider-quota-message is-warning"><h3>New customer opportunities paused</h3><p>You’ve completed your free successful client quota. Your existing jobs, reviews, profile and customer account remain available.</p></div> : remaining === 1 ? <div className="provider-quota-message is-warning"><h3>Almost at your free client limit</h3><p>After your next successful client, new customer opportunities will pause until lifetime provider access is activated.</p></div> : <p className="provider-quota-message">{remaining} successful clients remaining before new opportunities pause.</p>}<p className="provider-muted">Only completed services confirmed by a customer count toward your quota.</p></>}</Panel><div className="provider-detail-aside"><Panel title="Lifetime activation">{access.activationFee !== null && <div className="provider-activation-fee"><span>Activation fee</span><strong>{fee}</strong></div>}{activation}</Panel></div></div></>
 }
 
 export function ProviderNotifications() {

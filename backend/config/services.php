@@ -40,9 +40,20 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8010/auth/google/callback'),
     ],
-    # get captcha secret key from .env 
+    // get captcha secret key from .env
     'recaptcha' => [
         'secret' => env('RECAPTCHA_SECRET_KEY'),
+    ],
+
+    // PayMongo (Philippine payment gateway) for the provider activation fee: hosted checkout + signed webhooks.
+    // Test keys start with sk_test_; the webhook secret comes from the webhook you create in the PayMongo dashboard.
+    'paymongo' => [
+        'secret_key' => env('PAYMONGO_SECRET_KEY'),
+        'webhook_secret' => env('PAYMONGO_WEBHOOK_SECRET'),
+        'base_url' => env('PAYMONGO_BASE_URL', 'https://api.paymongo.com/v1'),
+        // Must be methods enabled on your PayMongo account (Settings > Payment Methods).
+        'payment_methods' => array_values(array_filter(array_map('trim', explode(',', (string) env('PAYMONGO_PAYMENT_METHODS', 'gcash,paymaya,card'))))),
+        'signature_tolerance_seconds' => (int) env('PAYMONGO_SIGNATURE_TOLERANCE', 600),
     ],
 
 ];

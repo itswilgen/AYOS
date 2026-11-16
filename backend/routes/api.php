@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\ConversationController;
 use App\Http\Controllers\Api\CustomerServiceRequestController;
 use App\Http\Controllers\Api\LocationReferenceController;
+use App\Http\Controllers\Api\PayMongoWebhookController;
 use App\Http\Controllers\Api\ProviderController;
 use App\Http\Controllers\Api\ServiceDisputeController;
 use App\Http\Controllers\Api\ServiceLocationController;
@@ -35,6 +36,8 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/platform-state', fn (PlatformSettings $settings) => response()->json(['maintenance_mode' => (bool) $settings->get('maintenance_mode', false)]));
 Route::get('/platform-notices', [AdminController::class, 'publicNotices']);
+
+Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->middleware('throttle:120,1')->name('webhooks.paymongo');
 
 Route::prefix('locations')->controller(LocationReferenceController::class)->group(function (): void {
     Route::get('/regions', 'regions');
@@ -109,6 +112,8 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
     Route::get('/provider/workspace', [ProviderController::class, 'workspace'])->middleware('account.active');
     Route::post('/provider/apply', [ProviderController::class, 'apply'])->middleware(['account.active', 'throttle:3,1']);
     Route::post('/provider/activation-payments', [ProviderController::class, 'submitActivationPayment'])->middleware(['account.active', 'throttle:5,1']);
+    Route::post('/provider/activation-checkout', [ProviderController::class, 'startActivationCheckout'])->middleware(['account.active', 'throttle:10,1']);
+    Route::post('/provider/activation-checkout/sync', [ProviderController::class, 'syncActivationCheckout'])->middleware('throttle:20,1');
     Route::get('/provider/verification-documents/{documentId}', [ProviderController::class, 'verificationDocument'])->middleware('account.active');
     Route::get('/provider/area-options', [ProviderController::class, 'areaOptions']);
     Route::get('/provider/area-barangays', [ProviderController::class, 'areaBarangays']);
