@@ -107,9 +107,10 @@ class CustomerServiceRequestController extends Controller
             ->join('service_categories as c', 'c.id', '=', 'r.service_category_id')
             ->leftJoin('provider_jobs as j', 'j.service_request_id', '=', 'r.id')
             ->leftJoin('provider_reviews as rv', 'rv.provider_job_id', '=', 'j.id')
-            ->where('r.customer_id', $request->user()->id)->orderByDesc('r.created_at')
+            ->where('r.customer_id', $request->user()->id)->orderByDesc('r.created_at')->orderByDesc('r.id')
             ->get(['r.id', 'r.description', 'r.preferred_at', 'r.status as request_status', 'r.created_at',
-                'p.id as provider_id', 'p.display_name as provider_name', 'c.name as service', 'j.id as job_id', 'j.status as job_status', 'rv.id as review_id']);
+                'p.id as provider_id', 'p.display_name as provider_name', 'c.name as service', 'j.id as job_id', 'j.status as job_status', 'j.completed_at',
+                'rv.id as review_id', 'rv.rating as review_rating', 'r.repeat_of_request_id as repeat_of']);
 
         return response()->json(['data' => $items]);
     }
@@ -157,8 +158,13 @@ class CustomerServiceRequestController extends Controller
             abort_unless(DB::table('provider_services')->where('provider_profile_id', $provider->id)->where('service_category_id', $category->id)->where('active', true)->exists(), 422, 'This provider does not offer that service.');
             abort_unless(DB::table('provider_service_areas')->where('provider_profile_id', $provider->id)->where('city_municipality_code', $location->city_municipality_code)
                 ->where('active', true)->where(fn ($q) => $q->whereNull('barangay_code')->orWhere('barangay_code', $location->barangay_code))->exists(), 422, 'This provider does not serve your selected location.');
+            // A repeat booking: the customer already had a finished job with this provider. Decided here from the
+            // job history (never from the client), so the count is right however the customer got to the form.
+            $repeatOf = DB::table('service_requests as r')->join('provider_jobs as j', 'j.service_request_id', '=', 'r.id')
+                ->where('r.customer_id', $userId)->where('r.provider_profile_id', $provider->id)->where('j.status', 'completed')
+                ->orderByDesc('j.completed_at')->orderByDesc('r.id')->value('r.id');
             $id = DB::table('service_requests')->insertGetId([
-                'customer_id' => $userId, 'provider_profile_id' => $provider->id, 'service_category_id' => $category->id,
+                'customer_id' => $userId, 'provider_profile_id' => $provider->id, 'repeat_of_request_id' => $repeatOf, 'service_category_id' => $category->id,
                 'service_location_id' => $location->id, 'description' => trim($data['description']), 'notes' => trim($data['notes'] ?? ''),
                 'preferred_at' => $data['preferredAt'], 'status' => 'new', 'created_at' => now(), 'updated_at' => now(),
             ]);

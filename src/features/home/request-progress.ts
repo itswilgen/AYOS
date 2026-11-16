@@ -83,3 +83,35 @@ export function needsYouItems(requests: CustomerRequest[], conversations: Unread
 
   return [...confirm, ...messages, ...reviews]
 }
+
+export type PastProvider = {
+  providerId: number
+  name: string
+  /** The service from their most recent finished job, preselected when booking again. */
+  service: string
+  lastDone: string | null
+  /** The stars this customer gave them most recently, if they left a review. */
+  rating: number | null
+}
+
+/** Providers who finished a job for this customer, most recent first, once each. */
+export function pastProviders(requests: CustomerRequest[], limit = 4): PastProvider[] {
+  const finished = requests.filter((request) => request.job_status === 'completed')
+    .sort((a, b) => (b.completed_at ?? b.created_at).localeCompare(a.completed_at ?? a.created_at))
+  const byProvider = new Map<number, PastProvider>()
+  for (const request of finished) {
+    const known = byProvider.get(request.provider_id)
+    if (known) {
+      known.rating ??= request.review_rating
+      continue
+    }
+    byProvider.set(request.provider_id, { providerId: request.provider_id, name: request.provider_name, service: request.service,
+      lastDone: request.completed_at, rating: request.review_rating })
+  }
+  return [...byProvider.values()].slice(0, limit)
+}
+
+/** The request form for this provider, with their last service picked and the "book again" wording. */
+export const bookAgainPath = (provider: PastProvider) =>
+  `/services/request/${provider.providerId}?${new URLSearchParams({ service: provider.service, again: '1' })}`
+

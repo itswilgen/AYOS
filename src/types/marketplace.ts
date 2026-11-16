@@ -89,7 +89,13 @@ export interface CustomerRequest {
   provider_id: number
   job_id: number | null
   job_status: string | null
+  /** When the customer confirmed the finished job (UTC), null until then. */
+  completed_at: string | null
   review_id: number | null
+  /** The stars this customer gave, when they reviewed the job. */
+  review_rating: number | null
+  /** The earlier request this one repeats, when the customer booked the same provider again after a finished job. */
+  repeat_of: number | null
 }
 
 export interface NotificationSummary {

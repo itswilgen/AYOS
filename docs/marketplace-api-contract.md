@@ -98,3 +98,10 @@ The response shapes below are frontend expectations, not existing server routes.
 - `platform_notices.notified_at` records the send. Editing a published notice, or unpublishing and publishing it again, doesn't notify anyone a second time. Drafts notify nobody until they're published.
 - The bell's title and detail columns are shorter than a notice, so the title is cut to 100 characters and the body to 240, each ending in "…". The bell is the only place users see notices; the site no longer shows a banner above the header.
 - Users who sign up after a notice was sent don't get it.
+
+### Repeat bookings (`GET /api/customer/requests`, `POST /api/customer/requests`) — Phase 2 "Book again"
+
+- `POST /api/customer/requests` takes no new field. The server sets `service_requests.repeat_of_request_id` when the customer already has a **completed** job with the same provider (the most recently completed one). It is never read from the client, so the count is honest however the customer reached the form. An accepted or unfinished job does not count.
+- `GET /api/customer/requests` items now also return `completed_at` (UTC, null until the customer confirms the job), `review_rating` (1–5, null without a review) and `repeat_of` (the earlier request id, or null). Items are ordered newest first, ties broken by id.
+- Home builds "Book again" from these items: providers with a completed job, newest first, once each, up to 4. "Request again" opens `/services/request/{providerId}?service={name}&again=1`, which preselects the service and shows the "Book again" heading.
+- Measuring the Phase 2 gate: `select count(*) filter (where repeat_of_request_id is not null) * 1.0 / count(*) from service_requests` gives the share of repeat bookings.
