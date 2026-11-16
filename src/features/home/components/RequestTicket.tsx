@@ -74,7 +74,7 @@ export default function RequestTicket({ requests, state, onRetry }: Props) {
     head={<><span>Your request · #{request.id}</span><span className="home-ticket-step">Step {progress.step + 1}<span> / {REQUEST_STEPS.length}</span></span></>}
     foot={<>
       <Link className="home-ticket-link" to="/my-requests">{others ? `${others} more open` : 'All requests'}</Link>
-      <Button href="/my-requests">{progress.action ?? 'View request'} <ArrowRight size={16} aria-hidden="true" /></Button>
+      <Button href={`/my-requests#request-${request.id}`}>{progress.action ?? 'View request'} <ArrowRight size={16} aria-hidden="true" /></Button>
     </>}
   >
     <h2 id="ticket-title" className="home-ticket-title">{request.service}</h2>

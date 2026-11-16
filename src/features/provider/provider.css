@@ -530,3 +530,32 @@
   .provider-stat-grid strong { font-size: 2rem; }
 }
 @media (prefers-reduced-motion: reduce) { .provider-shell *, .provider-shell *::before, .provider-shell *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+/* A to-do on Home links straight to one request: it lands clear of the header and is briefly marked. */
+.provider-request-card[id^="request-"] { scroll-margin-top: 96px; }
+.provider-request-card.is-target { border-color: var(--ayos-sky-action); box-shadow: 0 0 0 3px var(--ayos-sky-soft); }
+@media (prefers-reduced-motion: no-preference) {
+  .provider-request-card.is-target { animation: request-target-flash 1.6s var(--ease-standard) 1; }
+}
+@keyframes request-target-flash { 0%, 30% { background: var(--ayos-sky-soft); } 100% { background: #fff; } }
+
+/* The buttons on a My requests card share one row with even spacing, and wrap cleanly on narrow phones. */
+.request-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.request-card-actions + .provider-form { margin-top: 16px; }
+
+/* Tap-to-rate stars in the review form (StarRating). Radios stay in the page for keyboard and screen readers, drawn as stars. */
+.star-rating { width: 100%; margin: 0; padding: 0; border: 0; min-width: 0; }
+.star-rating legend { margin-bottom: 6px; padding: 0; color: #334954; font-size: .75rem; font-weight: 750; }
+.star-rating-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.star-rating-stars { display: flex; }
+.star-rating-option { position: relative; display: inline-flex; }
+.star-rating-input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+.provider-form .star-rating-option label { width: 44px; height: 44px; display: inline-grid; place-items: center; border-radius: var(--pv-radius-sm, 5px); color: #b9c9d1; cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
+.provider-form .star-rating-option label.is-on { color: var(--ayos-orange-bright); }
+.provider-form .star-rating-option label:active { transform: scale(.9); }
+.star-rating-input:focus-visible + label { outline: 2px solid var(--ayos-sky-action); outline-offset: 1px; }
+.star-rating-word { min-width: 9ch; color: var(--ayos-text); font-size: .85rem; font-weight: 700; }
+@media (prefers-reduced-motion: reduce) {
+  .provider-form .star-rating-option label { transition: none; }
+  .provider-form .star-rating-option label:active { transform: none; }
+}

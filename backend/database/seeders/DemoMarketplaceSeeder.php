@@ -50,8 +50,8 @@ class DemoMarketplaceSeeder extends Seeder
             $paolo = $this->customer('paolo', 'Paolo Abellana', '09170000004', '1804621001', 'Sample Lane', null);
 
             $jun = $this->provider('jun', 'Jun Reyes Plumbing', 'Leaks, clogged drains, faucets and new pipes for homes in Tanjay.', 7, ['plumbing' => 'Leak repair, drains and faucets', 'carpentry' => 'Cabinet and sink repairs'], 'demo/jun-reyes.jpg');
-            $this->provider('aircon', 'Tanjay Cool Aircon', 'Aircon cleaning, freon and repair for window and split types.', 5, ['aircon' => 'Cleaning, freon and repair', 'appliance-repair' => 'Ref and washing machine repair'], null);
-            $this->provider('marco', 'Marco Electrical Works', 'House wiring, outlets, breakers and solar setups.', 9, ['electrical' => 'Wiring, outlets and breakers', 'solar' => 'Small home solar setups'], null);
+            $aircon = $this->provider('aircon', 'Tanjay Cool Aircon', 'Aircon cleaning, freon and repair for window and split types.', 5, ['aircon' => 'Cleaning, freon and repair', 'appliance-repair' => 'Ref and washing machine repair'], null);
+            $marco = $this->provider('marco', 'Marco Electrical Works', 'House wiring, outlets, breakers and solar setups.', 9, ['electrical' => 'Wiring, outlets and breakers', 'solar' => 'Small home solar setups'], null);
             $this->provider('bea', 'Bea Gadget Repair', 'Phone screens, batteries and laptop repairs.', 4, ['phone-repair' => 'Screens and batteries', 'computer-repair' => 'Laptops and desktops'], null);
 
             // Finished, reviewed jobs: the reviews and completed count on Jun's profile.
@@ -68,6 +68,15 @@ class DemoMarketplaceSeeder extends Seeder
 
             // A new request still waiting for Jun (the provider's Requests inbox).
             $this->request($grace, $jun, 'Guba ang gripo sa kusina, padayon ang tulo.', 'new', now()->subMinutes(40), true);
+
+            // Lea's to-dos on Home ("Needs you"): aircon work marked finished and waiting for her confirmation,
+            // a finished electrical job she has not reviewed yet, and an unread reply from Jun.
+            $this->job($lea, $aircon, 'Dili na mobugnaw ang aircon sa kwarto, kinahanglan limpyo ug freon.', 'provider_finished', now()->subDays(2), now()->subHours(5), false, 'aircon');
+            $this->job($lea, $marco, 'Nag-spark ang outlet sa sala, ilisan ug bag-o.', 'completed', now()->subDays(6), null, false, 'electrical');
+            $this->conversation($lea, $jun, [
+                ['customer', 'Kuya Jun, ugma pa ba ka moabot? Basa na kaayo ang salog.', now()->subHours(2)],
+                ['provider', 'Oo Ma\'am Lea, alas 9 sa buntag. Dad-on nako ang pyesa sa tubo.', now()->subMinutes(25)],
+            ]);
         });
     }
 
@@ -102,11 +111,11 @@ class DemoMarketplaceSeeder extends Seeder
         return $profileId;
     }
 
-    private function request(User $customer, int $providerId, string $description, string $status, \DateTimeInterface $at, bool $withPhoto = false): int
+    private function request(User $customer, int $providerId, string $description, string $status, \DateTimeInterface $at, bool $withPhoto = false, string $category = 'plumbing'): int
     {
         $requestId = DB::table('service_requests')->insertGetId([
             'customer_id' => $customer->id, 'provider_profile_id' => $providerId,
-            'service_category_id' => DB::table('service_categories')->where('slug', 'plumbing')->value('id'),
+            'service_category_id' => DB::table('service_categories')->where('slug', $category)->value('id'),
             'service_location_id' => $customer->serviceLocations()->value('id'), 'description' => $description, 'notes' => '',
             'preferred_at' => now()->addDay()->setTime(9, 0), 'status' => $status, 'created_at' => $at, 'updated_at' => $at,
         ]);
@@ -119,13 +128,34 @@ class DemoMarketplaceSeeder extends Seeder
         return $requestId;
     }
 
-    private function job(User $customer, int $providerId, string $description, string $status, \DateTimeInterface $at, ?\DateTimeInterface $scheduledAt = null, bool $withPhoto = false): int
+    private function job(User $customer, int $providerId, string $description, string $status, \DateTimeInterface $at, ?\DateTimeInterface $scheduledAt = null, bool $withPhoto = false, string $category = 'plumbing'): int
     {
-        $requestId = $this->request($customer, $providerId, $description, 'accepted', $at, $withPhoto);
+        $requestId = $this->request($customer, $providerId, $description, 'accepted', $at, $withPhoto, $category);
 
         return DB::table('provider_jobs')->insertGetId([
             'service_request_id' => $requestId, 'provider_profile_id' => $providerId, 'customer_id' => $customer->id, 'status' => $status,
             'scheduled_at' => $scheduledAt ?? $at, 'completed_at' => $status === 'completed' ? $at : null, 'created_at' => $at, 'updated_at' => $at,
         ]);
+    }
+
+    /**
+     * A chat between a customer and a provider. The customer has read up to their own last message,
+     * so any provider message after it shows as unread for them.
+     *
+     * @param  list<array{0: 'customer'|'provider', 1: string, 2: \DateTimeInterface}>  $messages
+     */
+    private function conversation(User $customer, int $providerId, array $messages): void
+    {
+        $providerUserId = (int) DB::table('provider_profiles')->where('id', $providerId)->value('user_id');
+        $conversationId = DB::table('conversations')->insertGetId(['customer_id' => $customer->id, 'provider_profile_id' => $providerId,
+            'created_at' => $messages[0][2], 'updated_at' => now()]);
+        $read = ['customer' => 0, 'provider' => 0];
+        foreach ($messages as [$role, $body, $at]) {
+            $id = DB::table('conversation_messages')->insertGetId(['conversation_id' => $conversationId, 'sender_role' => $role,
+                'sender_id' => $role === 'customer' ? $customer->id : $providerUserId, 'body' => $body, 'created_at' => $at, 'updated_at' => $at]);
+            $read[$role] = $id;
+        }
+        DB::table('conversations')->where('id', $conversationId)->update(['last_message_at' => end($messages)[2],
+            'customer_last_read_id' => $read['customer'], 'provider_last_read_id' => max($read)]);
     }
 }
