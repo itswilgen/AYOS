@@ -3,7 +3,7 @@ import type { CustomerRequest, NotificationSummary, ProviderSummary, ServiceCate
 import { apiTime } from '../lib/time/api-time'
 
 type ApiCategory = { id: number; slug: string; name: string; description: string }
-type ApiProvider = { id: string; displayName: string; specialties: string[]; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
+type ApiProvider = { id: string; displayName: string; specialties: string[]; startingPrices: Record<string, number>; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
 
 const icon: Record<string, ServiceIconKey> = {
   electrical: 'electrical', plumbing: 'plumbing', carpentry: 'carpentry', aircon: 'aircon',
@@ -26,7 +26,7 @@ export function findServiceCategories(categories: ServiceCategory[], query: stri
 const absoluteMedia = (path: string) => path.startsWith('/') ? backendUrl(path) : path
 
 const mapProvider = (provider: ApiProvider): ProviderSummary => ({
-  id: provider.id, displayName: provider.displayName, specialties: provider.specialties,
+  id: provider.id, displayName: provider.displayName, specialties: provider.specialties, startingPrices: provider.startingPrices ?? {},
   serviceAreaLabel: provider.serviceAreaLabel, rating: provider.rating === null ? null : Number(provider.rating),
   reviewCount: provider.reviewCount, completedServices: provider.completedServices,
   verificationStatus: provider.verified ? 'verified' : 'unverified', availability: 'available',

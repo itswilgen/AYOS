@@ -94,8 +94,9 @@ class ProviderWorkspace
         })->all();
         $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
             ->where('s.provider_profile_id', $pid)->where('s.is_visible', true)->orderBy('c.name')
-            ->get(['s.id', 'c.name as category', 's.description', 's.active', 's.cover_path', 's.cover_status', 's.cover_review_note', 's.cover_fit', 's.cover_focus_x', 's.cover_focus_y'])
-            ->map(fn ($s) => ['id' => (string) $s->id, 'category' => $s->category, 'description' => $s->description, 'active' => (bool) $s->active,
+            ->get(['s.id', 'c.name as category', 's.description', 's.starting_price', 's.active', 's.cover_path', 's.cover_status', 's.cover_review_note', 's.cover_fit', 's.cover_focus_x', 's.cover_focus_y'])
+            ->map(fn ($s) => ['id' => (string) $s->id, 'category' => $s->category, 'description' => $s->description,
+                'startingPrice' => $s->starting_price === null ? null : (int) $s->starting_price, 'active' => (bool) $s->active,
                 'cover' => $s->cover_path ? ['image' => Storage::disk('public')->url($s->cover_path), 'status' => $s->cover_status, 'note' => $s->cover_review_note,
                     'fit' => $s->cover_fit, 'focusX' => (int) $s->cover_focus_x, 'focusY' => (int) $s->cover_focus_y] : null])->all();
         $areas = DB::table('provider_service_areas as a')->join('regions as r', 'r.code', '=', 'a.region_code')

@@ -130,7 +130,7 @@ class ProviderDirectory
         }
         $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
             ->where('s.provider_profile_id', $providerId)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
-            ->get(['s.id', 's.service_category_id', 's.description', 's.cover_path', 's.cover_status', 's.cover_fit', 's.cover_focus_x', 's.cover_focus_y', 'c.name', 'c.slug']);
+            ->get(['s.id', 's.service_category_id', 's.description', 's.starting_price', 's.cover_path', 's.cover_status', 's.cover_fit', 's.cover_focus_x', 's.cover_focus_y', 'c.name', 'c.slug']);
         if ($services->isEmpty()) {
             return null;
         }
@@ -163,6 +163,7 @@ class ProviderDirectory
                 ->map(fn (object $area): string => $area->barangay ? $area->barangay.', '.$area->city : $area->city)->unique()->values()->all(),
             'services' => $services->map(fn (object $s): array => [
                 'id' => (string) $s->id, 'category' => $s->name, 'categorySlug' => $s->slug, 'description' => $s->description,
+                'startingPrice' => $s->starting_price === null ? null : (int) $s->starting_price,
                 'completedJobs' => (int) ($jobsByCategory[$s->service_category_id] ?? 0),
                 'cover' => $s->cover_path && $s->cover_status === 'approved' ? ['image' => Storage::disk('public')->url($s->cover_path),
                     'fit' => $s->cover_fit, 'focusX' => (int) $s->cover_focus_x, 'focusY' => (int) $s->cover_focus_y] : null,

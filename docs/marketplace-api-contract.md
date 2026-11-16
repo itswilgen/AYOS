@@ -114,3 +114,10 @@ The response shapes below are frontend expectations, not existing server routes.
 - Each step notifies the other side in-app and adds a note to their chat; an accepted time re-sends the customer's "Visit scheduled" email with the new time.
 - Reads: `GET /api/customer/requests` items add `scheduled_at`, `reschedule_by`, `reschedule_at`, `reschedule_reason`; provider workspace jobs add `reschedule: { requestedBy, proposedAt, reason } | null`.
 - Times: the database stores UTC without a zone. The frontend reads every request/job time through `src/lib/time/api-time.ts` (`apiTime`), which treats such values as UTC.
+
+### Price guide ("From ₱…") — Phase 2
+
+- `provider_services.starting_price`: optional, whole pesos, 50–500,000. Empty means the price depends on the job.
+- Providers set it with `POST /api/provider/services` and `PUT /api/provider/services/{id}` (`startingPrice`, nullable integer); the workspace returns `services[].startingPrice`.
+- Customers read it in `GET /api/providers/{id}` (`services[].startingPrice`) and `GET /api/providers` (`startingPrices`: service name → price, only services that have one).
+- Search shows the price only for the service that was searched, never another service's price. The request form shows it as guidance: "The final price is agreed after they see the job."

@@ -54,6 +54,12 @@ class DemoMarketplaceSeeder extends Seeder
             $marco = $this->provider('marco', 'Marco Electrical Works', 'House wiring, outlets, breakers and solar setups.', 9, ['electrical' => 'Wiring, outlets and breakers', 'solar' => 'Small home solar setups'], null);
             $this->provider('bea', 'Bea Gadget Repair', 'Phone screens, batteries and laptop repairs.', 4, ['phone-repair' => 'Screens and batteries', 'computer-repair' => 'Laptops and desktops'], null);
 
+            // Price guide ("From ₱…"); some services stay without one, as real providers may leave it empty.
+            foreach ([[$jun, 'plumbing', 650], [$aircon, 'aircon', 1200], [$marco, 'electrical', 350]] as [$providerId, $slug, $price]) {
+                DB::table('provider_services')->where('provider_profile_id', $providerId)
+                    ->where('service_category_id', DB::table('service_categories')->where('slug', $slug)->value('id'))->update(['starting_price' => $price]);
+            }
+
             // Finished, reviewed jobs: the reviews and completed count on Jun's profile.
             foreach ([[$carlo, 5, 'Paspas kaayo moabot ug limpyo ang trabaho. Salamat Kuya Jun!', 12],
                 [$paolo, 5, 'Na-fix ang leak sa CR namo. Recommended!', 20],

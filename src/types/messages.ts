@@ -62,7 +62,7 @@ export interface PublicProviderProfile {
   repeatCustomers: number
   achievements: { key: ProviderAchievementKey; title: string; detail: string }[]
   areas: string[]
-  services: { id: string; category: string; categorySlug: string; description: string; completedJobs: number; cover: { image: string; fit: 'cover' | 'contain'; focusX: number; focusY: number } | null }[]
+  services: { id: string; category: string; categorySlug: string; description: string; startingPrice: number | null; completedJobs: number; cover: { image: string; fit: 'cover' | 'contain'; focusX: number; focusY: number } | null }[]
   portfolio: ProviderWorkItem[]
   reviews: ProviderReviewPage
 }

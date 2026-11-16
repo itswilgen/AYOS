@@ -575,3 +575,12 @@
 .reschedule-note { margin: 8px 0 0; color: var(--ayos-muted); font-size: .75rem; }
 .request-card-actions + .reschedule-form, .request-card-actions + .reschedule-box { margin-top: 16px; }
 .reschedule-form .reschedule-actions { margin-top: 0; }
+
+/* Price guide: the peso field on My Services, its tag in the list, and the note on the request form */
+.provider-price-input { position: relative; display: block; width: 100%; max-width: 220px; }
+.provider-price-input > span { position: absolute; top: 50%; left: 12px; color: #6b7d87; font-weight: 700; transform: translateY(-50%); pointer-events: none; }
+.provider-form .provider-price-input input[type="number"] { padding-left: 28px; font-variant-numeric: tabular-nums; }
+.provider-field-hint { color: #6b7d87; font-size: .74rem; font-weight: 500; line-height: 1.45; }
+.provider-price-tag { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: var(--radius-pill); color: var(--ayos-sky-deep); background: var(--ayos-sky-soft); font-size: .72rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.request-price-note { display: block; margin-top: 2px; color: #445b67; font-size: .78rem; font-weight: 500; line-height: 1.45; }
+.request-price-note strong { color: var(--ayos-ink); font-weight: 800; }

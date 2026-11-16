@@ -30,6 +30,8 @@ export interface ProviderSummary {
   availability: 'available' | 'busy' | 'offline'
   initials: string
   photo?: string | null
+  /** Price guide: "From ₱…" per service name, only for services that have one. */
+  startingPrices: Record<string, number>
 }
 
 export interface ServiceLocationSummary {

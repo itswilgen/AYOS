@@ -8,6 +8,7 @@ import type { ProviderAchievementKey, PublicProviderProfile } from '../../types/
 import ProviderReviews, { Stars } from './ProviderReviews'
 import ProviderWorkGallery from './ProviderWorkGallery'
 import { initials, monthYear, plural } from './profile-format'
+import { peso } from '../../lib/format/peso'
 import './provider-profile.css'
 
 const achievementIcons: Record<ProviderAchievementKey, LucideIcon> = { top_rated: Trophy, jobs_milestone: Award, repeat_customers: Repeat2, experienced: Hammer }
@@ -141,6 +142,7 @@ export default function ProviderProfilePage() {
             {service.cover ? <img className={`pp-service-cover is-${service.cover.fit}`} src={service.cover.image} alt="" style={{ objectPosition: `${service.cover.focusX}% ${service.cover.focusY}%` }} loading="lazy" /> : <span className="pp-service-cover is-empty" aria-hidden="true">{service.category.slice(0, 1)}</span>}
             <div>
               <h3>{service.category}</h3>
+              {service.startingPrice !== null && <p className="pp-service-price">From <strong>{peso(service.startingPrice)}</strong></p>}
               {service.description && <p>{service.description}</p>}
               {service.completedJobs > 0 && <p className="pp-service-meta">{plural(service.completedJobs, 'job')} done</p>}
             </div>
