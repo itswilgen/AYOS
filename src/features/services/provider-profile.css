@@ -224,3 +224,7 @@
   .pp-rating-summary.is-new .pp-rating-count { margin: 2px 0 0; }
   .pp-rating-summary.is-new .pp-rating-new-note { grid-column: 1 / -1; margin-top: 12px; }
 }
+
+/* Price guide on a service: "From" stays quiet, the amount reads first */
+.pp-services .pp-service-price { margin: 2px 0 0; color: var(--ayos-muted); font-size: .8rem; }
+.pp-services .pp-service-price strong { color: var(--ayos-ink); font-size: .92rem; font-weight: 800; font-variant-numeric: tabular-nums; }

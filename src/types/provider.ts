@@ -30,7 +30,7 @@ export interface ProviderJob {
 
 export type CoverReviewStatus = 'pending' | 'approved' | 'rejected'
 export interface ServiceCover extends CoverLayout { image: string; status: CoverReviewStatus; note: string | null }
-export interface ProviderService { id: string; category: string; description: string; active: boolean; cover: ServiceCover | null }
+export interface ProviderService { id: string; category: string; description: string; /** Price guide in whole pesos, null when it depends on the job. */ startingPrice: number | null; active: boolean; cover: ServiceCover | null }
 export interface ProviderServiceArea { id: string; region: string; province: string; city: string; barangay?: string; active: boolean }
 export interface ProviderReview { id: string; rating: number; comment: string; service: string; date: string; customerName: string }
 export interface PortfolioItem { id: string; title: string; category: string; image: string }

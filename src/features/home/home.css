@@ -335,3 +335,7 @@
 @media (prefers-reduced-motion: reduce) {
   .ayos-app-shell *, .ayos-app-shell *::before, .ayos-app-shell *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Price guide on a search result, for the service that was searched */
+.provider-meta > .search-price { color: var(--ayos-body); }
+.provider-meta > .search-price strong { color: var(--ayos-ink); font-size: .82rem; font-weight: 800; font-variant-numeric: tabular-nums; }

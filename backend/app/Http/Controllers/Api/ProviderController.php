@@ -273,7 +273,10 @@ class ProviderController extends Controller
     public function saveService(Request $request, ?int $serviceId = null): JsonResponse
     {
         $profile = $this->workspace->approved($request->user()->id);
-        $data = $request->validate(['category' => ['required', 'string', Rule::exists('service_categories', 'name')], 'description' => ['nullable', 'string', 'max:240']]);
+        $data = $request->validate(['category' => ['required', 'string', Rule::exists('service_categories', 'name')], 'description' => ['nullable', 'string', 'max:240'],
+            // Price guide, in whole pesos; empty when the price depends on the job.
+            'startingPrice' => ['nullable', 'integer', 'between:50,500000']]);
+        $price = isset($data['startingPrice']) ? (int) $data['startingPrice'] : null;
         $categoryId = DB::table('service_categories')->where('name', $data['category'])->value('id');
         if ($serviceId) {
             $service = DB::table('provider_services')->where('id', $serviceId)->where('provider_profile_id', $profile->id)->first();
@@ -283,13 +286,13 @@ class ProviderController extends Controller
             }
             $categoryChanged = (int) $service->service_category_id !== (int) $categoryId;
             DB::table('provider_services')->where('id', $serviceId)->update([
-                'service_category_id' => $categoryId, 'description' => trim($data['description'] ?? ''), 'updated_at' => now(),
+                'service_category_id' => $categoryId, 'description' => trim($data['description'] ?? ''), 'starting_price' => $price, 'updated_at' => now(),
                 ...($categoryChanged && $service->cover_path ? ['cover_status' => 'pending', 'cover_review_note' => null, 'cover_submitted_at' => now(), 'cover_reviewed_at' => null] : []),
             ]);
         } else {
             abort_if(DB::table('provider_services')->where('provider_profile_id', $profile->id)->where('service_category_id', $categoryId)->exists(), 409, 'This service is already listed.');
             DB::table('provider_services')->insert(['provider_profile_id' => $profile->id, 'service_category_id' => $categoryId,
-                'description' => trim($data['description'] ?? ''), 'active' => true, 'created_at' => now(), 'updated_at' => now()]);
+                'description' => trim($data['description'] ?? ''), 'starting_price' => $price, 'active' => true, 'created_at' => now(), 'updated_at' => now()]);
         }
 
         return $this->workspace($request);

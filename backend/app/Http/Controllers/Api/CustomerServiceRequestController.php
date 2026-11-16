@@ -45,7 +45,7 @@ class CustomerServiceRequestController extends Controller
         $ids = $providers->pluck('id')->all();
         $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
             ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
-            ->get(['s.provider_profile_id', 'c.name'])->groupBy('provider_profile_id');
+            ->get(['s.provider_profile_id', 'c.name', 's.starting_price'])->groupBy('provider_profile_id');
         // With a city filter, the label names the customer's own city rather than the provider's first area alphabetically.
         $areas = $this->directory->areaLabels($ids, $data['cityCode'] ?? null);
         ['reviews' => $reviews, 'completed' => $completed] = $this->directory->stats($ids);
@@ -55,6 +55,9 @@ class CustomerServiceRequestController extends Controller
             return ['id' => (string) $p->id, 'displayName' => $p->display_name, 'bio' => $p->bio,
                 'yearsExperience' => $p->years_experience, 'photo' => $p->photo_path ? Storage::disk('public')->url($p->photo_path) : null,
                 'specialties' => ($services->get($p->id) ?? collect())->pluck('name')->all(),
+                // Price guide: "From ₱…" per service name, only for services that have one.
+                'startingPrices' => (object) ($services->get($p->id) ?? collect())->whereNotNull('starting_price')
+                    ->mapWithKeys(fn ($s) => [$s->name => (int) $s->starting_price])->all(),
                 'serviceAreaLabel' => $areas[$p->id] ?? '',
                 'rating' => $reviews->has($p->id) ? round((float) $reviews->get($p->id)->average, 1) : null,
                 'reviewCount' => (int) ($reviews->get($p->id)?->total ?? 0),
