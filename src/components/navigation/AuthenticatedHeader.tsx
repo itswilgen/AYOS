@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Bell, ChevronDown, CircleUserRound, LogOut, MapPin, Settings2, UserRound, X } from 'lucide-react'
+import { Bell, Bookmark, ChevronDown, CircleUserRound, LogOut, MapPin, Settings2, UserRound, X } from 'lucide-react'
 import Brand from '../common/Brand'
 import ServicesMenu from './ServicesMenu'
 import { useAuth } from '../../lib/auth/useAuth'
@@ -86,6 +86,7 @@ export default function AuthenticatedHeader() {
             <nav aria-label="Account menu links">
               <Link to="/account/profile" onClick={() => setProfileOpen(false)}><UserRound size={17} /> View profile</Link>
               <Link to="/account/locations?add=1" onClick={() => setProfileOpen(false)}><MapPin size={17} /> My addresses</Link>
+              <Link to="/saved-providers" onClick={() => setProfileOpen(false)}><Bookmark size={17} /> Saved providers</Link>
               <Link to="/provider" onClick={() => setProfileOpen(false)}><Settings2 size={17} /> Switch to Provider Mode</Link>
             </nav>
             {signOutError && <p className="app-popover-error" role="alert">{signOutError}</p>}

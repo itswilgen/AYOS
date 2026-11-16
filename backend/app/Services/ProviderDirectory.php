@@ -104,6 +104,35 @@ class ProviderDirectory
      * @param  Collection<int, array{completedServices: int, rating: float|null, verified: bool, id: string}>  $providers
      * @return Collection<int, array<string, mixed>>
      */
+    /**
+     * The card a customer sees for each provider (search results, saved providers): name, photo, services with
+     * their "From ₱…" prices, area, rating and identity check. Rows need id, display_name, bio, years_experience,
+     * photo_path and verified. With a city, the area label names that city.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function summaries(Collection $providers, ?string $cityCode = null): Collection
+    {
+        $ids = $providers->pluck('id')->all();
+        $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
+            ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
+            ->get(['s.provider_profile_id', 'c.name', 's.starting_price'])->groupBy('provider_profile_id');
+        $areas = $this->areaLabels($ids, $cityCode);
+        ['reviews' => $reviews, 'completed' => $completed] = $this->stats($ids);
+
+        return $providers->map(fn (object $p): array => ['id' => (string) $p->id, 'displayName' => $p->display_name, 'bio' => $p->bio,
+            'yearsExperience' => $p->years_experience, 'photo' => $p->photo_path ? Storage::disk('public')->url($p->photo_path) : null,
+            'specialties' => ($services->get($p->id) ?? collect())->pluck('name')->all(),
+            // Price guide: "From ₱…" per service name, only for services that have one.
+            'startingPrices' => (object) ($services->get($p->id) ?? collect())->whereNotNull('starting_price')
+                ->mapWithKeys(fn ($s) => [$s->name => (int) $s->starting_price])->all(),
+            'serviceAreaLabel' => $areas[$p->id] ?? '',
+            'rating' => $reviews->has($p->id) ? round((float) $reviews->get($p->id)->average, 1) : null,
+            'reviewCount' => (int) ($reviews->get($p->id)?->total ?? 0),
+            'completedServices' => (int) ($completed->get($p->id)?->total ?? 0),
+            'verified' => (bool) $p->verified])->values();
+    }
+
     public function rankByTrust(Collection $providers): Collection
     {
         return $providers->sortBy([

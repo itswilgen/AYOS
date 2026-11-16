@@ -1,0 +1,33 @@
+/* Save a provider: a bookmark in a search card's corner, or a labelled quiet button on the profile. */
+.save-provider { display: inline-flex; flex-direction: column; gap: 4px; }
+.save-provider-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--ayos-line); border-radius: var(--radius-pill); color: var(--ayos-sky-deep); background: var(--ayos-white); font: inherit; font-size: .84rem; font-weight: 700; cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+.save-provider-button:hover:not(:disabled) { border-color: var(--ayos-sky-light); background: var(--ayos-sky-soft); }
+.save-provider-button:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; }
+.save-provider-button:disabled { cursor: progress; }
+.save-provider-button.is-saved { border-color: color-mix(in srgb, var(--ayos-orange-bright) 45%, transparent); color: var(--ayos-orange); background: var(--ayos-orange-soft); }
+.save-provider-button svg { transition: transform var(--duration-fast) var(--ease-standard); }
+.save-provider-button:active:not(:disabled) svg { transform: scale(.88); }
+.save-provider.is-full { width: 100%; margin-top: 10px; }
+.save-provider.is-full .save-provider-button { width: 100%; min-height: 44px; padding: 0 16px; }
+.save-provider.is-icon { position: absolute; top: 10px; right: 10px; z-index: 1; }
+.save-provider.is-icon .save-provider-button { width: 44px; height: 44px; padding: 0; }
+.save-provider-error { max-width: 28ch; color: var(--ayos-error); font-size: .74rem; font-weight: 600; }
+.save-provider.is-icon .save-provider-error { position: absolute; top: 48px; right: 0; padding: 6px 8px; border-radius: var(--radius-sm); background: var(--ayos-white); box-shadow: 0 4px 14px rgb(24 35 43 / 12%); }
+/* Search cards make room for the corner bookmark. */
+.search-provider-item { position: relative; }
+.search-provider-item .search-provider-main h3 { padding-right: 48px; }
+@media (prefers-reduced-motion: reduce) {
+  .save-provider-button, .save-provider-button svg { transition: none; }
+  .save-provider-button:active:not(:disabled) svg { transform: none; }
+}
+/* Saved keeps its warm colour on hover, a shade deeper. */
+.save-provider-button.is-saved:hover:not(:disabled) { border-color: var(--ayos-orange-bright); background: color-mix(in srgb, var(--ayos-orange-soft) 70%, var(--ayos-orange-bright) 12%); }
+
+/* On phones the profile's action bar stays one row: the bookmark sits beside Message and Request. */
+@media (max-width: 840px) {
+  .pp-actions:has(.save-provider) { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 10px; }
+  .pp-actions .save-provider.is-full { width: auto; margin-top: 0; }
+  .pp-actions .save-provider.is-full .save-provider-button { width: 46px; min-height: 46px; padding: 0; }
+  .pp-actions .save-provider.is-full .save-provider-button > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .pp-actions .pp-action-error, .pp-actions .save-provider-error { grid-column: 1 / -1; }
+}
