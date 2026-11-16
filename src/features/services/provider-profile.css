@@ -164,7 +164,7 @@
 @media (max-width: 960px) {
   .pp-layout { grid-template-columns: minmax(0, 1fr); }
   /* On phones the actions dock above the bottom navigation so they stay one tap away while reading. */
-  .pp-actions { position: fixed; z-index: 34; right: 0; bottom: calc(62px + env(safe-area-inset-bottom)); left: 0; padding: 12px 16px; border-width: 1px 0 0; border-radius: 0; box-shadow: 0 -6px 20px rgb(24 35 43 / 6%); }
+  .pp-actions { position: fixed; z-index: 34; top: auto; right: 0; bottom: calc(62px + env(safe-area-inset-bottom)); left: 0; padding: 12px 16px; border-width: 1px 0 0; border-radius: 0; box-shadow: 0 -6px 20px rgb(24 35 43 / 6%); }
   .pp-actions-rating, .pp-actions-title, .pp-actions-copy { display: none; }
   .pp-actions-buttons { grid-template-columns: 1fr 1fr; }
   .pp-actions-buttons .button { min-height: 46px; padding-inline: 12px; }
