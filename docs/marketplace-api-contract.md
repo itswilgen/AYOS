@@ -127,3 +127,10 @@ The response shapes below are frontend expectations, not existing server routes.
 - `GET /api/customer/saved-providers` → `{ data: SavedProvider[] }`: the same card fields as search (`ProviderDirectory::summaries`) plus `acceptingRequests` and `savedAt`, newest first. Suspended or unapproved providers drop off the list; paused ones stay, with `acceptingRequests: false`.
 - `PUT /api/customer/saved-providers/{providerId}` saves, `DELETE` removes. Both are idempotent (`200` every time). Refused: your own provider profile (`422`), an unknown or unapproved provider (`404`), more than 50 saved (`422`), guests (`401`). Limited to 30 a minute.
 - `GET /api/providers/{id}` adds `isSaved`; `GET /api/providers` adds `saved` per provider for a signed-in customer.
+
+### Service covers in search — Phase 2
+
+- `GET /api/providers` adds two fields per provider:
+  - `matchedService`: the provider's service the search matched (the `category`, or the first service name containing `q`). It is `null` without a search, or when only the provider's name matched.
+  - `cover`: `{ image, service, fit, focusX, focusY } | null`. This is the matched service's **approved** cover. A pending or rejected cover is never sent, and another service's cover never stands in, so a plumbing search never shows an aircon photo. When `matchedService` is `null`, it is the first approved cover.
+- The search card shows the cover, else the provider's profile photo, else their initials. The "From ₱…" price uses `matchedService`, so alias searches ("plumber" → Plumbing) also show the price.
