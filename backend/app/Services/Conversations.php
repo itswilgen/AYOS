@@ -18,7 +18,7 @@ class Conversations
 {
     private const PAGE = 100;
 
-    public function __construct(private ProviderWorkspace $workspace, private ContactMasker $masker, private PublicImageStore $images) {}
+    public function __construct(private ProviderWorkspace $workspace, private ContactMasker $masker, private PublicImageStore $images, private ChatSignals $signals) {}
 
     /**
      * @return object the conversation row, when the user takes part in it as the given side
@@ -71,6 +71,7 @@ class Conversations
             if (! $alreadyWaiting) {
                 $this->notifyRecipient($conversation, $side);
             }
+            $this->signals->send((int) $conversation->id, 'message', $side, $id);
 
             return $id;
         });
@@ -85,18 +86,22 @@ class Conversations
         if (! $conversationId) {
             return;
         }
-        DB::table('conversation_messages')->insert([
+        $id = DB::table('conversation_messages')->insertGetId([
             'conversation_id' => $conversationId, 'sender_role' => 'system', 'body' => Str::limit($text, 240),
             'created_at' => now(), 'updated_at' => now(),
         ]);
         DB::table('conversations')->where('id', $conversationId)->update(['last_message_at' => now(), 'updated_at' => now()]);
+        $this->signals->send((int) $conversationId, 'message', 'system', $id);
     }
 
     public function markRead(object $conversation, string $side): void
     {
         $latest = (int) DB::table('conversation_messages')->where('conversation_id', $conversation->id)->max('id');
-        DB::table('conversations')->where('id', $conversation->id)->where($side.'_last_read_id', '<', $latest)
+        $moved = DB::table('conversations')->where('id', $conversation->id)->where($side.'_last_read_id', '<', $latest)
             ->update([$side.'_last_read_id' => $latest]);
+        if ($moved) {
+            $this->signals->send((int) $conversation->id, 'read', $side, $latest);
+        }
     }
 
     /**
@@ -140,7 +145,9 @@ class Conversations
         $base = $side === 'provider' ? '/api/provider/conversations/' : '/api/conversations/';
 
         return [
-            'conversation' => [...$this->summary($row, $side), 'contactShared' => $this->contactShared($conversation)],
+            'conversation' => [...$this->summary($row, $side), 'contactShared' => $this->contactShared($conversation),
+                // Seen receipts: the newest message id the other side has read.
+                'seenUpTo' => (string) (int) $row->{($side === 'provider' ? 'customer' : 'provider').'_last_read_id'}],
             'messages' => $messages->map(fn (object $m): array => [
                 'id' => (string) $m->id, 'role' => $m->sender_role, 'mine' => $m->sender_role === $side,
                 'body' => $m->hidden_at ? null : $m->body,

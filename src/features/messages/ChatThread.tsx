@@ -1,8 +1,9 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowDown, ArrowLeft, Flag, ShieldCheck, TicketCheck } from 'lucide-react'
+import { ArrowDown, ArrowLeft, CheckCheck, Flag, ShieldCheck, TicketCheck } from 'lucide-react'
 import { ApiError } from '../../lib/api/client'
 import { usePolling } from '../../lib/hooks/usePolling'
+import { isLiveConnected, joinTyping, onConnectionChange, onConversationSignal, useLiveConnected, type ConversationSignal } from '../../lib/realtime/live-chat'
 import { refreshInboxUnread } from '../../lib/hooks/useInboxUnread'
 import { messagesService } from '../../services/messages.service'
 import type { ChatMessage, ChatSide, ChatThreadData } from '../../types/messages'
@@ -37,6 +38,9 @@ export default function ChatThread({ side, conversationId, backTo, onActivity, o
   const nearBottom = useRef(true)
   const readUpTo = useRef('')
   const lastId = thread?.messages.at(-1)?.id
+  const live = useLiveConnected()
+  const [typing, setTyping] = useState(false)
+  const typingLink = useRef<{ typing: () => void; leave: () => void } | null>(null)
 
   useEffect(() => {
     let active = true
@@ -55,12 +59,50 @@ export default function ChatThread({ side, conversationId, backTo, onActivity, o
     }
   }
 
-  usePolling(async () => {
+  const fetchNew = async () => {
     try {
       absorb(await messagesService.thread(side, conversationId, lastId))
       setOffline(false)
     } catch { setOffline(true) }
-  }, { interval: 5000, enabled: status === 'ready' })
+  }
+  // Live signals bring new messages at once; while connected the timer is only a safety net.
+  usePolling(fetchNew, { interval: live ? 60_000 : 5000, enabled: status === 'ready' })
+
+  const onSignal = useEffectEvent((signal: ConversationSignal) => {
+    if (signal.conversationId !== conversationId || status !== 'ready') return
+    if (signal.kind === 'read') {
+      if (signal.side !== side) setThread((current) => current && Number(signal.messageId) > Number(current.conversation.seenUpTo)
+        ? { ...current, conversation: { ...current.conversation, seenUpTo: signal.messageId } } : current)
+      return
+    }
+    if (!lastId || Number(signal.messageId) > Number(lastId)) {
+      if (signal.side !== side) setTyping(false)
+      void fetchNew()
+    }
+  })
+  useEffect(() => onConversationSignal((signal) => onSignal(signal)), [])
+
+  // After the connection comes back, load whatever arrived while it was down.
+  const catchUp = useEffectEvent(() => { if (status === 'ready') void fetchNew() })
+  useEffect(() => onConnectionChange(() => { if (isLiveConnected()) catchUp() }), [])
+
+  // "typing…": shown for a few seconds after each signal from the other side.
+  useEffect(() => {
+    if (!live) return
+    let timer: number | undefined
+    const link = joinTyping(conversationId, side, () => {
+      setTyping(true)
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setTyping(false), 4000)
+    })
+    typingLink.current = link
+    return () => {
+      link.leave()
+      typingLink.current = null
+      window.clearTimeout(timer)
+      setTyping(false)
+    }
+  }, [live, conversationId, side])
 
   const markRead = useEffectEvent(() => {
     if (!lastId || document.hidden || readUpTo.current === lastId) return
@@ -104,6 +146,9 @@ export default function ChatThread({ side, conversationId, backTo, onActivity, o
 
   const { conversation, messages } = thread
   const counterpart = conversation.counterpart
+  // "Seen" sits under your newest message once the other side has read it.
+  const lastMine = [...messages].reverse().find((message) => message.mine)
+  const seenId = lastMine && Number(lastMine.id) <= Number(conversation.seenUpTo) ? lastMine.id : null
   const profileLink = side === 'customer' && counterpart.providerId ? `/providers/${counterpart.providerId}` : null
 
   return <section className="chat-thread" aria-label={`Conversation with ${counterpart.name}`}>
@@ -121,12 +166,13 @@ export default function ChatThread({ side, conversationId, backTo, onActivity, o
         <p className="chat-day-label"><span>{group.label}</span></p>
         {group.messages.map((message) => message.role === 'system'
           ? <SystemNote key={message.id} message={message} />
-          : <Bubble key={message.id} message={message} onReport={() => setReporting(message)} />)}
+          : <Bubble key={message.id} message={message} seen={message.id === seenId} onReport={() => setReporting(message)} />)}
       </div>)}
     </div>
     {unseen > 0 && <button type="button" className="chat-jump" onClick={jumpToLatest}><ArrowDown size={15} aria-hidden="true" />{unseen === 1 ? '1 new message' : `${unseen} new messages`}</button>}
+    {typing && <p className="chat-typing" role="status"><span className="chat-typing-dots" aria-hidden="true"><i /><i /><i /></span>{counterpart.name} is typing…</p>}
     {conversation.canSend
-      ? <MessageComposer disabled={false} onSend={send} />
+      ? <MessageComposer disabled={false} onSend={send} onTyping={() => typingLink.current?.typing()} />
       : <p className="chat-closed">{side === 'customer' ? 'This provider can’t receive messages right now. Your conversation is saved here.' : 'Messaging is paused while your provider account is under review.'}</p>}
     {reporting && <ReportMessageDialog message={reporting} onClose={() => setReporting(null)} />}
   </section>
@@ -137,7 +183,7 @@ function SystemNote({ message }: { message: ChatMessage }) {
   return <div className="chat-note"><span className="chat-note-stub">{ticket ? <><small>REQUEST</small>{ticket}</> : <TicketCheck size={16} aria-label="Booking update" />}</span><p>{text}</p><time dateTime={message.createdAt}>{timeLabel(message.createdAt)}</time></div>
 }
 
-function Bubble({ message, onReport }: { message: ChatMessage; onReport: () => void }) {
+function Bubble({ message, seen, onReport }: { message: ChatMessage; seen: boolean; onReport: () => void }) {
   return <div className={`chat-message${message.mine ? ' is-mine' : ''}`}>
     <div className={`chat-bubble${message.hidden ? ' is-hidden' : ''}${message.image && !message.body ? ' is-photo' : ''}`}>
       {message.hidden ? <p>Message removed by AYOS</p> : <>
@@ -147,6 +193,7 @@ function Bubble({ message, onReport }: { message: ChatMessage; onReport: () => v
     </div>
     <div className="chat-message-meta">
       <time dateTime={message.createdAt}>{timeLabel(message.createdAt)}</time>
+      {seen && <span className="chat-seen"><CheckCheck size={13} aria-hidden="true" />Seen</span>}
       {message.masked && <span className="chat-masked">{message.mine ? 'Contact details hidden until booking' : 'Contact details hidden'}</span>}
       {!message.mine && !message.hidden && <button type="button" className="chat-report" onClick={onReport}><Flag size={12} aria-hidden="true" />Report</button>}
     </div>

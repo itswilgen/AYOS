@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { apiRequest, authRequest } from '../api/client'
 import { AuthContext, type AuthUser } from './auth-context'
+import { connectLiveChat, disconnectLiveChat } from '../realtime/live-chat'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
@@ -34,6 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void load()
     return () => { active = false }
   }, [])
+
+  // Live chat follows the signed-in account: it opens on sign-in and closes on sign-out or account switch.
+  const userId = user?.id
+  useEffect(() => {
+    if (!userId) return
+    connectLiveChat(userId)
+    return () => disconnectLiveChat()
+  }, [userId])
 
   const signOut = useCallback(async () => {
     await authRequest<void>('/logout', { method: 'POST', body: '{}' })

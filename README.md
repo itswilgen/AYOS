@@ -28,7 +28,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-Use `http://localhost:5180` for the frontend, `http://localhost:8010` for the API, `localhost:5440` for PostgreSQL clients, and `http://localhost:8025` for Mailpit. Mailpit captures verification and password-reset emails locally.
+Use `http://localhost:5180` for the frontend, `http://localhost:8010` for the API, `localhost:5440` for PostgreSQL clients, `http://localhost:8025` for Mailpit, and `ws://localhost:8090` for live chat (the `reverb` service). Mailpit captures verification and password-reset emails locally.
 
 After pulling changes from `main`, rebuild and start the services with `docker compose up --build -d`. The backend entrypoint applies migrations, seeds the Philippine geography snapshot and ten service categories, and creates the public media symlink. The frontend and backend check their lockfiles against their persistent dependency volumes and sync dependencies when needed. To follow service logs, run `docker compose logs -f frontend backend`.
 
@@ -65,6 +65,7 @@ Signup creates one universal account; it does not ask for customer/provider role
 - Customers find approved providers by service and city, send a request using a saved address, and track it under **My requests**. Providers see only a broad area until they accept a request; accepted job details contain the service address.
 - The job flow is `accepted → scheduled → in_progress → provider_finished → completed`. Only the customer can confirm completion and submit one review for a completed job.
 - The free quota defaults to ten distinct customers with confirmed completed work. The limit is configured by `PROVIDER_FREE_CLIENT_LIMIT`. Reaching it pauses new opportunities and leaves the existing account and work available. `PROVIDER_ACTIVATION_FEE` is blank until billing is connected; there is no payment flow yet.
+- Live chat runs on Laravel Reverb (the `reverb` service). The socket only carries ids ("conversation 4 has message 34"); pages load messages through the normal API, so contact masking and access checks stay in one place. Each user listens on `private-user.{id}`; typing uses whispers on `private-conversation.{id}`, open to the customer and to the provider while approved. If Reverb is down, messages still save (the error is only logged) and pages fall back to polling every few seconds.
 - Profile and portfolio images are public and limited to JPEG, PNG, or WebP. Request photos stay on the private disk and are streamed only to the assigned approved provider. Residential addresses and identity records are absent from public provider listings.
 
 For an existing Docker checkout, run:
@@ -110,7 +111,7 @@ Feature tests cover universal registration and terms acceptance, safe login/curr
 
 ## Before launch
 
-Replace the Terms and Privacy preview notices with reviewed policy documents, configure PostgreSQL and production mail, use HTTPS and shared-domain Sanctum cookies, and complete a production browser/accessibility review. Payment processing and the visual admin dashboard are not connected.
+Replace the Terms and Privacy preview notices with reviewed policy documents, configure PostgreSQL and production mail, use HTTPS and shared-domain Sanctum cookies, run Reverb behind the HTTPS proxy (`wss://`) with its own random `REVERB_APP_KEY`/`REVERB_APP_SECRET` and `REVERB_ALLOWED_ORIGINS` set to the real domain, and complete a production browser/accessibility review. Payment processing and the visual admin dashboard are not connected.
 
 ## Updating after a pull
 

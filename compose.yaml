@@ -60,6 +60,14 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-hello@ayos.test}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-AYOS}
+      # Live chat: the API sends signals to the reverb service inside Docker.
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID:-ayos-local}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:-ayos-local-key}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:-ayos-local-secret}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
     ports:
       - "127.0.0.1:8010:8000"
     volumes:
@@ -71,6 +79,38 @@ services:
       mailpit:
         condition: service_started
 
+  # Live chat WebSocket server. Browsers connect on port 8090; the API reaches it as reverb:8080.
+  reverb:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    environment:
+      APP_ENV: local
+      # Reverb watches the cache (stored in PostgreSQL) for `reverb:restart`.
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ayos
+      DB_USERNAME: ayos
+      DB_PASSWORD: ${AYOS_DOCKER_DB_PASSWORD:-ayos-local-dev-password}
+      CACHE_STORE: database
+      REVERB_APP_ID: ${REVERB_APP_ID:-ayos-local}
+      REVERB_APP_KEY: ${REVERB_APP_KEY:-ayos-local-key}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET:-ayos-local-secret}
+      REVERB_ALLOWED_ORIGINS: localhost,127.0.0.1
+    ports:
+      - "127.0.0.1:8090:8080"
+    volumes:
+      - ./backend:/var/www/html
+      - ayos-backend-vendor:/var/www/html/vendor
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_started
+
   frontend:
     build:
       context: .
@@ -80,6 +120,10 @@ services:
       VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:8010}
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8010/api}
       VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY:-}
+      VITE_REVERB_APP_KEY: ${REVERB_APP_KEY:-ayos-local-key}
+      VITE_REVERB_HOST: ${VITE_REVERB_HOST:-localhost}
+      VITE_REVERB_PORT: ${VITE_REVERB_PORT:-8090}
+      VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME:-http}
     ports:
       - "127.0.0.1:5180:5173"
     volumes:

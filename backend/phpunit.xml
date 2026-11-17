@@ -21,7 +21,7 @@
         <server name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <!-- Tests fake Google's siteverify, so a dummy secret is enough; never depend on a developer's real key. -->
         <env name="RECAPTCHA_SECRET_KEY" value="testing-recaptcha-secret"/>
         <server name="CACHE_STORE" value="array"/>
