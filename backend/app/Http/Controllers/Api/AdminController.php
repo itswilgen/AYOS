@@ -16,6 +16,7 @@ use App\Http\Requests\Admin\UpdatePlatformSettingsRequest;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\ActivationPayments;
+use App\Services\GateStats;
 use App\Services\PlatformNoticeBroadcaster;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
@@ -68,6 +69,7 @@ class AdminController extends Controller
             'quotaReachedProviders' => $quotaReached,
             'lifetimeActivations' => DB::table('provider_profiles')->where('access_kind', 'lifetime')->count(),
             'pendingPayments' => DB::table('activation_payments')->where('status', 'pending')->count(),
+            'gate' => app(GateStats::class)->summary(),
             'recentActivity' => $recent,
         ]]);
     }

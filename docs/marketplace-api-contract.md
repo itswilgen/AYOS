@@ -145,3 +145,11 @@ The response shapes below are frontend expectations, not existing server routes.
   - `read`: `side` read up to `messageId`. Sent only when the read position moves.
 - `GET …/conversations/{id}/messages` adds `conversation.seenUpTo`: the newest message id the other side has read ("Seen" receipt).
 - Polling stays as the fallback: open thread 5 s, inbox 20 s, badges 45 s while the socket is down; 60 s, 90 s and 180 s while it is up.
+
+### Engagement gate on the admin dashboard — Phase 2
+
+- `GET /api/admin/dashboard` (permission `dashboard.view`) adds `gate`, computed by `App\Services\GateStats`:
+  - `days` (30) and `minSample` (5).
+  - `repeatBookings`: `{ requests, repeats, rate, previousRate, trend }` — requests sent in the last 30 days, how many were repeat bookings (`repeat_of_request_id` set by the server), the rate in %, and the rate for the 30 days before.
+  - `acceptSpeed`: `{ accepted, medianMinutes, previousMedianMinutes, waiting, trend }` — the median minutes from "request sent" to "accepted" for requests accepted in the period (accepting creates the job in the same step, so `provider_jobs.created_at` is the accept time), and how many requests are still `new` now.
+  - `trend` is `better`, `worse` or `same`, or `null` when either period has fewer than `minSample` requests (or acceptances). For repeat bookings higher is better; for accept speed lower is better. With no data at all, `rate` and `medianMinutes` are `null`, not 0.

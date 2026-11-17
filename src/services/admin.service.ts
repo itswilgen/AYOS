@@ -22,7 +22,20 @@ export interface AdminDashboard {
   quotaReachedProviders: number
   lifetimeActivations: number
   pendingPayments: number
+  /** The engagement numbers AYOS is judged by, for the last 30 days against the 30 days before. */
+  gate: GateSummary
   recentActivity: { id: number; event: string; created_at: string; actor: string | null }[]
+}
+
+/** 'better' / 'worse' / 'same' against the period before; null when either period has too little data. */
+export type GateTrend = 'better' | 'worse' | 'same' | null
+
+export interface GateSummary {
+  days: number
+  /** Requests (or acceptances) each period needs before a trend is shown. */
+  minSample: number
+  repeatBookings: { requests: number; repeats: number; rate: number | null; previousRate: number | null; trend: GateTrend }
+  acceptSpeed: { accepted: number; medianMinutes: number | null; previousMedianMinutes: number | null; waiting: number; trend: GateTrend }
 }
 
 const encode = (value: unknown) => JSON.stringify(value)
