@@ -15,6 +15,7 @@ import {
 import { type AdminDashboard } from "../../services/admin.service";
 import { dateText, humanize } from "./admin-config";
 import { Panel, Empty, Metric } from "./AdminUI";
+import GateCard from "./GateCard";
 
 export default function DashboardView({
   data,
@@ -112,6 +113,7 @@ export default function DashboardView({
           />
         ))}
       </div>
+      {data.gate && <div className="admin-gate"><GateCard gate={data.gate} /></div>}
       <div className="admin-dashboard-bottom">
         <Panel
           title="Recent activity"

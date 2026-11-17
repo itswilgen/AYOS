@@ -684,6 +684,107 @@
 }
 
 /* Dashboard lower row */
+/* Engagement gate: two numbers side by side, each with its trend in words. */
+.admin-gate {
+  margin-top: 20px;
+}
+.admin-gate-note {
+  color: var(--admin-muted);
+  font-size: 0.76rem;
+}
+.admin-gate-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.admin-gate-stat {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 4px 24px 4px 0;
+}
+.admin-gate-stat + .admin-gate-stat {
+  padding: 4px 0 4px 24px;
+  border-left: 1px solid var(--admin-divider);
+}
+.admin-gate-stat header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-gate-stat h3 {
+  margin: 0;
+  color: var(--admin-label);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.admin-gate-stat strong {
+  margin-top: 4px;
+  color: var(--admin-night);
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.admin-gate-stat strong.is-zero {
+  color: var(--admin-zero);
+}
+.admin-gate-stat p {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.admin-gate-stat .admin-gate-trend {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--admin-radius-pill);
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+.admin-gate-trend.is-good {
+  color: var(--admin-green);
+  background: rgb(31 138 91 / 10%);
+}
+.admin-gate-trend.is-bad {
+  color: var(--admin-red);
+  background: rgb(180 63 50 / 9%);
+}
+.admin-gate-trend.is-neutral {
+  color: var(--admin-label);
+  background: var(--admin-tile);
+}
+.admin-gate-trend.is-pending {
+  /* The longest label: a softer corner keeps it tidy if it wraps on a narrow screen. */
+  border-radius: var(--admin-radius-sm);
+  border: 1px dashed var(--admin-line-strong);
+  color: var(--admin-muted);
+  font-weight: 600;
+}
+.admin-gate-stat .admin-gate-waiting.has-waiting {
+  color: var(--admin-orange);
+  font-weight: 650;
+}
+@media (max-width: 760px) {
+  .admin-gate-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-gate-stat,
+  .admin-gate-stat + .admin-gate-stat {
+    padding: 0;
+  }
+  .admin-gate-stat + .admin-gate-stat {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--admin-divider);
+    border-left: 0;
+  }
+}
+
 .admin-dashboard-bottom {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
