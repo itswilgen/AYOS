@@ -9,10 +9,12 @@ type Props = {
   disabled: boolean
   /** Resolves when the message is saved. Throws with a readable message when it isn't. */
   onSend: (message: { body: string; image: File | null }) => Promise<void>
+  /** Called while the user types, so the other side can see "typing…". */
+  onTyping?: () => void
 }
 
 /** Enter sends, Shift+Enter adds a line. One photo per message, shrunk on the device before upload. */
-export default function MessageComposer({ disabled, onSend }: Props) {
+export default function MessageComposer({ disabled, onSend, onTyping }: Props) {
   const [body, setBody] = useState('')
   const [image, setImage] = useState<PreparedImage | null>(null)
   const [preparing, setPreparing] = useState(false)
@@ -73,7 +75,7 @@ export default function MessageComposer({ disabled, onSend }: Props) {
         {preparing ? <LoaderCircle className="chat-spin" size={19} aria-hidden="true" /> : <ImagePlus size={19} aria-hidden="true" />}
       </button>
       <label className="sr-only" htmlFor="chat-body">Message</label>
-      <textarea ref={field} id="chat-body" rows={1} maxLength={MAX_LENGTH} value={body} disabled={disabled} placeholder={disabled ? 'Messaging is unavailable' : 'Write a message'} onChange={(event) => setBody(event.target.value)} onKeyDown={onKeyDown} />
+      <textarea ref={field} id="chat-body" rows={1} maxLength={MAX_LENGTH} value={body} disabled={disabled} placeholder={disabled ? 'Messaging is unavailable' : 'Write a message'} onChange={(event) => { setBody(event.target.value); if (event.target.value.trim()) onTyping?.() }} onKeyDown={onKeyDown} />
       <button type="submit" className="chat-composer-send" aria-label="Send message" disabled={!canSend}>
         {sending ? <LoaderCircle className="chat-spin" size={18} aria-hidden="true" /> : <SendHorizontal size={18} aria-hidden="true" />}
       </button>

@@ -133,6 +133,14 @@
 .chat-composer-count { margin: 6px 0 0 52px; color: var(--ayos-muted); font-size: .7rem; }
 .chat-closed { margin: 0; padding: 16px 20px; border-top: 1px solid var(--chat-line); color: var(--ayos-text); background: var(--ayos-white); font-size: .8rem; text-align: center; }
 .chat-spin { animation: chat-spin .8s linear infinite; }
+/* Live chat: "typing…" above the composer, and "Seen" under your newest read message. */
+.chat-typing { display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 20px; color: var(--ayos-muted); background: var(--ayos-white); font-size: .74rem; animation: chat-in var(--duration-fast) var(--ease-standard); }
+.chat-typing-dots { display: inline-flex; gap: 3px; }
+.chat-typing-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ayos-sky-deep); animation: chat-typing 1.2s infinite ease-in-out; }
+.chat-typing-dots i:nth-child(2) { animation-delay: .15s; }
+.chat-typing-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes chat-typing { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+.chat-seen { display: inline-flex; align-items: center; gap: 3px; color: var(--ayos-sky-deep); font-weight: 650; }
 @keyframes chat-spin { to { transform: rotate(360deg); } }
 @keyframes chat-in { from { opacity: 0; transform: translateY(6px); } }
 
@@ -191,4 +199,6 @@
   .chat-message, .chat-note { animation: none; }
   .chat-list-skeleton span, .chat-list-skeleton i, .chat-skeleton { animation: none; }
   .chat-spin { animation-duration: 2.4s; }
+  .chat-typing, .chat-typing-dots i { animation: none; }
+  .chat-typing-dots i { opacity: .6; }
 }

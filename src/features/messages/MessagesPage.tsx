@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { MessagesSquare } from 'lucide-react'
 import { usePolling } from '../../lib/hooks/usePolling'
+import { onConversationSignal, useLiveConnected } from '../../lib/realtime/live-chat'
 import { messagesService } from '../../services/messages.service'
 import type { ChatSide, ConversationSummary } from '../../types/messages'
 import ChatThread from './ChatThread'
@@ -29,7 +30,10 @@ export default function MessagesPage({ side }: { side: ChatSide }) {
     messagesService.list(side).then((result) => { if (active) setItems(result) }, () => { if (active) setError(true) }).finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [side])
-  usePolling(load, { interval: 20_000, hiddenInterval: 60_000 })
+  const live = useLiveConnected()
+  usePolling(load, live ? { interval: 90_000, hiddenInterval: 180_000 } : { interval: 20_000, hiddenInterval: 60_000 })
+  // New messages and reads anywhere in the inbox reorder the list and update previews and counts at once.
+  useEffect(() => onConversationSignal(() => { void load() }), [load])
 
   const onRead = useCallback((id: string) => setItems((current) => current.map((item) => item.id === id ? { ...item, unread: 0 } : item)), [])
   const onActivity = useCallback(() => { void load() }, [load])

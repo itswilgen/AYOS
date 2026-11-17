@@ -31,7 +31,8 @@ export interface ChatMessage {
 }
 
 export interface ChatThreadData {
-  conversation: Omit<ConversationSummary, 'lastMessage' | 'unread'> & { contactShared: boolean }
+  /** `seenUpTo`: the newest message id the other side has read, for the "Seen" receipt. */
+  conversation: Omit<ConversationSummary, 'lastMessage' | 'unread'> & { contactShared: boolean; seenUpTo: string }
   messages: ChatMessage[]
 }
 

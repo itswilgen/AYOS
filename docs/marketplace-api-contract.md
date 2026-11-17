@@ -134,3 +134,14 @@ The response shapes below are frontend expectations, not existing server routes.
   - `matchedService`: the provider's service the search matched (the `category`, or the first service name containing `q`). It is `null` without a search, or when only the provider's name matched.
   - `cover`: `{ image, service, fit, focusX, focusY } | null`. This is the matched service's **approved** cover. A pending or rejected cover is never sent, and another service's cover never stands in, so a plumbing search never shows an aircon photo. When `matchedService` is `null`, it is the first approved cover.
 - The search card shows the cover, else the provider's profile photo, else their initials. The "From ₱…" price uses `matchedService`, so alias searches ("plumber" → Plumbing) also show the price.
+
+### Live chat (Reverb) — Phase 2
+
+- `POST /api/broadcasting/auth` (signed in, verified, active) authorizes private channels:
+  - `private-user.{userId}`: only that user.
+  - `private-conversation.{conversationId}`: the customer, and the provider while their profile is approved. Used only for `client-typing` whispers (`{ side }`), which are never stored.
+- Event `conversation.updated` on both people's user channels: `{ conversationId, kind: "message" | "read", side, messageId }`. Ids only, never message text. Sent after the change is saved; if Reverb is unreachable the error is logged and the request still succeeds.
+  - `message`: a new message (including booking notes, `side: "system"`). The page loads it with `GET …/messages?after={lastId}`.
+  - `read`: `side` read up to `messageId`. Sent only when the read position moves.
+- `GET …/conversations/{id}/messages` adds `conversation.seenUpTo`: the newest message id the other side has read ("Seen" receipt).
+- Polling stays as the fallback: open thread 5 s, inbox 20 s, badges 45 s while the socket is down; 60 s, 90 s and 180 s while it is up.
