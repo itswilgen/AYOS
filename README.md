@@ -111,6 +111,10 @@ Frontend tests use Vitest and Testing Library (`npm test`, or `npm run test:watc
 
 Feature tests cover universal registration and terms acceptance, safe login/current-user output, generic password reset responses, and the admin role and account-status gates. Responsive and keyboard checks should be repeated in the target deployment environment.
 
+## Production
+
+The production setup is `compose.prod.yaml` (Caddy with automatic HTTPS, PHP-FPM, Reverb, PostgreSQL) with scripts in `deploy/`: `deploy.sh` (build, migrate, restart, health check), `backup.sh` (encrypted daily backup to Backblaze B2) and `restore-test.sh`. Settings come from `deploy/.env.production.example`. Step-by-step server setup for ayosofficial.com: `deploy/RUNBOOK.md`.
+
 ## Before launch
 
 Replace the Terms and Privacy preview notices with reviewed policy documents, configure PostgreSQL and production mail, use HTTPS and shared-domain Sanctum cookies, run Reverb behind the HTTPS proxy (`wss://`) with its own random `REVERB_APP_KEY`/`REVERB_APP_SECRET` and `REVERB_ALLOWED_ORIGINS` set to the real domain, and complete a production browser/accessibility review. Payment processing and the visual admin dashboard are not connected.

@@ -1,0 +1,90 @@
+# AYOS production web server. One domain for everything, so Sanctum's sign-in cookies just work.
+# Caddy gets and renews the HTTPS certificate on its own (ports 80 and 443 must reach this server).
+{
+	email {$ACME_EMAIL}
+}
+
+# Hands a request to Laravel (PHP-FPM in the backend container). Not `php_fastcgi`: that first checks
+# for index.php in *this* container, finds nothing (the code lives in the backend container) and quietly
+# answers an empty 200. Laravel still sees the original address through REQUEST_URI.
+(laravel) {
+	rewrite * /index.php?{query}
+	reverse_proxy backend:9000 {
+		transport fastcgi {
+			root /var/www/html/public
+			split .php
+		}
+	}
+}
+
+# www.ayosofficial.com → ayosofficial.com, so there is one address for cookies and links.
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Must hold a message with photos (Laravel allows up to 30 MB per request).
+	request_body {
+		max_size 30MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
+		-Server
+	}
+
+	# Live chat sockets → Reverb.
+	handle /app/* {
+		reverse_proxy reverb:8080
+	}
+
+	# Public uploads (profile photos, service covers, portfolio) straight from the uploads volume;
+	# anything else under /storage is a signed private link that Laravel checks.
+	handle /storage/* {
+		@file file {
+			root /srv/files
+		}
+		handle @file {
+			root * /srv/files
+			header Cache-Control "public, max-age=604800"
+			file_server
+		}
+		handle {
+			import laravel
+		}
+	}
+
+	# Laravel's own addresses. Any non-GET request is Laravel too: POST /login shares its address
+	# with the React login page, and only the GET belongs to React.
+	@laravel path /api/* /sanctum/* /auth/google/* /email/verify/* /user/* /up
+	handle @laravel {
+		import laravel
+	}
+	@write not method GET HEAD
+	handle @write {
+		import laravel
+	}
+
+	# Everything else is the React app. Built files have hashed names, so they can be cached for a year;
+	# index.html must never be cached, or people would keep an old version after a deploy.
+	handle {
+		root * /srv/app
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		@page not path /assets/*
+		header @page Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
