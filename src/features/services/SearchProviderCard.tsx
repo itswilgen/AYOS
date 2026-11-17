@@ -2,14 +2,10 @@ import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, BadgeCheck, MapPin, Star } from 'lucide-react'
 import type { ProviderSummary } from '../../types/marketplace'
-import { lowestPrice, peso } from '../../lib/format/peso'
+import { peso } from '../../lib/format/peso'
+import { priceFor } from './search-price'
 import SaveProviderButton from './SaveProviderButton'
 import './search-card.css'
-
-/** The matched service's price; the lowest one only when no service matched. Never another service's price. */
-function priceFor(provider: ProviderSummary): number | null {
-  return provider.matchedService ? provider.startingPrices[provider.matchedService] ?? null : lowestPrice(provider.startingPrices)
-}
 
 /** What the card leads with: the provider's approved cover, else their photo, else their initials. */
 function Media({ provider }: { provider: ProviderSummary }) {
