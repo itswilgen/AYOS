@@ -98,41 +98,90 @@ class ProviderDirectory
     }
 
     /**
+     * The card a customer sees for each provider (search results, saved providers): name, photo, services with
+     * their "From ₱…" prices, area, rating and identity check. Rows need id, display_name, bio, years_experience,
+     * photo_path and verified. With a city, the area label names that city.
+     *
+     * A search passes the category slug or the typed term: `matchedService` names the service that matched, and
+     * `cover` is that service's approved cover, so a plumbing search never shows an aircon photo. Without a matched
+     * service (no search, or only the provider's name matched), `cover` is the first approved cover.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function summaries(Collection $providers, ?string $cityCode = null, ?string $categorySlug = null, ?string $term = null): Collection
+    {
+        $ids = $providers->pluck('id')->all();
+        $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
+            ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
+            ->get(['s.provider_profile_id', 'c.name', 'c.slug', 's.starting_price', 's.cover_path', 's.cover_status', 's.cover_fit', 's.cover_focus_x', 's.cover_focus_y'])
+            ->groupBy('provider_profile_id');
+        $areas = $this->areaLabels($ids, $cityCode);
+        ['reviews' => $reviews, 'completed' => $completed] = $this->stats($ids);
+
+        return $providers->map(function (object $p) use ($services, $areas, $reviews, $completed, $categorySlug, $term): array {
+            $own = $services->get($p->id) ?? collect();
+            $matched = $this->matchedService($own, $categorySlug, $term);
+            // A matched service shows its own cover or none; never another service's photo.
+            $coverFrom = $matched ?? $own->first(fn (object $s): bool => $this->hasApprovedCover($s));
+
+            return $this->summary($p, $own, $areas, $reviews, $completed) + [
+                'matchedService' => $matched?->name,
+                'cover' => $coverFrom && $this->hasApprovedCover($coverFrom) ? ['image' => Storage::disk('public')->url($coverFrom->cover_path),
+                    'service' => $coverFrom->name, 'fit' => $coverFrom->cover_fit, 'focusX' => (int) $coverFrom->cover_focus_x,
+                    'focusY' => (int) $coverFrom->cover_focus_y] : null,
+            ];
+        })->values();
+    }
+
+    /**
+     * @param  Collection<int, object>  $services
+     * @param  array<int, string>  $areas
+     * @param  Collection<int, object>  $reviews
+     * @param  Collection<int, object>  $completed
+     * @return array<string, mixed>
+     */
+    private function summary(object $p, Collection $services, array $areas, Collection $reviews, Collection $completed): array
+    {
+        return ['id' => (string) $p->id, 'displayName' => $p->display_name, 'bio' => $p->bio,
+            'yearsExperience' => $p->years_experience, 'photo' => $p->photo_path ? Storage::disk('public')->url($p->photo_path) : null,
+            'specialties' => $services->pluck('name')->all(),
+            // Price guide: "From ₱…" per service name, only for services that have one.
+            'startingPrices' => (object) $services->whereNotNull('starting_price')
+                ->mapWithKeys(fn ($s) => [$s->name => (int) $s->starting_price])->all(),
+            'serviceAreaLabel' => $areas[$p->id] ?? '',
+            'rating' => $reviews->has($p->id) ? round((float) $reviews->get($p->id)->average, 1) : null,
+            'reviewCount' => (int) ($reviews->get($p->id)?->total ?? 0),
+            'completedServices' => (int) ($completed->get($p->id)?->total ?? 0),
+            'verified' => (bool) $p->verified];
+    }
+
+    /**
+     * The provider's service that a search matched: the searched category, else the first service whose name
+     * contains the typed term. Null when nothing was searched or only the provider's name matched.
+     *
+     * @param  Collection<int, object>  $services
+     */
+    private function matchedService(Collection $services, ?string $categorySlug, ?string $term): ?object
+    {
+        if ($categorySlug !== null) {
+            return $services->firstWhere('slug', $categorySlug);
+        }
+
+        return filled($term) ? $services->first(fn (object $s): bool => str_contains(mb_strtolower($s->name), mb_strtolower(trim($term)))) : null;
+    }
+
+    private function hasApprovedCover(object $service): bool
+    {
+        return $service->cover_path && $service->cover_status === 'approved';
+    }
+
+    /**
      * Orders discovery results by proof of good work: most confirmed jobs, then best rating, then identity-checked.
      * Providers without completed jobs follow, identity-checked first, so the order is stable and never random.
      *
      * @param  Collection<int, array{completedServices: int, rating: float|null, verified: bool, id: string}>  $providers
      * @return Collection<int, array<string, mixed>>
      */
-    /**
-     * The card a customer sees for each provider (search results, saved providers): name, photo, services with
-     * their "From ₱…" prices, area, rating and identity check. Rows need id, display_name, bio, years_experience,
-     * photo_path and verified. With a city, the area label names that city.
-     *
-     * @return Collection<int, array<string, mixed>>
-     */
-    public function summaries(Collection $providers, ?string $cityCode = null): Collection
-    {
-        $ids = $providers->pluck('id')->all();
-        $services = DB::table('provider_services as s')->join('service_categories as c', 'c.id', '=', 's.service_category_id')
-            ->whereIn('s.provider_profile_id', $ids)->where('s.active', true)->where('s.is_visible', true)->orderBy('c.name')
-            ->get(['s.provider_profile_id', 'c.name', 's.starting_price'])->groupBy('provider_profile_id');
-        $areas = $this->areaLabels($ids, $cityCode);
-        ['reviews' => $reviews, 'completed' => $completed] = $this->stats($ids);
-
-        return $providers->map(fn (object $p): array => ['id' => (string) $p->id, 'displayName' => $p->display_name, 'bio' => $p->bio,
-            'yearsExperience' => $p->years_experience, 'photo' => $p->photo_path ? Storage::disk('public')->url($p->photo_path) : null,
-            'specialties' => ($services->get($p->id) ?? collect())->pluck('name')->all(),
-            // Price guide: "From ₱…" per service name, only for services that have one.
-            'startingPrices' => (object) ($services->get($p->id) ?? collect())->whereNotNull('starting_price')
-                ->mapWithKeys(fn ($s) => [$s->name => (int) $s->starting_price])->all(),
-            'serviceAreaLabel' => $areas[$p->id] ?? '',
-            'rating' => $reviews->has($p->id) ? round((float) $reviews->get($p->id)->average, 1) : null,
-            'reviewCount' => (int) ($reviews->get($p->id)?->total ?? 0),
-            'completedServices' => (int) ($completed->get($p->id)?->total ?? 0),
-            'verified' => (bool) $p->verified])->values();
-    }
-
     public function rankByTrust(Collection $providers): Collection
     {
         return $providers->sortBy([

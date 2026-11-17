@@ -1,0 +1,71 @@
+/* Search result card: the provider's work photo leads, so customers see real work before reading. */
+.search-provider-item.has-media {
+  grid-template-columns: 176px minmax(0, 1fr);
+  gap: 18px;
+  padding: 14px;
+}
+
+.search-card-media-link {
+  display: block;
+  border-radius: var(--radius-sm);
+}
+
+.search-card-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--ayos-sky-soft);
+}
+
+.search-card-media img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+/* A poster or a photo that must be seen whole sits over a soft blur of itself, like on Home. */
+.search-card-media.is-contain .search-card-backdrop {
+  position: absolute;
+  inset: 0;
+  filter: blur(18px) saturate(1.1);
+  transform: scale(1.15);
+  opacity: .7;
+}
+.search-card-media.is-contain .search-card-image {
+  position: relative;
+  object-fit: contain;
+}
+
+/* No approved cover yet: the provider's initials, set like the rest of AYOS headings. */
+.search-card-media.is-initials span {
+  color: var(--ayos-sky-deep);
+  font-family: var(--font-display);
+  font-size: 2.6rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  line-height: 1;
+}
+
+.search-card-match {
+  color: var(--ayos-ink);
+  font-weight: 750;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .search-card-media-link:hover .search-card-image { transform: scale(1.03); }
+}
+
+@media (max-width: 640px) {
+  .search-provider-item.has-media {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+  .search-card-media { aspect-ratio: 1; }
+  .search-card-media.is-initials span { font-size: 1.7rem; }
+}

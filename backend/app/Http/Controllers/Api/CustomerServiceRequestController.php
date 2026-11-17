@@ -43,7 +43,7 @@ class CustomerServiceRequestController extends Controller
         $providers = $query->limit(100)->get();
         ['reviews' => $reviews, 'completed' => $completed] = $this->directory->stats($providers->pluck('id')->all());
         $providers = $providers->filter(fn ($p) => $this->directory->withinFreeQuota((int) $p->id, $p->access_kind, $completed));
-        $items = $this->directory->summaries($providers, $data['cityCode'] ?? null);
+        $items = $this->directory->summaries($providers, $data['cityCode'] ?? null, $data['category'] ?? null, $data['q'] ?? null);
         // A signed-in customer sees which providers they saved.
         if ($viewer = $request->user('sanctum')) {
             $saved = DB::table('saved_providers')->where('user_id', $viewer->id)->whereIn('provider_profile_id', $providers->pluck('id'))->pluck('provider_profile_id')->flip();

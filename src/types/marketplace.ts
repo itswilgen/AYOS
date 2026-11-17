@@ -32,6 +32,10 @@ export interface ProviderSummary {
   photo?: string | null
   /** Price guide: "From ₱…" per service name, only for services that have one. */
   startingPrices: Record<string, number>
+  /** The provider's service that the search matched; null without a search or when only the name matched. */
+  matchedService: string | null
+  /** An approved cover: the matched service's own, or the first one when no service matched. */
+  cover: (CoverLayout & { image: string; service: string }) | null
   /** Whether the signed-in customer saved this provider. */
   saved: boolean
 }

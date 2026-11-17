@@ -3,7 +3,8 @@ import type { CustomerRequest, NotificationSummary, ProviderSummary, SavedProvid
 import { apiTime } from '../lib/time/api-time'
 
 type ApiCategory = { id: number; slug: string; name: string; description: string }
-type ApiProvider = { id: string; displayName: string; specialties: string[]; startingPrices: Record<string, number>; saved?: boolean; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
+type ApiProvider = { id: string; displayName: string; specialties: string[]; startingPrices: Record<string, number>; saved?: boolean;
+  matchedService?: string | null; cover?: ProviderSummary['cover']; serviceAreaLabel: string; rating: number | null; reviewCount: number; completedServices: number; verified: boolean; photo: string | null }
 
 const icon: Record<string, ServiceIconKey> = {
   electrical: 'electrical', plumbing: 'plumbing', carpentry: 'carpentry', aircon: 'aircon',
@@ -32,6 +33,8 @@ const mapProvider = (provider: ApiProvider): ProviderSummary => ({
   verificationStatus: provider.verified ? 'verified' : 'unverified', availability: 'available',
   initials: provider.displayName.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase(),
   photo: provider.photo ? absoluteMedia(provider.photo) : null,
+  matchedService: provider.matchedService ?? null,
+  cover: provider.cover ? { ...provider.cover, image: absoluteMedia(provider.cover.image) } : null,
   saved: provider.saved ?? false,
 })
 
