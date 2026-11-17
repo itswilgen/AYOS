@@ -107,7 +107,7 @@ cd backend && php artisan test
 cd .. && npm run lint && npm test && npm run build
 ```
 
-Frontend tests use Vitest and Testing Library (`npm test`, or `npm run test:watch` while working). They sit next to the code as `*.test.ts(x)` and run in Manila time (`Asia/Manila`), so time tests match what customers see. They cover the logic where a quiet mistake shows customers the wrong thing (API times, prices, request progress, "Needs you", Book again, chat days) and the star rating and Save button.
+Frontend tests use Vitest and Testing Library (`npm test`, or `npm run test:watch` while working). They sit next to the code as `*.test.ts(x)` and run in Manila time (`Asia/Manila`), so time tests match what customers see. They cover the logic where a quiet mistake shows customers the wrong thing (API times, prices, request progress, "Needs you", Book again, chat days), the star rating and Save button, and three full flows in `src/test/flows/`: signing in, sending a request, and confirming a job then reviewing it. Flow tests run the real pages, services and API client against a fake server (`src/test/fake-server.ts`) that stands in for Laravel at the `fetch` level and records what each page sent.
 
 Feature tests cover universal registration and terms acceptance, safe login/current-user output, generic password reset responses, and the admin role and account-status gates. Responsive and keyboard checks should be repeated in the target deployment environment.
 
