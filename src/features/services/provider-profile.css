@@ -43,8 +43,11 @@
 
 .pp-stars { display: inline-flex; gap: 1px; color: var(--ayos-orange-bright); }
 
-/* Overview: numbers, then earned achievements. */
-.pp-stats { display: grid; grid-template-columns: repeat(var(--pp-stat-columns, 3), minmax(0, 1fr)); margin: 0; }
+/* Overview: one card like .pp-actions. The numbers sit in a tinted band; achievements and about follow below hairlines. */
+.pp-overview-card { overflow: hidden; border: 1px solid var(--ayos-line); border-radius: var(--radius-md); background: var(--ayos-white); box-shadow: var(--shadow-soft); }
+.pp-overview-card > .pp-subsection { margin: 0; padding: 22px 24px 24px; border-top: 1px solid var(--ayos-hairline); }
+.pp-overview-card > .pp-subsection:first-child { border-top: 0; }
+.pp-stats { display: grid; grid-template-columns: repeat(var(--pp-stat-columns, 3), minmax(0, 1fr)); margin: 0; padding: 22px 24px; background: var(--ayos-sky-soft); }
 .pp-stats > div { padding: 2px 0; }
 .pp-stats > div + div { padding-left: 20px; border-left: 1px solid var(--ayos-hairline); }
 .pp-stats dd { display: grid; justify-items: start; gap: 4px; margin: 0; }
@@ -52,7 +55,7 @@
 .pp-stats dd > span:last-child { color: var(--ayos-muted); font-size: .78rem; }
 
 .pp-achievements { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
-.pp-achievements li { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--ayos-line); border-radius: var(--radius-md); background: var(--ayos-white); animation: pp-rise .4s var(--ease-out-expo) both; }
+.pp-achievements li { display: grid; grid-template-columns: 42px minmax(0, 1fr); align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--ayos-hairline); border-radius: var(--radius-md); background: var(--ayos-white); animation: pp-rise .4s var(--ease-out-expo) both; }
 .pp-achievements li:nth-child(2) { animation-delay: 60ms; }
 .pp-achievements li:nth-child(3) { animation-delay: 120ms; }
 .pp-achievements li:nth-child(4) { animation-delay: 180ms; }
@@ -203,6 +206,7 @@
   .pp-hero { grid-template-columns: 76px minmax(0, 1fr); gap: 16px; align-items: center; }
   .pp-photo, .pp-skeleton-photo { width: 76px; height: 76px; font-size: 1.7rem; }
   .pp-stats strong { font-size: 1.6rem; }
+  .pp-stats, .pp-overview-card > .pp-subsection { padding-inline: 16px; }
   .pp-section-head h2 { font-size: 1.45rem; }
   .pp-achievements { grid-template-columns: minmax(0, 1fr); }
   .pp-services li { grid-template-columns: 52px minmax(0, 1fr); }
