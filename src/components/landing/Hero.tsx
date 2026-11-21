@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, BadgeCheck, HandCoins, LockKeyhole, Pause, Play } from 'lucide-react'
+import { ArrowRight, Pause, Play } from 'lucide-react'
 import Button from '../ui/Button'
 import InstallAppButton from '../common/InstallAppButton'
 import { serviceSearchPath } from './landing-links'
@@ -69,11 +69,6 @@ const popularSearches = [
   { label: 'Cracked phone screen', service: 'Phone repair' },
 ]
 
-const heroFacts = [
-  { icon: BadgeCheck, title: 'Reviewed providers', detail: 'Checked before taking requests' },
-  { icon: HandCoins, title: 'No booking fees', detail: 'Agree on the price directly' },
-  { icon: LockKeyhole, title: 'Private contact', detail: 'Hidden until you book' },
-]
 
 const pad = (value: number) => String(value).padStart(2, '0')
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -143,12 +138,7 @@ export default function Hero() {
         </h1>
         <p className="lp-hero-lede lp-hero-reveal">From a leaking tap to a laptop that won’t start, find skilled people in your community who can get it sorted.</p>
 
-        {/* Two clear next steps: create an account, or install AYOS like an app (full PWA support is planned). */}
-        <div className="lp-hero-actions lp-hero-reveal">
-          <Button href="/signup">Get started <ArrowRight size={17} aria-hidden="true" /></Button>
-          <InstallAppButton />
-        </div>
-
+        {/* What people come for first, so the buttons below are the last, clearest step. */}
         <div className="lp-popular lp-hero-reveal">
           <span className="lp-popular-label" id="popular-label">Popular</span>
           <ul aria-labelledby="popular-label">
@@ -156,12 +146,12 @@ export default function Hero() {
           </ul>
         </div>
 
-        <ul className="lp-hero-facts lp-hero-reveal" aria-label="Why use AYOS">
-          {heroFacts.map(({ icon: Icon, title, detail }) => <li key={title}>
-            <Icon size={18} aria-hidden="true" />
-            <span><strong>{title}</strong>{detail}</span>
-          </li>)}
-        </ul>
+        {/* Two clear next steps: create an account, or install AYOS like an app. */}
+        <div className="lp-hero-actions lp-hero-reveal">
+          <Button href="/signup">Get started <ArrowRight size={17} aria-hidden="true" /></Button>
+          <InstallAppButton />
+        </div>
+
       </div>
 
       <div className="lp-hero-visual" role="region" aria-roledescription="carousel" aria-label="How AYOS works" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onFocusCapture={() => setHasFocus(true)} onBlurCapture={(event) => {

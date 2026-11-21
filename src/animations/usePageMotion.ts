@@ -46,6 +46,9 @@ export function usePageMotion() {
         gsap.from(parts, { y: 16, autoAlpha: 0, duration: 0.8, ease: 'power3.out', stagger: 0.08, delay: 0.12, scrollTrigger: once(block) })
       })
 
+      // The three facts under the hero rise in together, a beat apart.
+      gsap.from('.lp-fact', { y: 12, autoAlpha: 0, duration: 0.7, ease: 'power3.out', stagger: 0.08, scrollTrigger: once('.lp-facts', 'top 92%') })
+
       gsap.from('.lp-service', {
         y: 28, autoAlpha: 0, duration: 0.8, ease: 'expo.out',
         stagger: { each: 0.06, grid: 'auto', from: 'start' },
