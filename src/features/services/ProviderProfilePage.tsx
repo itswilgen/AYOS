@@ -130,18 +130,26 @@ export default function ProviderProfilePage() {
         </section>
 
         {profile.portfolio.length > 0 && <section id="pp-work" data-section className="pp-section" aria-labelledby="pp-work-title">
-          <div className="pp-section-head"><h2 id="pp-work-title">Finished work</h2><p>Photos the provider shared from completed jobs.</p></div>
-          <ProviderWorkGallery items={profile.portfolio} />
+          <div className="pp-card">
+            <div className="pp-section-head pp-card-head"><h2 id="pp-work-title">Finished work</h2><p>Photos the provider shared from completed jobs.</p></div>
+            <div className="pp-card-body"><ProviderWorkGallery items={profile.portfolio} /></div>
+          </div>
         </section>}
 
         <section id="pp-reviews" data-section className="pp-section" aria-labelledby="pp-reviews-title">
-          <div className="pp-section-head"><h2 id="pp-reviews-title">Customer reviews</h2><p>Only customers with a completed AYOS job can leave a review.</p></div>
-          <ProviderReviews id={profile.id} rating={profile.rating} reviewCount={profile.reviewCount} ratingBreakdown={profile.ratingBreakdown} reviews={profile.reviews}
-            name={profile.displayName} requestPath={profile.acceptingRequests ? requestPath : undefined} />
+          <div className="pp-card">
+            <div className="pp-section-head pp-card-head"><h2 id="pp-reviews-title">Customer reviews</h2><p>Only customers with a completed AYOS job can leave a review.</p></div>
+            <div className="pp-card-body">
+              <ProviderReviews id={profile.id} rating={profile.rating} reviewCount={profile.reviewCount} ratingBreakdown={profile.ratingBreakdown} reviews={profile.reviews}
+                name={profile.displayName} requestPath={profile.acceptingRequests ? requestPath : undefined} />
+            </div>
+          </div>
         </section>
 
         <section id="pp-services" data-section className="pp-section" aria-labelledby="pp-services-title">
-          <div className="pp-section-head"><h2 id="pp-services-title">Services</h2></div>
+          <div className="pp-card">
+          <div className="pp-section-head pp-card-head"><h2 id="pp-services-title">Services</h2></div>
+          <div className="pp-card-body">
           <ul className="pp-services">{profile.services.map((service) => <li key={service.id}>
             {service.cover ? <img className={`pp-service-cover is-${service.cover.fit}`} src={service.cover.image} alt="" style={{ objectPosition: `${service.cover.focusX}% ${service.cover.focusY}%` }} loading="lazy" /> : <span className="pp-service-cover is-empty" aria-hidden="true">{service.category.slice(0, 1)}</span>}
             <div>
@@ -152,7 +160,9 @@ export default function ProviderProfilePage() {
             </div>
             {profile.acceptingRequests && !profile.isOwnProfile && <Link className="pp-service-link" to={`${requestPath}?${new URLSearchParams({ service: service.category })}`} aria-label={`Request ${service.category.toLowerCase()}`}>Request <ArrowRight size={15} aria-hidden="true" /></Link>}
           </li>)}</ul>
+          </div>
           {profile.areas.length > 0 && <div className="pp-subsection"><h3 className="pp-minor-title">Areas served</h3><ul className="pp-areas">{profile.areas.map((area) => <li key={area}><MapPin size={14} aria-hidden="true" />{area}</li>)}</ul></div>}
+          </div>
         </section>
       </div>
 
