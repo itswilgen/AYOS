@@ -24,8 +24,9 @@
 .pp-section-nav a:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: -2px; border-radius: var(--radius-sm); }
 .pp-section-nav a span { min-width: 20px; padding: 1px 6px; border-radius: var(--radius-pill); color: var(--ayos-body); background: var(--ayos-paper); font-size: .7rem; text-align: center; font-variant-numeric: tabular-nums; }
 
-.pp-section { padding: 30px 0; border-bottom: 1px solid var(--ayos-hairline); scroll-margin-top: 140px; }
-.pp-section:last-child { border-bottom: 0; }
+/* Every profile section is a card (see .pp-card), so cards are spaced evenly instead of split by lines. */
+.pp-section { padding: 12px 0; scroll-margin-top: 140px; }
+.pp-section:first-of-type { padding-top: 24px; }
 .pp-section h2, .pp-minor-title { margin: 0 0 14px; color: var(--ayos-body); font-size: .74rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .pp-section-head { margin-bottom: 18px; }
 .pp-section-head h2 { margin: 0; color: var(--ayos-ink); font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; letter-spacing: -.01em; text-transform: none; }
@@ -44,8 +45,14 @@
 .pp-stars { display: inline-flex; gap: 1px; color: var(--ayos-orange-bright); }
 
 /* Overview: one card like .pp-actions. The numbers sit in a tinted band; achievements and about follow below hairlines. */
-.pp-overview-card { overflow: hidden; border: 1px solid var(--ayos-line); border-radius: var(--radius-md); background: var(--ayos-white); box-shadow: var(--shadow-soft); }
-.pp-overview-card > .pp-subsection { margin: 0; padding: 22px 24px 24px; border-top: 1px solid var(--ayos-hairline); }
+.pp-overview-card, .pp-card { overflow: hidden; border: 1px solid var(--ayos-line); border-radius: var(--radius-md); background: var(--ayos-white); box-shadow: var(--shadow-soft); }
+.pp-overview-card > .pp-subsection, .pp-card > .pp-subsection { margin: 0; padding: 22px 24px 24px; border-top: 1px solid var(--ayos-hairline); }
+/* Section cards: the title is the card's header, the content its body. */
+.pp-card-head { margin: 0; padding: 20px 24px 18px; border-bottom: 1px solid var(--ayos-hairline); }
+.pp-card-head h2 { font-size: 1.5rem; }
+.pp-card-body { padding: 22px 24px 24px; }
+/* Inside a white card, the rating summary is tinted like the Overview's numbers band: tinted means "the numbers". */
+.pp-card .pp-rating-summary { border: 0; background: var(--ayos-sky-soft); }
 .pp-overview-card > .pp-subsection:first-child { border-top: 0; }
 .pp-stats { display: grid; grid-template-columns: repeat(var(--pp-stat-columns, 3), minmax(0, 1fr)); margin: 0; padding: 22px 24px; background: var(--ayos-sky-soft); }
 .pp-stats > div { padding: 2px 0; }
@@ -206,7 +213,7 @@
   .pp-hero { grid-template-columns: 76px minmax(0, 1fr); gap: 16px; align-items: center; }
   .pp-photo, .pp-skeleton-photo { width: 76px; height: 76px; font-size: 1.7rem; }
   .pp-stats strong { font-size: 1.6rem; }
-  .pp-stats, .pp-overview-card > .pp-subsection { padding-inline: 16px; }
+  .pp-stats, .pp-overview-card > .pp-subsection, .pp-card > .pp-subsection, .pp-card-head, .pp-card-body { padding-inline: 16px; }
   .pp-section-head h2 { font-size: 1.45rem; }
   .pp-achievements { grid-template-columns: minmax(0, 1fr); }
   .pp-services li { grid-template-columns: 52px minmax(0, 1fr); }
