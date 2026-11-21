@@ -179,7 +179,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-top: 34px;
+  margin-top: 28px;
 }
 .lp-hero-actions .button {
   min-height: 52px;
@@ -190,7 +190,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-  margin-top: 18px;
+  margin-top: 24px;
 }
 .lp-popular-label {
   color: var(--ayos-text-soft);
@@ -233,40 +233,49 @@
 .lp-chip:active {
   transform: translateY(0);
 }
-/* Three plain product facts, set like a spec line rather than cards. */
-.lp-hero-facts {
+/* "Why AYOS": three plain facts in their own white strip under the hero (TrustStrip.tsx). */
+.lp-facts {
+  border-block: 1px solid var(--ayos-hairline);
+  background: var(--ayos-white);
+}
+.lp-facts-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 40px 0 0;
-  padding: 20px 0 0;
-  border-top: 1px solid var(--ayos-hairline);
+  margin-block: 0; /* only block: the inline margins come from .lp-container and centre the list */
+  padding: 28px 0;
   list-style: none;
 }
-.lp-hero-facts li {
+.lp-fact {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding-right: 16px;
+  gap: 14px;
+  padding-right: 24px;
 }
-.lp-hero-facts li + li {
-  padding-left: 16px;
+.lp-fact + .lp-fact {
+  padding-left: 24px;
   border-left: 1px solid var(--ayos-hairline);
 }
-.lp-hero-facts svg {
+.lp-fact-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
   flex: none;
-  margin-top: 2px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ayos-sky-soft);
   color: var(--ayos-sky-deep);
 }
-.lp-hero-facts span {
+.lp-fact span:last-child {
   display: grid;
   gap: 2px;
+  padding-top: 1px;
   color: var(--ayos-text);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   line-height: 1.45;
 }
-.lp-hero-facts strong {
+.lp-fact strong {
   color: var(--ayos-ink);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 700;
 }
 
@@ -1354,18 +1363,6 @@
   outline-color: var(--ayos-white);
 }
 
-/* Small laptops: the facts stack so the copy column stays roomy. */
-@media (max-width: 1240px) {
-  .lp-hero-facts {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-  }
-  .lp-hero-facts li + li {
-    padding-left: 0;
-    border-left: 0;
-  }
-}
-
 /* Large tablets */
 @media (max-width: 1100px) {
   .lp-service-grid {
@@ -1411,14 +1408,6 @@
   }
   .lp-hero-card {
     width: auto;
-  }
-  .lp-hero-facts {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
-  }
-  .lp-hero-facts li + li {
-    padding-left: 16px;
-    border-left: 1px solid var(--ayos-hairline);
   }
   .lp-steps {
     grid-template-columns: minmax(0, 1fr);
@@ -1504,13 +1493,17 @@
   .lp-hero {
     padding-bottom: 48px;
   }
-  .lp-hero-facts {
+  /* Phones: the three facts stack, split by hairlines. */
+  .lp-facts-list {
     grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
-    margin-top: 32px;
+    padding: 8px 0;
   }
-  .lp-hero-facts li + li {
+  .lp-fact {
+    padding: 16px 0;
+  }
+  .lp-fact + .lp-fact {
     padding-left: 0;
+    border-top: 1px solid var(--ayos-hairline);
     border-left: 0;
   }
   .lp-hero-card {

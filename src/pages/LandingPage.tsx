@@ -1,4 +1,5 @@
 import Hero from '../components/landing/Hero'
+import TrustStrip from '../components/landing/TrustStrip'
 import ServicesSection from '../components/landing/ServicesSection'
 import HowItWorks from '../components/landing/HowItWorks'
 import TrustSection from '../components/landing/TrustSection'
@@ -10,5 +11,5 @@ import '../components/landing/landing.css'
 
 export default function LandingPage() {
   usePageMotion()
-  return <main id="main-content" className="lp"><Hero /><ServicesSection /><HowItWorks /><TrustSection /><LocationSection /><ProviderSection /><FinalCta /></main>
+  return <main id="main-content" className="lp"><Hero /><TrustStrip /><ServicesSection /><HowItWorks /><TrustSection /><LocationSection /><ProviderSection /><FinalCta /></main>
 }
