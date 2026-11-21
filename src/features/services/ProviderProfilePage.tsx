@@ -107,6 +107,8 @@ export default function ProviderProfilePage() {
         </nav>
 
         <section id="pp-overview" data-section className="pp-section" aria-label="Overview">
+          {/* One card, like the "Ask first" card beside it: numbers in a tinted band, then each part below a hairline. */}
+          <div className="pp-overview-card">
           <dl className="pp-stats" style={{ '--pp-stat-columns': stats.length } as CSSProperties}>{stats.map((stat) => <div key={stat.key}>
             <dt className="sr-only">{stat.label}</dt>
             <dd><strong>{stat.value}</strong>{'stars' in stat && stat.stars != null ? <Stars rating={stat.stars} size={13} /> : null}<span>{stat.label}</span></dd>
@@ -124,6 +126,7 @@ export default function ProviderProfilePage() {
           </div>}
 
           {profile.bio && <div className="pp-subsection"><h2>About</h2><p className="pp-bio">{profile.bio}</p></div>}
+          </div>
         </section>
 
         {profile.portfolio.length > 0 && <section id="pp-work" data-section className="pp-section" aria-labelledby="pp-work-title">
