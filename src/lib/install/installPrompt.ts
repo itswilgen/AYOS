@@ -19,7 +19,8 @@ let installed = false
 const listeners = new Set<() => void>()
 const notify = () => listeners.forEach((listener) => listener())
 
-function runningAsApp(): boolean {
+/** True when AYOS runs as the installed app (home screen or desktop), not in a browser tab. */
+export function isInstalledApp(): boolean {
   const iosStandalone = (navigator as Navigator & { standalone?: boolean }).standalone === true
   return window.matchMedia('(display-mode: standalone)').matches || iosStandalone
 }
@@ -31,7 +32,7 @@ function isAppleMobile(): boolean {
 }
 
 if (typeof window !== 'undefined') {
-  installed = runningAsApp()
+  installed = isInstalledApp()
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault()
     deferred = event as BeforeInstallPromptEvent
