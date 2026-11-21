@@ -9,7 +9,7 @@
 export const LEGAL_META = {
   status: 'draft' as 'draft' | 'final',
   version: 'Draft 1',
-  updated: '2026-11-14',
+  updated: '2026-11-18',
   contactEmail: 'hello@ayos.ph',
 }
 
@@ -101,11 +101,11 @@ export const termsOfService: LegalDocument = {
     {
       id: 'fees',
       title: 'Fees and payments',
-      summary: 'Customers pay providers directly. Providers use AYOS free for their first 10 customers, then may need to pay an activation fee.',
+      summary: 'Customers pay providers directly. Providers use AYOS free for their first 20 customers, then may need to pay an activation fee.',
       body: [
         'AYOS does not collect payment for services. The customer and the provider agree on the price and how it is paid. Settle the price before work starts.',
         'Creating an account and sending requests is free for customers.',
-        'Providers can serve up to 10 different customers with confirmed completed jobs for free. After that, new requests pause until the provider account is activated. Existing jobs, messages, and records stay available. If an activation fee applies, we will show the amount before you pay, and you submit your payment reference in the provider workspace for our team to review.',
+        'Providers can serve up to 20 different customers with confirmed completed jobs for free. After that, new requests pause until the provider account is activated. Existing jobs, messages, and records stay available. If an activation fee applies, we will show the amount before you pay, and you submit your payment reference in the provider workspace for our team to review.',
         'We may change fees in the future. We will tell providers before a change applies to them. Fees already paid are not refundable unless the law requires it or we made a mistake.',
       ],
     },
