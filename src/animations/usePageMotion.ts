@@ -2,6 +2,7 @@ import { useLayoutEffect } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
+import { jobScreenTimeline, playOnce } from './jobScreens'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -56,12 +57,23 @@ export function usePageMotion() {
       const fills = gsap.utils.toArray<HTMLElement>('.lp-step-line-fill')
       gsap.set(nodes.slice(1), { '--on': 0 })
       gsap.set(fills, { '--fill': 0 })
+
+      // "Follow one job": the same request plays through the four phone screens, in step order.
+      // Wide screens show all four side by side, so each one waits for the rail to light its number;
+      // on phones the steps stack, so each plays as it scrolls into view.
+      const screens = gsap.utils.toArray<HTMLElement>('.lp-job').map(jobScreenTimeline)
+      if (wide) ScrollTrigger.create({ ...once('.lp-steps', 'top 70%'), onEnter: () => playOnce(screens[0]) })
+      else gsap.utils.toArray<HTMLElement>('.lp-job').forEach((screen, index) => {
+        ScrollTrigger.create({ ...once(screen, 'top 85%'), onEnter: () => playOnce(screens[index]) })
+      })
+
       const rail = gsap.timeline({
         defaults: { ease: 'none' },
         scrollTrigger: { trigger: '.lp-steps', start: wide ? 'top 62%' : 'top 70%', end: wide ? 'bottom 72%' : 'bottom 62%', scrub: 0.6 },
       })
       fills.forEach((fill, index) => {
         rail.to(fill, { '--fill': 1, duration: 1 }).to(nodes[index + 1], { '--on': 1, duration: 0.18 })
+        if (wide) rail.call(playOnce, [screens[index + 1]])
       })
 
       gsap.from('.lp-trust-item', { y: 18, autoAlpha: 0, duration: 0.75, ease: 'power3.out', stagger: 0.08, scrollTrigger: once('.lp-trust-list') })
