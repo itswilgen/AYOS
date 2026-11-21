@@ -47,7 +47,7 @@
 .chat-state-icon { width: 44px; height: 44px; display: grid; place-items: center; margin-bottom: 6px; border-radius: 50%; color: var(--ayos-sky-deep); background: var(--ayos-sky-soft); }
 .chat-text-button { min-height: 36px; display: inline-flex; align-items: center; padding: 0 4px; border: 0; color: var(--ayos-sky-deep); background: none; font: inherit; font-size: .82rem; font-weight: 750; text-decoration: none; cursor: pointer; }
 .chat-text-button:hover { text-decoration: underline; text-underline-offset: 3px; }
-.chat-text-button:focus-visible, .chat-back:focus-visible, .chat-report:focus-visible, .chat-jump:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; border-radius: var(--radius-sm); }
+.chat-text-button:focus-visible, .chat-back:focus-visible, .chat-report:focus-visible, .chat-jump:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; border-radius: var(--radius-button); }
 
 .chat-list-skeleton { display: grid; grid-template-columns: 42px 1fr; gap: 12px; padding: 11px 12px; }
 .chat-list-skeleton span { width: 42px; height: 42px; border-radius: 50%; }
@@ -163,7 +163,7 @@
 .chat-dialog-field textarea { padding: 9px 12px; border: 1px solid var(--ayos-line); border-radius: var(--radius-sm); font: inherit; font-size: .86rem; font-weight: 400; resize: vertical; }
 .chat-dialog-field textarea:focus { border-color: var(--ayos-sky-action); outline: none; box-shadow: 0 0 0 3px var(--ayos-sky-soft); }
 .chat-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
-.chat-button { min-height: 42px; padding: 0 16px; border: 1px solid var(--ayos-line); border-radius: var(--radius-sm); color: var(--ayos-ink); background: var(--ayos-white); font: inherit; font-size: .84rem; font-weight: 750; cursor: pointer; }
+.chat-button { min-height: 42px; padding: 0 16px; border: 1px solid var(--ayos-line); border-radius: var(--radius-button); color: var(--ayos-ink); background: var(--ayos-white); font: inherit; font-size: .84rem; font-weight: 750; cursor: pointer; }
 .chat-button:hover:not(:disabled) { border-color: var(--ayos-sky-light); }
 .chat-button-primary { border-color: var(--ayos-action); color: var(--ayos-white); background: var(--ayos-action); }
 .chat-button-primary:hover:not(:disabled) { border-color: var(--ayos-action-hover); background: var(--ayos-action-hover); }

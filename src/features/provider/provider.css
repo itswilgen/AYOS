@@ -97,7 +97,7 @@
 .provider-shell .provider-eyebrow { font-size: .68rem; letter-spacing: .14em; }
 .provider-page-heading h1 { margin: 8px 0 8px; color: var(--pv-night); font-family: var(--font-display); font-size: clamp(2.1rem, 3.2vw, 2.75rem); font-weight: 700; letter-spacing: -.005em; line-height: .98; }
 .provider-page-heading p { margin: 0; color: var(--pv-muted); font-size: .9rem; }
-.provider-button { min-height: 43px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 15px; border: 1px solid var(--pv-line-strong, #c5dce7); border-radius: var(--pv-radius-sm, 5px); color: var(--pv-blue, var(--ayos-sky-deep)); background: #fff; font-size: .79rem; font-weight: 750; text-align: center; white-space: normal; }
+.provider-button { min-height: 43px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 15px; border: 1px solid var(--pv-line-strong, #c5dce7); border-radius: var(--radius-button); color: var(--pv-blue, var(--ayos-sky-deep)); background: #fff; font-size: .79rem; font-weight: 750; text-align: center; white-space: normal; }
 .provider-button:hover:not(:disabled) { border-color: var(--pv-blue, var(--ayos-sky-deep)); background: #f0f8fb; }
 /* Outside the provider shell (customer pages) these fall back to the shared orange action colour. */
 .provider-button-primary { border-color: var(--pv-orange, var(--ayos-action)); color: #fff; background: var(--pv-orange, var(--ayos-action)); }
@@ -404,7 +404,7 @@
 .provider-state h1 { margin: 0; color: var(--pv-night); font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; line-height: 1.02; }
 .provider-state p { max-width: 420px; margin: 10px 0 24px; color: var(--pv-muted); line-height: 1.6; }
 .provider-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-.provider-state > button:not(.provider-button), .provider-state > a:not(.provider-button) { display: inline-block; padding: 9px 17px; border: 0; border-radius: 4px; color: #fff; background: var(--pv-blue); }
+.provider-state > button:not(.provider-button), .provider-state > a:not(.provider-button) { display: inline-block; padding: 9px 17px; border: 0; border-radius: var(--radius-button); color: #fff; background: var(--pv-blue); }
 .provider-apply-page { --pv-blue: #126c9e; --pv-blue-dark: #0b486d; --pv-orange: #c84f19; --pv-ink: #1e2b33; --pv-muted: #63727c; --pv-line: #dce5e9; width: min(calc(100% - 40px), 760px); min-height: calc(100dvh - 155px); display: grid; align-content: center; margin: 0 auto; padding: 32px 0 64px; color: var(--pv-ink); }
 .provider-apply-page :is(a, button, input, textarea):focus-visible { outline: 3px solid #ef8a46; outline-offset: 2px; }
 .provider-apply-back { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 18px; color: var(--pv-blue); font-size: .78rem; font-weight: 750; }

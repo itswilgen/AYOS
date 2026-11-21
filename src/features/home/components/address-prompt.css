@@ -109,7 +109,7 @@
   min-height: 44px;
   padding: 0 16px;
   border: 1px solid var(--ayos-line);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-button);
   background: var(--ayos-white);
   color: var(--ayos-sky-deep);
   font: inherit;

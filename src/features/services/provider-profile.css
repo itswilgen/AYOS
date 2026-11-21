@@ -36,8 +36,8 @@
 
 .pp-text-button { min-height: 36px; padding: 0; border: 0; color: var(--ayos-sky-deep); background: none; font: inherit; font-size: .84rem; font-weight: 750; cursor: pointer; }
 .pp-text-button:hover { text-decoration: underline; text-underline-offset: 3px; }
-.pp-text-button:focus-visible, .pp-more-button:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; border-radius: var(--radius-sm); }
-.pp-more-button { min-height: 44px; margin-top: 16px; padding: 0 18px; border: 1px solid var(--ayos-line); border-radius: var(--radius-sm); color: var(--ayos-ink); background: var(--ayos-white); font: inherit; font-size: .86rem; font-weight: 700; cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast); }
+.pp-text-button:focus-visible, .pp-more-button:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; border-radius: var(--radius-button); }
+.pp-more-button { min-height: 44px; margin-top: 16px; padding: 0 18px; border: 1px solid var(--ayos-line); border-radius: var(--radius-button); color: var(--ayos-ink); background: var(--ayos-white); font: inherit; font-size: .86rem; font-weight: 700; cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast); }
 .pp-more-button:hover:not(:disabled) { border-color: var(--ayos-sky-light); background: var(--ayos-white-hover); }
 .pp-more-button:disabled { cursor: wait; opacity: .7; }
 
