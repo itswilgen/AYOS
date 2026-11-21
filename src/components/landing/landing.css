@@ -713,11 +713,10 @@
   border-radius: var(--radius-lg);
   background: var(--ayos-sky-panel);
 }
-.lp-step-media img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
+/* Each step shows the same job on a phone that peeks up from the bottom of the card. */
+.lp-step-media {
+  position: relative;
+  container-type: inline-size;
 }
 .lp-step-track {
   display: flex;
@@ -764,6 +763,265 @@
   color: var(--ayos-text);
   font-size: 1rem;
   line-height: 1.65;
+}
+
+/* "Follow one job": one kitchen-sink request across the four steps (JobScreen.tsx).
+   Sizes follow the card's width (cqi), so the phone reads the same in a narrow column and on a phone. */
+.lp-job {
+  position: absolute;
+  inset: 0;
+}
+.lp-job-phone {
+  position: absolute;
+  top: 11%;
+  bottom: -8%;
+  left: 50%;
+  width: min(70cqi, 300px);
+  padding: 2.2cqi 2.2cqi 0;
+  border-radius: 7cqi 7cqi 0 0;
+  background: var(--ayos-ink);
+  box-shadow: 0 18px 36px -18px rgb(24 35 43 / 45%);
+  transform: translateX(-50%);
+}
+.lp-job-speaker {
+  position: absolute;
+  top: 0.8cqi;
+  left: 50%;
+  width: 12cqi;
+  height: 0.7cqi;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 22%);
+  transform: translateX(-50%);
+}
+.lp-job-screen {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55em;
+  overflow: hidden;
+  padding: 1.1em 1em;
+  border-radius: 5cqi 5cqi 0 0;
+  background: var(--ayos-white);
+  color: var(--ayos-ink);
+  font: 500 clamp(9px, 3.6cqi, 13px) / 1.3 var(--font-body);
+  text-align: left;
+}
+.lp-job svg {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+.lp-job-heading {
+  margin: 0;
+  font: 700 1.3em / 1 var(--font-display);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+.lp-job-muted {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  margin: 0;
+  color: var(--ayos-muted);
+  font-size: 0.85em;
+}
+.lp-job-chips {
+  display: flex;
+  gap: 0.4em;
+}
+.lp-job-chip {
+  padding: 0.3em 0.75em;
+  border: 1px solid var(--ayos-hairline);
+  border-radius: var(--radius-pill);
+  color: var(--ayos-text);
+  font-size: 0.85em;
+  font-weight: 600;
+}
+/* --pick (0 → 1) lets the animation *select* the chip and the provider; without motion it stays 1. */
+.lp-job-chip.is-picked,
+.lp-job-pro.is-picked {
+  --pick: 1;
+  border-color: color-mix(in srgb, var(--ayos-sky-action) calc(var(--pick) * 100%), var(--ayos-hairline));
+  background: color-mix(in srgb, var(--ayos-sky-soft) calc(var(--pick) * 100%), var(--ayos-white));
+  color: color-mix(in srgb, var(--ayos-sky-deep) calc(var(--pick) * 100%), var(--ayos-text));
+}
+.lp-job-field {
+  overflow: hidden;
+  padding: 0.55em 0.7em;
+  border: 1px solid var(--ayos-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+.lp-job-typed {
+  display: inline-block;
+}
+.lp-job-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+.lp-job-photo {
+  display: grid;
+  width: 2.2em;
+  height: 2.2em;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--ayos-sky-soft);
+  color: var(--ayos-sky-deep);
+}
+.lp-job-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+  padding: 0.65em;
+  border-radius: var(--radius-sm);
+  background: var(--ayos-orange);
+  color: var(--ayos-white);
+  font-size: 0.9em;
+  font-weight: 700;
+}
+.lp-job-pro {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 0.5em 0.55em;
+  border: 1px solid var(--ayos-hairline);
+  border-radius: var(--radius-sm);
+}
+.lp-job-avatar {
+  display: grid;
+  width: 2.1em;
+  height: 2.1em;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ayos-sky-panel);
+  color: var(--ayos-sky-deep);
+  font: 700 0.85em / 1 var(--font-display);
+}
+.lp-job-pro-text {
+  display: grid;
+  min-width: 0;
+  gap: 0.1em;
+}
+.lp-job-pro-text strong {
+  overflow: hidden;
+  color: var(--ayos-ink);
+  font-size: 0.9em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lp-job-pro-text small {
+  display: flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--ayos-muted);
+  font-size: 0.78em;
+}
+.lp-job-pro-text small svg {
+  color: var(--ayos-orange);
+}
+.lp-job-check {
+  display: grid;
+  width: 1.6em;
+  height: 1.6em;
+  flex: none;
+  margin-left: auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ayos-sky-action);
+  color: var(--ayos-white);
+}
+.lp-job-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.25em;
+  margin: 0.2em 0 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-job-track li {
+  height: 0.45em;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--ayos-line);
+}
+.lp-job-track li span {
+  display: block;
+  height: 100%;
+}
+.lp-job-track li.is-on span {
+  background: var(--ayos-sky-action);
+  transform-origin: left center;
+}
+.lp-job-status {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.3em;
+  padding: 0.3em 0.65em;
+  border-radius: var(--radius-pill);
+  background: var(--ayos-sky-soft);
+  color: var(--ayos-sky-deep);
+  font-size: 0.8em;
+  font-weight: 700;
+}
+.lp-job-status.is-done {
+  background: color-mix(in srgb, var(--ayos-success) 14%, var(--ayos-white));
+  color: var(--ayos-success);
+}
+.lp-job-bubble {
+  align-self: flex-start;
+  max-width: 88%;
+  margin: 0;
+  padding: 0.5em 0.75em;
+  border-radius: var(--radius-md) var(--radius-md) var(--radius-md) 3px;
+  background: var(--ayos-paper-deep);
+  font-size: 0.85em;
+}
+/* The finished state shows "Work confirmed"; the animation starts from "Confirm work done". */
+.lp-job-button.is-confirmed {
+  --done: 1;
+  background: color-mix(in srgb, var(--ayos-success) calc(var(--done) * 100%), var(--ayos-orange));
+}
+.lp-job-label-before {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+}
+.lp-job-label-after {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+}
+.lp-job-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+  color: var(--ayos-orange);
+}
+.lp-job-star {
+  position: relative;
+  display: grid;
+}
+.lp-job-star svg {
+  width: 1.45em;
+  height: 1.45em;
+}
+.lp-job-star .lp-job-star-fill {
+  position: absolute;
+  inset: 0;
+}
+.lp-job-word {
+  margin-left: 0.4em;
+  color: var(--ayos-ink);
+  font-size: 0.85em;
+  font-weight: 700;
 }
 
 /* Trust — the one dark band */

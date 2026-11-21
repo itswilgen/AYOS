@@ -1,31 +1,29 @@
+import JobScreen from './JobScreen'
+
 const steps = [
   {
     number: '01',
     title: 'Describe the job',
     text: 'Pick a service, add a short note or a photo, and choose a time that works for you.',
-    image: '/images/how-steps/step-01-request',
-    alt: 'A service request preview with an electrical service selected.',
+    screen: 'A new request on a phone: Plumbing is picked, the note says the kitchen sink leaks, a photo is added, and Send request is tapped.',
   },
   {
     number: '02',
     title: 'Choose a local pro',
     text: 'Compare nearby providers by the services they offer, the areas they cover, and their reviews.',
-    image: '/images/how-steps/step-02-discover',
-    alt: 'A customer and local service professional looking through job details together.',
+    screen: 'Plumbers near you on a phone: Jun Reyes Plumbing, rated 4.8 and from ₱650, is chosen, and Request Jun is tapped.',
   },
   {
     number: '03',
     title: 'Track it to done',
     text: 'Your provider accepts, schedules the visit, and updates the job as the work moves along.',
-    image: '/images/how-steps/step-03-connect',
-    alt: 'A customer and plumbing professional discussing a leaking tap through a message preview.',
+    screen: 'The kitchen sink request on a phone moves from Sent to Accepted, Scheduled and Working, and Jun writes: On my way. About 10 minutes.',
   },
   {
     number: '04',
     title: 'Confirm and review',
     text: 'Mark the work complete, then leave an honest review to help your neighbors choose.',
-    image: '/images/how-steps/step-04-feedback',
-    alt: 'A feedback form with unselected stars and an empty comment field.',
+    screen: 'The finished job on a phone: Confirm work done is tapped, five stars are given, and AYOS thanks Lea for the review.',
   },
 ]
 
@@ -38,11 +36,9 @@ export default function HowItWorks() {
         <p className="lp-lede">Four clear steps from something broken to something fixed, with every update kept in one place.</p>
       </header>
       <ol className="lp-steps">
-        {steps.map(({ number, title, text, image, alt }, index) => <li className="lp-step" key={number}>
-          <picture className="lp-step-media">
-            <source media="(prefers-reduced-motion: no-preference)" srcSet={`${image}.gif`} type="image/gif" />
-            <img src={`${image}.webp`} alt={alt} width="480" height="308" loading="lazy" decoding="async" />
-          </picture>
+        {steps.map(({ number, title, text, screen }, index) => <li className="lp-step" key={number}>
+          {/* The same job in every step: one kitchen-sink request, from first note to five stars. */}
+          <div className="lp-step-media"><JobScreen step={(index + 1) as 1 | 2 | 3 | 4} label={screen} /></div>
           <div className="lp-step-track" aria-hidden="true">
             <span className="lp-step-node">{number}</span>
             {index < steps.length - 1 && <span className="lp-step-line"><span className="lp-step-line-fill" /></span>}
