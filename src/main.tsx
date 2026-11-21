@@ -5,8 +5,11 @@ import App from './App'
 import { AuthProvider } from './lib/auth/AuthProvider'
 // Starts listening for the browser's one-time install offer as early as possible (see InstallAppButton).
 import './lib/install/installPrompt'
+import { registerServiceWorker } from './lib/install/serviceWorker'
 import './styles/tokens.css'
 import './styles/global.css'
+
+registerServiceWorker()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter></React.StrictMode>,

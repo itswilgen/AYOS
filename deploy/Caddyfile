@@ -79,6 +79,9 @@ www.{$DOMAIN} {
 		header @hashed Cache-Control "public, max-age=31536000, immutable"
 		@page not path /assets/*
 		header @page Cache-Control "no-cache"
+		# The installable-app manifest, typed explicitly (the alpine image may not know .webmanifest).
+		@manifest path /site.webmanifest
+		header @manifest Content-Type "application/manifest+json"
 		try_files {path} /index.html
 		file_server
 	}

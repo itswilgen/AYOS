@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import PublicLayout from './layouts/PublicLayout'
 import AuthLayout from './layouts/AuthLayout'
 import AuthenticatedLayout from './layouts/AuthenticatedLayout'
+import { isInstalledApp } from './lib/install/installPrompt'
 import RequireAuth from './components/auth/RequireAuth'
 import RequireAdmin from './components/auth/RequireAdmin'
 import * as ProviderPages from './features/provider/ProviderPages'
@@ -56,7 +57,8 @@ function PlatformGate({ children }: { children: ReactNode }) {
 export default function App() {
   return <PlatformGate><Routes>
     <Route element={<PublicLayout />}>
-      <Route path="/" element={<Suspense fallback={routeFallback}><LandingPage /></Suspense>} />
+      {/* The installed app is for using AYOS, not reading about it: it opens on login (signed-in people go on to Home). */}
+      <Route path="/" element={isInstalledApp() ? <Navigate to="/login" replace /> : <Suspense fallback={routeFallback}><LandingPage /></Suspense>} />
       <Route path="/terms" element={<Suspense fallback={routeFallback}><LegalPage /></Suspense>} />
       <Route path="/privacy" element={<Suspense fallback={routeFallback}><LegalPage /></Suspense>} />
     </Route>
