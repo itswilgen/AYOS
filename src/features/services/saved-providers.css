@@ -8,7 +8,7 @@
 .saved-name { margin: 0; font: 700 1.3rem / 1.1 var(--font-display); text-transform: uppercase; }
 .saved-name a { color: var(--ayos-ink); text-decoration: none; }
 .saved-name a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.saved-name a:focus-visible, .saved-request:focus-visible, .saved-remove:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; border-radius: var(--radius-sm); }
+.saved-name a:focus-visible, .saved-request:focus-visible, .saved-remove:focus-visible { outline: 2px solid var(--ayos-sky-action); outline-offset: 2px; border-radius: var(--radius-button); }
 .saved-trades { margin: 4px 0 0; color: var(--ayos-text); font-size: .86rem; }
 .saved-facts { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0 18px; list-style: none; color: var(--ayos-body); font-size: .8rem; }
 .saved-facts li { display: inline-flex; align-items: center; gap: 4px; }
@@ -19,7 +19,7 @@
 .saved-request { display: inline-flex; align-items: center; gap: 6px; color: var(--ayos-sky-deep); font-size: .94rem; font-weight: 700; text-decoration: none; }
 .saved-request:hover { color: var(--ayos-ink); }
 .saved-paused { color: var(--ayos-muted); font-size: .84rem; font-weight: 600; }
-.saved-remove { min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-sm); color: var(--ayos-muted); background: none; font: inherit; font-size: .84rem; font-weight: 700; cursor: pointer; }
+.saved-remove { min-height: 44px; padding: 0 10px; border: 0; border-radius: var(--radius-button); color: var(--ayos-muted); background: none; font: inherit; font-size: .84rem; font-weight: 700; cursor: pointer; }
 .saved-remove:hover:not(:disabled) { color: var(--ayos-ink); background: var(--ayos-sky-soft); }
 .saved-error { margin: 0 0 12px; color: var(--ayos-error); font-size: .86rem; font-weight: 600; }
 .saved-empty { display: grid; justify-items: start; gap: 8px; max-width: 46ch; padding: 24px; border: 1px dashed var(--ayos-line); border-radius: var(--radius-lg); background: var(--ayos-white); }

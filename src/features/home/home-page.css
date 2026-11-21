@@ -6,7 +6,7 @@
   padding-top: 24px;
 }
 .home-page .button {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-button);
 }
 .home-page .button-primary {
   box-shadow: var(--ayos-action-shadow);
