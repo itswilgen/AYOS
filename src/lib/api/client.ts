@@ -71,6 +71,14 @@ function messageFrom(payload: unknown): string {
     : "The request could not be completed.";
 }
 
+/** What people see when they hit a rate limit (HTTP 429): how long to wait, when the API says so. */
+export function tooManyRequestsMessage(retryAfter: string | null): string {
+  const seconds = Number(retryAfter);
+  return Number.isInteger(seconds) && seconds > 0
+    ? `Too many tries. Please wait ${seconds} second${seconds === 1 ? "" : "s"}, then try again.`
+    : "Too many tries. Please wait a moment, then try again.";
+}
+
 async function request<TResponse>(
   url: string,
   init: RequestInit = {},
@@ -95,6 +103,8 @@ async function request<TResponse>(
     response.status === 204
       ? undefined
       : await response.json().catch(() => undefined);
+  if (response.status === 429)
+    throw new ApiError(tooManyRequestsMessage(response.headers.get("Retry-After")), 429, payload);
   if (!response.ok) {
     const isServerError = response.status >= 500;
     throw new ApiError(
@@ -142,6 +152,8 @@ export async function apiFile(path: string): Promise<Blob> {
     credentials: "include",
     headers: { Accept: "application/json, */*" },
   });
+  if (response.status === 429)
+    throw new ApiError(tooManyRequestsMessage(response.headers.get("Retry-After")), 429);
   if (!response.ok) {
     const payload: unknown = await response.json().catch(() => undefined);
     throw new ApiError(

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Services\ReferenceCache;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -66,5 +67,8 @@ class PhilippineGeographySeeder extends Seeder
                 }
             }
         });
+
+        // Deploys run this seeder: pickers must show the new data right away, not after the cache expires.
+        ReferenceCache::clear(ReferenceCache::LOCATIONS);
     }
 }

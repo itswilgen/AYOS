@@ -14,14 +14,17 @@ class PlatformSettings
         'activation_payments_enabled' => false, 'activation_payment_instructions' => '',
     ];
 
+    /** Read on every API request (maintenance check), so it comes from the cache; update() clears it. */
     public function all(): array
     {
-        $settings = self::DEFAULTS;
-        foreach (DB::table('system_settings')->get(['key', 'value']) as $row) {
-            $settings[$row->key] = json_decode($row->value, true) ?? $row->value;
-        }
+        return ReferenceCache::remember(ReferenceCache::SETTINGS, 'all', function (): array {
+            $settings = self::DEFAULTS;
+            foreach (DB::table('system_settings')->get(['key', 'value']) as $row) {
+                $settings[$row->key] = json_decode($row->value, true) ?? $row->value;
+            }
 
-        return $settings;
+            return $settings;
+        });
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -41,6 +44,7 @@ class PlatformSettings
                 }
             }
         });
+        ReferenceCache::clear(ReferenceCache::SETTINGS);
 
         return $this->all();
     }

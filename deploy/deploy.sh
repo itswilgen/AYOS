@@ -29,7 +29,12 @@ compose run --rm backend php artisan migrate --force
 compose run --rm backend php artisan db:seed --class=PhilippineGeographySeeder --force
 compose run --rm backend php artisan db:seed --class=ServiceCategorySeeder --force
 
-step "Starting the new version"
+step "Starting the new version, one PHP container at a time"
+# While one restarts, Caddy sends everyone to the other, so the site stays up. (Both versions run side by
+# side for a few seconds, so a migration must never break the version that is still running.)
+compose up -d --wait redis
+compose up -d --no-deps --wait backend
+compose up -d --no-deps --wait backend-2
 compose up -d --remove-orphans
 compose ps
 

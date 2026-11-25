@@ -4,12 +4,26 @@
 	email {$ACME_EMAIL}
 }
 
-# Hands a request to Laravel (PHP-FPM in the backend container). Not `php_fastcgi`: that first checks
-# for index.php in *this* container, finds nothing (the code lives in the backend container) and quietly
+# Hands a request to Laravel (PHP-FPM in the backend containers). Not `php_fastcgi`: that first checks
+# for index.php in *this* container, finds nothing (the code lives in the backend containers) and quietly
 # answers an empty 200. Laravel still sees the original address through REQUEST_URI.
+#
+# Load balancing: requests go to whichever PHP container is less busy (least_conn). Every 2 s Caddy asks
+# each one for PHP-FPM's ping page (/fpm-ping, answers "pong"); one that doesn't answer is skipped until it
+# does again, so a restarted container is back in use within about 2 s. If a request still lands on one
+# that just went down, Caddy retries the other for up to 10 s. (Only remembering failures for 30 s, as a
+# first version did, made Caddy skip a container that had already come back: the 502 our failover test
+# caught.) The visitor's IP still reaches Laravel (REMOTE_ADDR), so rate limits count per person.
 (laravel) {
 	rewrite * /index.php?{query}
-	reverse_proxy backend:9000 {
+	reverse_proxy backend:9000 backend-2:9000 {
+		lb_policy least_conn
+		lb_try_duration 10s
+		lb_try_interval 250ms
+		health_uri /fpm-ping
+		health_interval 2s
+		health_timeout 2s
+		health_body pong
 		transport fastcgi {
 			root /var/www/html/public
 			split .php

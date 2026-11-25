@@ -39,7 +39,8 @@ Route::get('/user', function (Request $request) {
 Route::get('/platform-state', fn (PlatformSettings $settings) => response()->json(['maintenance_mode' => (bool) $settings->get('maintenance_mode', false)]));
 Route::get('/platform-notices', [AdminController::class, 'publicNotices']);
 
-Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->middleware('throttle:120,1')->name('webhooks.paymongo');
+// PayMongo can send bursts from one IP: it keeps its own limit instead of the general one.
+Route::post('/webhooks/paymongo', PayMongoWebhookController::class)->middleware('throttle:120,1')->withoutMiddleware('throttle:api')->name('webhooks.paymongo');
 
 Route::prefix('locations')->controller(LocationReferenceController::class)->group(function (): void {
     Route::get('/regions', 'regions');
@@ -77,7 +78,7 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->prefix('me/se
 });
 
 Route::get('/service-categories', [ProviderController::class, 'categories']);
-Route::get('/providers', [CustomerServiceRequestController::class, 'providers']);
+Route::get('/providers', [CustomerServiceRequestController::class, 'providers'])->middleware('throttle:search');
 Route::get('/providers/{providerId}', [CustomerServiceRequestController::class, 'profile'])->whereNumber('providerId');
 Route::get('/providers/{providerId}/reviews', [CustomerServiceRequestController::class, 'reviews'])->whereNumber('providerId');
 Route::get('/featured-services', [CustomerServiceRequestController::class, 'featuredServices']);
@@ -103,7 +104,7 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
         Route::get('/', 'index')->name('index');
         Route::post('/', 'start')->middleware('throttle:10,1')->name('start');
         Route::get('/{conversationId}/messages', 'messages')->whereNumber('conversationId')->name('messages');
-        Route::post('/{conversationId}/messages', 'send')->whereNumber('conversationId')->middleware('throttle:30,1')->name('send');
+        Route::post('/{conversationId}/messages', 'send')->whereNumber('conversationId')->middleware('throttle:messages')->name('send');
         Route::post('/{conversationId}/read', 'read')->whereNumber('conversationId')->name('read');
         Route::get('/{conversationId}/messages/{messageId}/image', 'image')->whereNumber(['conversationId', 'messageId'])->name('image');
     });
@@ -111,7 +112,7 @@ Route::middleware(['auth:sanctum', 'verified', 'account.active'])->group(functio
         Route::get('/', 'index')->name('index');
         Route::post('/', 'startForRequest')->middleware('throttle:10,1')->name('start');
         Route::get('/{conversationId}/messages', 'messages')->whereNumber('conversationId')->name('messages');
-        Route::post('/{conversationId}/messages', 'send')->whereNumber('conversationId')->middleware('throttle:30,1')->name('send');
+        Route::post('/{conversationId}/messages', 'send')->whereNumber('conversationId')->middleware('throttle:messages')->name('send');
         Route::post('/{conversationId}/read', 'read')->whereNumber('conversationId')->name('read');
         Route::get('/{conversationId}/messages/{messageId}/image', 'image')->whereNumber(['conversationId', 'messageId'])->name('image');
     });

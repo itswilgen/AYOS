@@ -26,6 +26,9 @@ RUN apt-get update \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
+# Redis client for the cache, sessions and rate-limit counters (pinned version).
+RUN pecl install redis-6.1.0 && docker-php-ext-enable redis
+
 RUN printf 'upload_max_filesize=5M\npost_max_size=30M\nmax_file_uploads=10\n' > /usr/local/etc/php/conf.d/ayos-uploads.ini
 
 COPY --from=composer-bin /usr/bin/composer /usr/local/bin/composer

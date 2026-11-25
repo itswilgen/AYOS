@@ -6,10 +6,14 @@ FROM php:8.4.27-fpm-bookworm
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        libicu-dev libjpeg62-turbo-dev libonig-dev libpng-dev libpq-dev libwebp-dev libxml2-dev libzip-dev unzip \
+        libfcgi-bin libicu-dev libjpeg62-turbo-dev libonig-dev libpng-dev libpq-dev libwebp-dev libxml2-dev libzip-dev unzip \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" bcmath exif gd intl mbstring opcache pcntl pdo_pgsql zip \
     && rm -rf /var/lib/apt/lists/*
+
+# Redis client for the cache, sessions and rate-limit counters (pinned version).
+# libfcgi-bin (above) gives `cgi-fcgi`, which the container health check uses to ping PHP-FPM.
+RUN pecl install redis-6.1.0 && docker-php-ext-enable redis
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY docker/php-prod.ini /usr/local/etc/php/conf.d/zz-ayos.ini

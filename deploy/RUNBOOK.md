@@ -7,8 +7,9 @@ What runs on the server (`compose.prod.yaml`):
 
 | Container | Job |
 |---|---|
-| `web` (Caddy) | HTTPS certificate, the React app, sends requests to the right place. The only one open to the internet (ports 80 and 443). |
-| `backend` (PHP-FPM) | Laravel API, sign-in, uploads |
+| `web` (Caddy) | HTTPS certificate, the React app, sends requests to the right place, and **load-balances** between the two PHP containers. The only one open to the internet (ports 80 and 443). |
+| `backend`, `backend-2` (PHP-FPM) | Two identical copies of the Laravel API (sign-in, uploads). If one crashes or is restarting, Caddy sends everyone to the other. |
+| `redis` | Cache, sessions and rate-limit counters, shared by both PHP containers (so you stay signed in whichever one answers). Saved to disk. |
 | `reverb` | Live chat sockets |
 | `postgres` | The database |
 
@@ -81,6 +82,7 @@ Generate the values the comments ask for (run each, paste the result into `.env`
 ```bash
 echo "base64:$(openssl rand -base64 32)"  # APP_KEY (the same format Laravel's key:generate makes)
 openssl rand -base64 32 | tr -d '/+='    # DB_PASSWORD
+openssl rand -base64 32 | tr -d '/+='    # REDIS_PASSWORD (a different one)
 openssl rand -hex 16                     # REVERB_APP_KEY
 openssl rand -hex 32                     # REVERB_APP_SECRET
 openssl rand -base64 32                  # BACKUP_PASSPHRASE (also save it in your password manager!)
@@ -139,9 +141,10 @@ Sign up → verify email → sign in → add an address → search a service →
 |---|---|
 | Deploy the latest `main` | `./deploy/deploy.sh` |
 | See what's running | `docker compose -f compose.prod.yaml ps` |
-| Read the logs | `docker compose -f compose.prod.yaml logs --tail=100 backend` (or `web`, `reverb`, `postgres`) |
+| Read the logs | `docker compose -f compose.prod.yaml logs --tail=100 backend backend-2` (or `web`, `reverb`, `redis`, `postgres`) |
 | Laravel command | `docker compose -f compose.prod.yaml exec backend php artisan <command>` |
-| Restart one part | `docker compose -f compose.prod.yaml restart backend` |
+| Restart one part | `docker compose -f compose.prod.yaml restart backend` (then `backend-2`, one at a time, so the site stays up) |
+| Clear the cache | `docker compose -f compose.prod.yaml exec backend php artisan cache:clear` (clears cached data and rate-limit counters; nobody is signed out, sessions live in another Redis database) |
 | Disk space | `df -h` and `docker system df` |
 
 ## If something goes wrong
