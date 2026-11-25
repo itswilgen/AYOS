@@ -172,6 +172,20 @@ class AdminOperationsTest extends TestCase
         $this->assertDatabaseMissing('customer_notifications', ['customer_id' => $suspended->id]);
     }
 
+    public function test_a_long_notice_reaches_the_bell_in_full_so_the_open_card_can_show_all_of_it(): void
+    {
+        $customer = User::factory()->create();
+        $profileId = $this->approvedProviderProfile();
+        $body = trim(str_repeat('AYOS now shows cover photos on the Home page. ', 21)); // 965 characters, near the 1000 limit
+
+        $this->actingAs($this->admin('super_admin'))->postJson('/api/admin/notices', ['title' => 'Cover photos are here', 'body' => $body, 'is_active' => true])
+            ->assertOk();
+
+        $this->actingAs($customer)->getJson('/api/customer/notifications')->assertOk()
+            ->assertJsonPath('data.0.description', $body)->assertJsonPath('data.0.category', 'notice');
+        $this->assertDatabaseHas('provider_notifications', ['provider_profile_id' => $profileId, 'detail' => $body, 'category' => 'notice']);
+    }
+
     public function test_draft_notice_notifies_nobody_until_it_is_published(): void
     {
         $customer = User::factory()->create();
@@ -200,7 +214,7 @@ class AdminOperationsTest extends TestCase
         $this->assertSame(1, DB::table('customer_notifications')->where('customer_id', $customer->id)->count());
     }
 
-    public function test_long_notice_is_shortened_to_fit_the_notification_bell(): void
+    public function test_a_long_title_is_shortened_but_the_whole_body_reaches_the_bell(): void
     {
         $customer = User::factory()->create();
 
@@ -209,7 +223,7 @@ class AdminOperationsTest extends TestCase
 
         $notification = DB::table('customer_notifications')->where('customer_id', $customer->id)->sole();
         $this->assertSame(str_repeat('T', 99).'…', $notification->title);
-        $this->assertSame(str_repeat('B', 239).'…', $notification->detail);
+        $this->assertSame(str_repeat('B', 1000), $notification->detail);
     }
 
     private function approvedProviderProfile(): int

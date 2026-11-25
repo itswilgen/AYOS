@@ -1,0 +1,62 @@
+/* Notification tabs: quiet pills; the chosen one is tinted, and a red dot means "something new here". */
+.notice-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.notice-tabs .notice-tab {
+  position: relative;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--ayos-line);
+  border-radius: var(--radius-button);
+  background: var(--ayos-white);
+  color: var(--ayos-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+.notice-tab:hover {
+  border-color: var(--ayos-sky-light);
+  color: var(--ayos-ink);
+}
+.notice-tab[aria-pressed='true'] {
+  border-color: var(--ayos-sky-action);
+  background: var(--ayos-sky-soft);
+  color: var(--ayos-sky-deep);
+}
+.notice-tab:focus-visible {
+  outline: 2px solid var(--ayos-sky-action);
+  outline-offset: 2px;
+}
+.notice-tab-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--ayos-white);
+  border-radius: 50%;
+  background: var(--ayos-error);
+}
+.notice-tabs.is-compact {
+  gap: 6px;
+}
+.notice-tabs.is-compact .notice-tab {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 0.76rem;
+}
+/* Phones: four equal columns that line up with the card edges below. */
+@media (max-width: 560px) {
+  .notice-tabs:not(.is-compact) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .notice-tabs:not(.is-compact) .notice-tab {
+    padding: 0 8px;
+  }
+}

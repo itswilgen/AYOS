@@ -39,7 +39,7 @@ class ProviderWorkspace
     {
         DB::table('provider_notifications')->insert([
             'provider_profile_id' => $profileId, 'title' => $title, 'detail' => $detail,
-            'href' => $href, 'created_at' => now(), 'updated_at' => now(),
+            'href' => $href, 'category' => self::category($href), 'created_at' => now(), 'updated_at' => now(),
         ]);
     }
 
@@ -47,8 +47,23 @@ class ProviderWorkspace
     {
         DB::table('customer_notifications')->insert([
             'customer_id' => $customerId, 'title' => $title, 'detail' => $detail,
-            'href' => $href, 'created_at' => now(), 'updated_at' => now(),
+            'href' => $href, 'category' => self::category($href), 'created_at' => now(), 'updated_at' => now(),
         ]);
+    }
+
+    /**
+     * Which notification tab a notification belongs to, from where it leads: requests, jobs and reviews are
+     * "request", conversations are "inbox", everything else (AYOS updates, access, covers, application) is "notice".
+     */
+    public static function category(string $href): string
+    {
+        $path = parse_url($href, PHP_URL_PATH) ?: $href;
+
+        return match (true) {
+            (bool) preg_match('#^/(provider/(requests|jobs|reviews)|my-requests)(/|$)#', $path) => 'request',
+            (bool) preg_match('#^/(provider/)?messages(/|$)#', $path) => 'inbox',
+            default => 'notice',
+        };
     }
 
     public function data(int $userId): array
@@ -120,7 +135,7 @@ class ProviderWorkspace
         $latestActivationPayment = DB::table('activation_payments')->where('provider_profile_id', $pid)->orderByDesc('id')->first();
         $notifications = DB::table('provider_notifications')->where('provider_profile_id', $pid)->orderByDesc('created_at')->orderByDesc('id')->limit(100)->get()
             ->map(fn ($note) => ['id' => (string) $note->id, 'title' => $note->title, 'detail' => $note->detail,
-                'createdAt' => $note->created_at, 'read' => $note->read_at !== null, 'href' => $note->href])->all();
+                'createdAt' => $note->created_at, 'read' => $note->read_at !== null, 'href' => $note->href, 'category' => $note->category])->all();
 
         return [
             'approved' => true, 'applicationStatus' => 'approved', 'acceptingRequests' => (bool) $profile->accepting_requests,

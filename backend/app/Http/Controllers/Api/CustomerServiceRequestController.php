@@ -114,7 +114,7 @@ class CustomerServiceRequestController extends Controller
 
         return response()->json(['data' => $items->map(fn ($item) => [
             'id' => (string) $item->id, 'title' => $item->title, 'description' => $item->detail,
-            'createdAtLabel' => $item->created_at, 'unread' => $item->read_at === null, 'href' => $item->href ?: '/my-requests',
+            'createdAtLabel' => $item->created_at, 'unread' => $item->read_at === null, 'href' => $item->href ?: '/my-requests', 'category' => $item->category,
         ])]);
     }
 

@@ -82,6 +82,7 @@
 }
 .app-icon-button { position: relative; display: grid; place-items: center; }
 .app-icon-button:hover, .app-profile-trigger:hover { background: var(--ayos-sky-soft); color: var(--ayos-sky-deep); }
+.app-notice-tabs { padding: 10px 17px; border-bottom: 1px solid var(--ayos-line); }
 .app-notification-dot { position: absolute; width: 8px; height: 8px; right: 9px; top: 8px; border-radius: 50%; background: var(--ayos-orange); border: 1px solid white; }
 .app-profile-trigger { display: inline-flex; align-items: center; gap: 8px; padding: 0 7px; }
 .app-profile-name { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .86rem; font-weight: 650; }
@@ -128,6 +129,14 @@
 .app-notification-list strong { font-size: .84rem; }
 .app-notification-list p { margin: 2px 0; color: var(--ayos-body); font-size: .8rem; }
 .app-notification-list small { color: var(--ayos-muted); font-size: .75rem; }
+/* Notice cards in the bell: a two-line preview; clicking opens the whole message, clicking again closes it. */
+.app-notification-list .app-notice-toggle { display: flex; align-items: flex-start; gap: 10px; }
+.app-notice-toggle > span { min-width: 0; flex: 1; }
+.app-notification-list li:not(.is-open) .app-notice-toggle p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.app-notification-list li.is-open .app-notice-toggle p { white-space: pre-line; overflow-wrap: anywhere; }
+.app-notice-chevron { flex: none; margin-top: 2px; color: var(--ayos-muted); transition: transform var(--duration-fast, 160ms) var(--ease-standard, ease-out); }
+.app-notification-list li.is-open .app-notice-chevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .app-notice-chevron { transition: none; } }
 
 .app-main { min-height: calc(100dvh - 145px); }
 .app-page { width: min(calc(100% - 48px), 1200px); margin-inline: auto; padding: 34px 0 72px; }
