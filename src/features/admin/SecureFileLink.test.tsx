@@ -10,6 +10,15 @@ function fakeTab() {
   return { opener: {} as unknown, document: { title: '', body: { textContent: '' } }, location: { href: '' }, close: vi.fn() }
 }
 
+/**
+ * A file as the API sends it. The body is plain text on purpose: on Node 22 (GitHub CI), `new Response(blob)`
+ * can't read the test browser's Blob ("object.stream is not a function"). The page's `response.blob()` still
+ * gets a file of the right type from the Content-Type header.
+ */
+function fileResponse(body: string, type: string) {
+  return new Response(body, { headers: { 'Content-Type': type } })
+}
+
 function serve(response: Response) {
   const fetchMock = vi.fn(async () => response)
   vi.stubGlobal('fetch', fetchMock)
@@ -27,7 +36,7 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('Open securely', () => {
   it('loads the file with the admin’s sign-in and shows a photo in the new tab', async () => {
-    const fetchMock = serve(new Response(new Blob(['png'], { type: 'image/png' }), { headers: { 'Content-Type': 'image/png' } }))
+    const fetchMock = serve(fileResponse('png-bytes', 'image/png'))
     render(<SecureFileLink path={PATH} fileName="id-front.png" />)
 
     await userEvent.click(screen.getByRole('button', { name: 'Open securely' }))
@@ -53,7 +62,7 @@ describe('Open securely', () => {
   })
 
   it('downloads files that could run code (like SVG) instead of showing them', async () => {
-    serve(new Response(new Blob(['<svg/>'], { type: 'image/svg+xml' }), { headers: { 'Content-Type': 'image/svg+xml' } }))
+    serve(fileResponse('<svg/>', 'image/svg+xml'))
     const clicked: string[] = []
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { clicked.push(this.download) })
     render(<SecureFileLink path={PATH} fileName="drawing.svg" />)
