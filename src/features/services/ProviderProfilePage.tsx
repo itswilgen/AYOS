@@ -83,11 +83,19 @@ export default function ProviderProfilePage() {
     { id: 'pp-services', label: 'Services', count: profile.services.length },
   ]
 
+  const coverSource = profile.services.find((service) => service.cover)
+  const cover = coverSource?.cover ?? null
+  const coverService = coverSource?.category ?? ''
   return <main className="app-page pp-page">
     <Link className="account-back-link" to="/services/search"><ArrowLeft size={16} aria-hidden="true" /> Find providers</Link>
     <div className="pp-layout">
       <div className="pp-content">
-        <header className="pp-hero">
+        {/* Cover banner: the provider's first approved service cover, as they framed it. Without one, the header is unchanged. */}
+        {cover && <div className={`pp-cover is-${cover.fit}`}>
+          {cover.fit === 'contain' && <img className="pp-cover-backdrop" src={cover.image} alt="" aria-hidden="true" />}
+          <img className="pp-cover-image" src={cover.image} alt={`${coverService} by ${profile.displayName}`} style={{ objectPosition: `${cover.focusX}% ${cover.focusY}%` }} />
+        </div>}
+        <header className={`pp-hero${cover ? ' has-cover' : ''}`}>
           <span className="pp-photo">{profile.photo ? <img src={profile.photo} alt={profile.displayName} /> : <span aria-hidden="true">{initials(profile.displayName)}</span>}</span>
           <div className="pp-identity">
             <p className="pp-trades">{profile.services.map((service) => service.category).join(' · ')}</p>

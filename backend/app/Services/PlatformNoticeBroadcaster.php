@@ -23,19 +23,20 @@ class PlatformNoticeBroadcaster
         $notice = DB::table('platform_notices')->where('id', $noticeId)->first();
         $message = [
             'title' => Str::limit($notice->title, 99, '…'),
-            'detail' => Str::limit($notice->body, 239, '…'),
+            // The whole update (the admin form allows 1000 characters), so the open Notice card shows all of it.
+            'detail' => mb_substr($notice->body, 0, 1000),
             'created_at' => now(),
             'updated_at' => now(),
         ];
 
         DB::table('users')->where('status', 'active')->select('id')->chunkById(500, function (Collection $users) use ($message): void {
             DB::table('customer_notifications')->insert($users->map(fn (object $user): array => [
-                ...$message, 'customer_id' => $user->id, 'href' => '/home',
+                ...$message, 'customer_id' => $user->id, 'href' => '/home', 'category' => 'notice',
             ])->all());
         });
         DB::table('provider_profiles')->where('status', 'approved')->select('id')->chunkById(500, function (Collection $profiles) use ($message): void {
             DB::table('provider_notifications')->insert($profiles->map(fn (object $profile): array => [
-                ...$message, 'provider_profile_id' => $profile->id, 'href' => '/provider/notifications',
+                ...$message, 'provider_profile_id' => $profile->id, 'href' => '/provider/notifications', 'category' => 'notice',
             ])->all());
         });
     }

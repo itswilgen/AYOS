@@ -62,7 +62,7 @@ class MarketplaceFlowTest extends TestCase
             ->assertJsonPath('data.0.job_status', 'completed')
             ->assertJsonPath('data.0.provider_name', 'Juan Electrical Works');
         $this->assertSame(
-            ['Work finished', 'Work started', 'Visit scheduled', 'Request accepted'],
+            ['Confirm the finished work', 'Work started', 'Visit scheduled', 'Request accepted'],
             collect($this->actingAs($customer)->getJson('/api/customer/notifications')->json('data'))->pluck('title')->all(),
         );
         $this->actingAs($providerUser)->getJson('/api/provider/workspace')->assertOk()

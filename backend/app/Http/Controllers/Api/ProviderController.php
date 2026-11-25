@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -254,9 +255,14 @@ class ProviderController extends Controller
             if ($action === 'finish') {
                 $this->workspace->notify($profile->id, 'Work marked finished', 'Waiting for the customer to confirm completion.', '/provider/jobs/'.$jobId);
             }
+            // Each update links to the customer's own request card; a finished job is the one that needs them.
+            $service = DB::table('service_requests as r')->join('service_categories as c', 'c.id', '=', 'r.service_category_id')
+                ->where('r.id', $job->service_request_id)->value('c.name');
             $this->workspace->notifyCustomer($job->customer_id,
-                ['schedule' => 'Visit scheduled', 'start' => 'Work started', 'finish' => 'Work finished'][$action],
-                ['schedule' => 'Your provider scheduled the visit.', 'start' => 'Your provider started the service.', 'finish' => 'Please confirm the completed work in My requests.'][$action]);
+                ['schedule' => 'Visit scheduled', 'start' => 'Work started', 'finish' => 'Confirm the finished work'][$action],
+                ['schedule' => 'Your provider scheduled the visit.', 'start' => 'Your provider started the service.',
+                    'finish' => Str::limit($profile->display_name.' finished your '.mb_strtolower((string) $service).' job. Check the work, then confirm it.', 240)][$action],
+                '/my-requests#request-'.$job->service_request_id);
             $this->conversations->note($job->customer_id, $profile->id, 'Request #'.$job->service_request_id.': '
                 .['schedule' => 'visit scheduled.', 'start' => 'work started.', 'finish' => 'work marked finished. Waiting for the customer to confirm.'][$action]);
         });

@@ -7,6 +7,8 @@ import { useAuth } from '../../lib/auth/useAuth'
 import { useInboxUnread } from '../../lib/hooks/useInboxUnread'
 import { notificationsService } from '../../services/home.service'
 import type { NotificationSummary } from '../../types/marketplace'
+import NotificationTabs from '../common/NotificationTabs'
+import { inTab, NOTIFICATION_TABS, unreadTabs, type NotificationTab } from '../../lib/notifications/notification-tabs'
 
 export default function AuthenticatedHeader() {
   const { user, signOut } = useAuth()
@@ -14,7 +16,18 @@ export default function AuthenticatedHeader() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [noticeOpen, setNoticeOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationSummary[]>([])
+  const [noticeTab, setNoticeTab] = useState<NotificationTab>('all')
+  const shownNotifications = inTab(notifications, noticeTab)
   const [noticeError, setNoticeError] = useState('')
+  // System updates (Notice) open in place to show the whole message; a second click closes them again.
+  const [openNotes, setOpenNotes] = useState<Set<NotificationSummary['id']>>(() => new Set())
+  const markReadHere = (id: NotificationSummary['id']) => setNotifications((items) => items.map((note) => note.id === id ? { ...note, unread: false } : note))
+  const toggleNotice = (item: NotificationSummary) => {
+    setOpenNotes((current) => { const next = new Set(current); if (next.has(item.id)) next.delete(item.id); else next.add(item.id); return next })
+    if (!item.unread) return
+    setNoticeError('')
+    void notificationsService.markRead(item.id).then(() => markReadHere(item.id)).catch(() => { setNoticeError('We couldn’t mark that update as read. Please try again.') })
+  }
   const [signOutError, setSignOutError] = useState('')
   const unreadMessages = useInboxUnread().customer
   const profileRef = useRef<HTMLDivElement>(null)
@@ -73,8 +86,11 @@ export default function AuthenticatedHeader() {
           </button>
           {noticeOpen && <section className="app-popover app-notice-popover" id="notification-popover" aria-label="Notifications">
             <div className="app-popover-heading"><div><strong>Notifications</strong><span>{notifications.filter((notification) => notification.unread).length} unread</span></div><button type="button" aria-label="Close notifications" onClick={() => setNoticeOpen(false)}><X size={17} /></button></div>
+            <div className="app-notice-tabs"><NotificationTabs compact active={noticeTab} onChange={setNoticeTab} unread={unreadTabs(notifications, (item) => item.unread)} /></div>
             {noticeError && <p className="app-popover-error" role="alert">{noticeError}</p>}
-            {notifications.length ? <ul className="app-notification-list">{notifications.map((item) => <li key={item.id}>{item.unread && <span className="app-notification-mark" />}<button type="button" onClick={() => { setNoticeError(''); void notificationsService.markRead(item.id).then(() => { setNotifications((items) => items.map((note) => note.id === item.id ? { ...note, unread: false } : note)); setNoticeOpen(false); navigate(item.href || '/my-requests') }).catch(() => { setNoticeError('We couldn’t open that update. Please try again.') }) }}><strong>{item.title}</strong><p>{item.description}</p><small>{item.createdAtLabel}</small></button></li>)}</ul> : <div className="app-popover-empty"><Bell size={20} aria-hidden="true" /><strong>You’re all caught up</strong><p>Updates about your service activity will show up here.</p></div>}
+            {shownNotifications.length ? <ul className="app-notification-list">{shownNotifications.map((item) => <li key={item.id} className={openNotes.has(item.id) ? 'is-open' : undefined}>{item.unread && <span className="app-notification-mark" />}{item.category === 'notice'
+              ? <button type="button" className="app-notice-toggle" aria-expanded={openNotes.has(item.id)} aria-controls={`bell-note-${item.id}`} onClick={() => toggleNotice(item)}><span><strong>{item.title}</strong><p id={`bell-note-${item.id}`}>{item.description}</p><small>{item.createdAtLabel}</small></span><ChevronDown className="app-notice-chevron" size={16} aria-hidden="true" /></button>
+              : <button type="button" onClick={() => { setNoticeError(''); void notificationsService.markRead(item.id).then(() => { markReadHere(item.id); setNoticeOpen(false); navigate(item.href || '/my-requests') }).catch(() => { setNoticeError('We couldn’t open that update. Please try again.') }) }}><strong>{item.title}</strong><p>{item.description}</p><small>{item.createdAtLabel}</small></button>}</li>)}</ul> : <div className="app-popover-empty"><Bell size={20} aria-hidden="true" /><strong>{noticeTab === 'all' ? 'You’re all caught up' : 'Nothing here yet'}</strong><p>{NOTIFICATION_TABS.find((tab) => tab.id === noticeTab)?.empty}</p></div>}
           </section>}
         </div>
         <div className="app-popover-anchor" ref={profileRef}>

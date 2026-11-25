@@ -1,3 +1,4 @@
+import type { NotificationCategory } from '../lib/notifications/notification-tabs'
 import type { CoverLayout } from './marketplace'
 export type RequestStatus = 'new' | 'accepted' | 'declined'
 export type JobStatus = 'accepted' | 'scheduled' | 'in_progress' | 'provider_finished' | 'completed' | 'cancelled'
@@ -57,7 +58,7 @@ export interface ProviderAccess {
   activationPaymentsEnabled?: boolean
   activationPaymentInstructions?: string
 }
-export interface ProviderNotification { id: string; title: string; detail: string; createdAt: string; read: boolean; href: string }
+export interface ProviderNotification { id: string; title: string; detail: string; createdAt: string; read: boolean; href: string; category: NotificationCategory }
 export interface ProviderWorkspaceData {
   approved: boolean
   applicationStatus: 'none' | 'pending' | 'approved' | 'rejected'

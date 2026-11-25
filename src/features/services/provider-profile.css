@@ -6,6 +6,13 @@
 .pp-hero { display: grid; grid-template-columns: 112px minmax(0, 1fr); align-items: end; gap: 24px; padding-bottom: 24px; }
 .pp-photo { width: 112px; height: 112px; display: grid; place-items: center; overflow: hidden; border-radius: var(--radius-md); color: var(--ayos-sky-deep); background: var(--ayos-sky-panel); font-family: var(--font-display); font-size: 2.4rem; font-weight: 700; }
 .pp-photo img { width: 100%; height: 100%; object-fit: cover; }
+/* Cover banner: the provider's framed work photo across the top; the square photo overlaps its bottom edge. */
+.pp-cover { position: relative; aspect-ratio: 3.6; overflow: hidden; margin-bottom: 0; border-radius: var(--radius-md); background: var(--ayos-sky-panel); }
+.pp-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.pp-cover.is-contain .pp-cover-backdrop { position: absolute; inset: 0; filter: blur(22px) saturate(1.1); transform: scale(1.15); opacity: .75; }
+.pp-cover.is-contain .pp-cover-image { position: relative; object-fit: contain; }
+.pp-hero.has-cover { padding-left: 20px; }
+.pp-hero.has-cover .pp-photo { position: relative; z-index: 1; margin-top: -56px; border: 4px solid var(--ayos-canvas); box-shadow: var(--shadow-soft); }
 .pp-trades { margin: 0 0 4px; color: var(--ayos-sky-deep); font-size: .74rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
 .pp-identity h1 { margin: 0; font-family: var(--font-display); font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 700; letter-spacing: -.02em; line-height: .95; text-wrap: balance; }
 .pp-badges { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 12px 0 0; color: var(--ayos-muted); font-size: .82rem; }
@@ -212,6 +219,10 @@
 @media (max-width: 560px) {
   .pp-hero { grid-template-columns: 76px minmax(0, 1fr); gap: 16px; align-items: center; }
   .pp-photo, .pp-skeleton-photo { width: 76px; height: 76px; font-size: 1.7rem; }
+  /* Top-aligned so the photo keeps overlapping the cover even when the name wraps to two lines. */
+  .pp-hero.has-cover { align-items: start; padding-top: 14px; padding-left: 12px; }
+  .pp-hero.has-cover .pp-photo { margin-top: -52px; }
+  .pp-cover { aspect-ratio: 2.4; }
   .pp-stats strong { font-size: 1.6rem; }
   .pp-stats, .pp-overview-card > .pp-subsection, .pp-card > .pp-subsection, .pp-card-head, .pp-card-body { padding-inline: 16px; }
   .pp-section-head h2 { font-size: 1.45rem; }

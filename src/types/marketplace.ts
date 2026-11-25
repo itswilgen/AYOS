@@ -1,3 +1,4 @@
+import type { NotificationCategory } from '../lib/notifications/notification-tabs'
 export type ServiceIconKey =
   | 'electrical'
   | 'plumbing'
@@ -126,6 +127,7 @@ export interface NotificationSummary {
   createdAtLabel: string
   unread: boolean
   href: string
+  category: NotificationCategory
 }
 
 export interface CoverLayout {

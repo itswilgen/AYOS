@@ -231,6 +231,26 @@
 .provider-back:hover { background: var(--pv-band); }
 .provider-detail-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(265px, .85fr); align-items: start; gap: 20px; }
 .provider-detail-aside { display: grid; gap: 20px; }
+/* My Services: adding is one row above the list (service, what you do, price, button). */
+.provider-add-bar { display: grid; grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(140px, 170px) auto; align-items: end; gap: 14px; }
+.provider-add-bar label { display: grid; gap: 6px; min-width: 0; color: var(--pv-label, var(--ayos-ink)); font-size: .78rem; font-weight: 700; }
+.provider-form .provider-add-label { display: flex; align-items: baseline; gap: 6px; color: inherit; font-weight: inherit; }
+.provider-add-label small { color: var(--ayos-muted); font-size: inherit; font-weight: 500; }
+.provider-add-bar .provider-button { min-height: 44px; white-space: nowrap; }
+.provider-add-service, .provider-edit-service { margin-bottom: 20px; }
+.provider-edit-service { scroll-margin-top: 96px; }
+@media (max-width: 900px) { .provider-add-bar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .provider-add-bar label:nth-of-type(2) { grid-column: 1 / -1; grid-row: 2; } }
+@media (max-width: 560px) { .provider-add-bar { grid-template-columns: minmax(0, 1fr); } .provider-add-bar label:nth-of-type(2) { grid-row: auto; } .provider-add-bar .provider-button { width: 100%; } }
+/* One card on its own (e.g. Quota & Access before the limit): a readable width, aligned with the page heading. */
+.provider-detail-grid.is-single { grid-template-columns: minmax(0, 720px); }
+/* Service Areas: the coverage card is exactly as tall as the Add card beside it (tops and bottoms line up).
+   It never grows: when there are many towns, the list scrolls inside the card. */
+@media (min-width: 701px) {
+  .provider-areas-grid { align-items: stretch; }
+  .provider-coverage-panel { height: 0; min-height: 100%; display: flex; flex-direction: column; }
+  .provider-coverage-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .provider-coverage-body > .provider-empty { height: 100%; align-content: center; }
+}
 .provider-detail-label { margin: 18px 0 5px; color: var(--pv-muted); font-size: .69rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase !important; }
 .provider-detail-copy { margin: 0; color: #415864; font-size: .85rem; }
 .provider-detail-list { display: grid; gap: 14px; margin: 0; }
@@ -376,6 +396,8 @@
 .provider-activation-fee strong { text-align: right; }
 .provider-payment-instructions { padding: 12px; border: 1px solid #d7e8f0; border-radius: var(--pv-radius-sm, 6px); color: #425c69; background: #f0f8fb; font-size: .78rem; line-height: 1.6; white-space: pre-wrap; }
 .provider-note { color: var(--pv-muted); font-size: .7rem; }
+/* Notification tabs sit at the top right of the list. */
+.provider-notice-toolbar { display: flex; justify-content: flex-end; margin-bottom: 14px; }
 .provider-notification-list { display: grid; gap: 2px; }
 .provider-notification-list button { width: 100%; min-height: 78px; display: flex; align-items: center; gap: 14px; padding: 14px 12px; border: 0; border-radius: var(--pv-radius-sm); background: #fff; text-align: left; transition: background-color 160ms; }
 .provider-notification-list button:hover { background: #f3f8fc; }
@@ -387,6 +409,14 @@
 .provider-notification-list small { margin-top: 3px; color: var(--pv-muted); font-size: .74rem; }
 .provider-notification-list time { margin-top: 5px; color: #6b8290; font-size: .68rem; }
 .provider-notification-list i { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--pv-orange); box-shadow: 0 0 0 3px rgb(200 79 25 / 14%); }
+/* Notice cards: a two-line preview; clicking opens the whole message, clicking again closes it. */
+.provider-notification-list button.is-notice:not(.is-open) small { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+.provider-notification-list button.is-open { align-items: flex-start; background: #f3f8fc; }
+.provider-notification-list button.is-open small { color: #415864; white-space: pre-line; overflow-wrap: anywhere; }
+.provider-notification-list button.is-open > :is(i, svg:last-child) { margin-top: 12px; }
+.provider-note-chevron { transition: transform 200ms var(--pv-ease, ease-out); }
+.provider-notification-list button.is-open .provider-note-chevron { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .provider-note-chevron { transition: none; } }
 .provider-alert { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; padding: 10px 10px 10px 14px; border: 1px solid; border-left-width: 4px; border-radius: var(--pv-radius-sm); box-shadow: var(--pv-shadow-card); font-size: .8rem; }
 .provider-alert button { width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 50%; color: inherit; background: transparent; transition: background-color 160ms; }
 .provider-alert button:hover { background: rgb(11 58 90 / 6%); }
