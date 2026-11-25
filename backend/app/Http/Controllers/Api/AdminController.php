@@ -20,6 +20,7 @@ use App\Services\GateStats;
 use App\Services\PlatformNoticeBroadcaster;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
+use App\Services\ReferenceCache;
 use App\Services\SecurityAuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -362,6 +363,7 @@ class AdminController extends Controller
         $id = DB::table('service_categories')->insertGetId(['name' => trim($data['name']), 'slug' => $data['slug'], 'description' => trim($data['description'] ?? ''),
             'is_active' => $data['is_active'] ?? true, 'created_at' => now(), 'updated_at' => now()]);
         $this->audit->record('SERVICE_CATEGORY_CREATED', $request->user()->id, $request, ['category_id' => $id, 'slug' => $data['slug']]);
+        ReferenceCache::clear(ReferenceCache::CATEGORIES);
 
         return response()->json(['data' => DB::table('service_categories')->find($id)], 201);
     }
@@ -373,6 +375,7 @@ class AdminController extends Controller
         abort_unless($old, 404);
         DB::table('service_categories')->where('id', $categoryId)->update([...$data, 'name' => trim($data['name']), 'description' => trim($data['description'] ?? ''), 'updated_at' => now()]);
         $this->audit->record('SERVICE_CATEGORY_UPDATED', $request->user()->id, $request, ['category_id' => $categoryId, 'old_name' => $old->name, 'new_name' => $data['name']]);
+        ReferenceCache::clear(ReferenceCache::CATEGORIES);
 
         return response()->json(['data' => DB::table('service_categories')->find($categoryId)]);
     }
@@ -384,6 +387,7 @@ class AdminController extends Controller
         abort_unless($old, 404);
         DB::table('service_categories')->where('id', $categoryId)->update(['is_active' => $data['is_active'], 'updated_at' => now()]);
         $this->audit->record($data['is_active'] ? 'SERVICE_CATEGORY_ENABLED' : 'SERVICE_CATEGORY_DISABLED', $request->user()->id, $request, ['category_id' => $categoryId]);
+        ReferenceCache::clear(ReferenceCache::CATEGORIES);
 
         return response()->json(['id' => $categoryId, 'is_active' => $data['is_active']]);
     }
@@ -417,6 +421,7 @@ class AdminController extends Controller
             }
             $this->audit->record('SUPPORTED_LOCATION_CHANGED', $request->user()->id, $request, ['city_code' => $cityCode, 'old_active' => $old, 'new_active' => (bool) $data['is_active']]);
         });
+        ReferenceCache::clear(ReferenceCache::LOCATIONS);
 
         return response()->json(['city_code' => $cityCode, 'is_active' => (bool) $data['is_active']]);
     }
@@ -605,7 +610,8 @@ class AdminController extends Controller
 
     public function publicNotices(): JsonResponse
     {
-        return response()->json(['data' => DB::table('platform_notices')->where('is_active', true)->orderByDesc('published_at')->limit(5)->get(['id', 'title', 'body', 'published_at'])]);
+        return response()->json(['data' => ReferenceCache::remember(ReferenceCache::NOTICES, 'published',
+            fn () => DB::table('platform_notices')->where('is_active', true)->orderByDesc('published_at')->limit(5)->get(['id', 'title', 'body', 'published_at'])->all())]);
     }
 
     public function notices(Request $request): JsonResponse
@@ -631,6 +637,7 @@ class AdminController extends Controller
 
             return $noticeId;
         });
+        ReferenceCache::clear(ReferenceCache::NOTICES);
 
         return response()->json(['data' => DB::table('platform_notices')->where('id', $noticeId)->first()]);
     }

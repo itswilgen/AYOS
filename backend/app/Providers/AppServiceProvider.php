@@ -10,7 +10,10 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Events\RecoveryCodeReplaced;
 use Laravel\Fortify\Events\RecoveryCodesGenerated;
@@ -31,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->configureRateLimits();
+
         ResetPasswordNotification::createUrlUsing(fn (User $user, string $token): string => rtrim(config('app.frontend_url'), '/').'/reset-password?'.http_build_query([
             'token' => $token,
             'email' => $user->getEmailForPasswordReset(),
@@ -58,5 +63,22 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(RecoveryCodesGenerated::class, fn ($event) => app(SecurityAuditLogger::class)->record('MFA_RECOVERY_CODES_REGENERATED', $event->user->id, request()));
         Event::listen(TwoFactorAuthenticationFailed::class, fn ($event) => app(SecurityAuditLogger::class)->record('MFA_CHALLENGE_FAILED', $event->user->id, request()));
         Event::listen(RecoveryCodeReplaced::class, fn ($event) => app(SecurityAuditLogger::class)->record('MFA_RECOVERY_CODE_USED', $event->user->id, request()));
+    }
+
+    /**
+     * General API limits (applied to every /api route, see bootstrap/app.php), plus search and messages.
+     * A signed-in person is counted per account, so people sharing one Wi-Fi don't block each other; a
+     * signed-out visitor per IP. The counters live in the cache (Redis), shared by both PHP containers.
+     * The stricter per-route limits (sign-in, 2FA, reports, …) still apply on top.
+     */
+    private function configureRateLimits(): void
+    {
+        $who = fn (Request $request): string => $request->user() ? 'user:'.$request->user()->getAuthIdentifier() : 'ip:'.$request->ip();
+
+        RateLimiter::for('api', fn (Request $request) => $request->user()
+            ? Limit::perMinute(120)->by('api:'.$who($request))
+            : Limit::perMinute(60)->by('api:'.$who($request)));
+        RateLimiter::for('search', fn (Request $request) => Limit::perMinute(30)->by('search:'.$who($request)));
+        RateLimiter::for('messages', fn (Request $request) => Limit::perMinute(20)->by('messages:'.$who($request)));
     }
 }

@@ -27,7 +27,8 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    // Lets the app read how long to wait after a 429 ("Too many requests").
+    'exposed_headers' => ['Retry-After'],
 
     'max_age' => 0,
 

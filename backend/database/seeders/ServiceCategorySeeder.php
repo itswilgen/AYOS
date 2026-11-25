@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Services\ReferenceCache;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -25,5 +26,8 @@ class ServiceCategorySeeder extends Seeder
                 'name' => $name, 'description' => $description, 'updated_at' => now(), 'created_at' => now(),
             ]);
         }
+
+        // Deploys run this seeder: pickers must show the new data right away, not after the cache expires.
+        ReferenceCache::clear(ReferenceCache::CATEGORIES);
     }
 }

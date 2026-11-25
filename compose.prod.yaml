@@ -1,4 +1,5 @@
-# AYOS production: Caddy (HTTPS + React app) → PHP-FPM (Laravel) → PostgreSQL, plus Reverb for live chat.
+# AYOS production: Caddy (HTTPS + React app) → two PHP-FPM containers (Laravel), load-balanced → PostgreSQL,
+# plus Redis (cache, sessions, rate-limit counters) and Reverb for live chat.
 # Settings and secrets come from .env next to this file (copy deploy/.env.production.example).
 # Only Caddy is reachable from outside, on ports 80 and 443. See deploy/RUNBOOK.md.
 name: ayos-prod
@@ -23,14 +24,19 @@ x-laravel-env: &laravel-env
   DB_DATABASE: ayos
   DB_USERNAME: ayos
   DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
-  SESSION_DRIVER: database
+  SESSION_DRIVER: redis
   SESSION_ENCRYPT: "true"
   SESSION_SECURE_COOKIE: "true"
   SESSION_SAME_SITE: lax
   SESSION_DOMAIN: ""
   SANCTUM_STATEFUL_DOMAINS: ${DOMAIN}
   CORS_ALLOWED_ORIGINS: https://${DOMAIN}
-  CACHE_STORE: database
+  # Redis holds the cache (database 1) and sessions (database 0), shared by both PHP containers, so a
+  # person stays signed in whichever container answers, and rate limits count across both.
+  CACHE_STORE: redis
+  REDIS_CLIENT: phpredis
+  REDIS_HOST: redis
+  REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
   QUEUE_CONNECTION: sync
   FILESYSTEM_DISK: local
   BROADCAST_CONNECTION: reverb
@@ -39,6 +45,29 @@ x-laravel-env: &laravel-env
   REVERB_SCHEME: http
   REVERB_ALLOWED_ORIGINS: ${DOMAIN}
   GOOGLE_REDIRECT_URI: https://${DOMAIN}/auth/google/callback
+
+x-backend: &backend
+  image: ayos-backend:prod
+  restart: unless-stopped
+  env_file: ${AYOS_ENV_FILE:-.env}
+  environment: *laravel-env
+  volumes:
+    # Every uploaded file: public ones (photos, covers) and private ones (ID documents, request and chat photos).
+    # Both containers share this volume (same server), so either one can serve any file.
+    - uploads:/var/www/html/storage/app
+  # Asks PHP-FPM itself for its ping page ("pong"), so "healthy" means it can take requests.
+  healthcheck:
+    test: ["CMD-SHELL", "SCRIPT_NAME=/fpm-ping SCRIPT_FILENAME=/fpm-ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 | grep -q pong"]
+    interval: 10s
+    timeout: 3s
+    retries: 3
+    start_period: 20s
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  logging: *logging
 
 services:
   postgres:
@@ -57,21 +86,33 @@ services:
       retries: 20
     logging: *logging
 
+  redis:
+    image: redis:7.4.1-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    # Saved to disk (appendonly), so a restart doesn't sign everyone out. 256 MB is plenty for this size;
+    # when full, Redis drops the least-used keys that have an expiry (cache, sessions, counters all do).
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes --maxmemory 256mb --maxmemory-policy volatile-lru"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: *logging
+
+  # Two identical PHP containers. Caddy spreads requests across them and skips one that is down, and
+  # deploy.sh restarts them one at a time, so a crash or a deploy doesn't take the site offline.
   backend:
+    <<: *backend
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
-    image: ayos-backend:prod
-    restart: unless-stopped
-    env_file: ${AYOS_ENV_FILE:-.env}
-    environment: *laravel-env
-    volumes:
-      # Every uploaded file: public ones (photos, covers) and private ones (ID documents, request and chat photos).
-      - uploads:/var/www/html/storage/app
-    depends_on:
-      postgres:
-        condition: service_healthy
-    logging: *logging
+
+  backend-2:
+    <<: *backend
 
   reverb:
     image: ayos-backend:prod
@@ -81,6 +122,8 @@ services:
     environment: *laravel-env
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       backend:
         condition: service_started
@@ -117,11 +160,13 @@ services:
           subpath: public
     depends_on:
       - backend
+      - backend-2
       - reverb
     logging: *logging
 
 volumes:
   pgdata:
+  redis-data:
   uploads:
   caddy-data:
   caddy-config:

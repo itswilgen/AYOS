@@ -18,6 +18,19 @@ services:
       timeout: 3s
       retries: 20
 
+  # Cache, sessions and rate-limit counters. Only other containers can reach it (no port on your Mac).
+  redis:
+    image: redis:7.4.1-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${AYOS_DOCKER_REDIS_PASSWORD:-ayos-local-redis-password}
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --save '' --appendonly no"]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_PASSWORD redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   mailpit:
     image: axllent/mailpit:v1.27.4
     restart: unless-stopped
@@ -42,7 +55,7 @@ services:
       DB_PASSWORD: ${AYOS_DOCKER_DB_PASSWORD:-ayos-local-dev-password}
       PROVIDER_FREE_CLIENT_LIMIT: ${PROVIDER_FREE_CLIENT_LIMIT:-10}
       PROVIDER_ACTIVATION_FEE: ${PROVIDER_ACTIVATION_FEE:-}
-      SESSION_DRIVER: database
+      SESSION_DRIVER: redis
       SESSION_LIFETIME: 120
       SESSION_ENCRYPT: "true"
       SESSION_DOMAIN:
@@ -50,8 +63,11 @@ services:
       SESSION_SAME_SITE: lax
       SANCTUM_STATEFUL_DOMAINS: localhost:5180,127.0.0.1:5180,localhost:8010,127.0.0.1:8010
       CORS_ALLOWED_ORIGINS: http://localhost:5180
-      CACHE_STORE: database
+      CACHE_STORE: redis
       QUEUE_CONNECTION: database
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${AYOS_DOCKER_REDIS_PASSWORD:-ayos-local-redis-password}
       MAIL_MAILER: ${MAIL_MAILER:-smtp}
       MAIL_HOST: ${MAIL_HOST:-mailpit}
       MAIL_PORT: ${MAIL_PORT:-1025}
@@ -76,6 +92,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       mailpit:
         condition: service_started
 
@@ -88,14 +106,17 @@ services:
     entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
     environment:
       APP_ENV: local
-      # Reverb watches the cache (stored in PostgreSQL) for `reverb:restart`.
+      # Reverb watches the cache (now Redis) for `reverb:restart`.
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
       DB_DATABASE: ayos
       DB_USERNAME: ayos
       DB_PASSWORD: ${AYOS_DOCKER_DB_PASSWORD:-ayos-local-dev-password}
-      CACHE_STORE: database
+      CACHE_STORE: redis
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PASSWORD: ${AYOS_DOCKER_REDIS_PASSWORD:-ayos-local-redis-password}
       REVERB_APP_ID: ${REVERB_APP_ID:-ayos-local}
       REVERB_APP_KEY: ${REVERB_APP_KEY:-ayos-local-key}
       REVERB_APP_SECRET: ${REVERB_APP_SECRET:-ayos-local-secret}
@@ -107,6 +128,8 @@ services:
       - ayos-backend-vendor:/var/www/html/vendor
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       backend:
         condition: service_started

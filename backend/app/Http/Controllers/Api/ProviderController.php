@@ -10,6 +10,7 @@ use App\Services\JobReschedules;
 use App\Services\PlatformSettings;
 use App\Services\ProviderWorkspace;
 use App\Services\PublicImageStore;
+use App\Services\ReferenceCache;
 use App\Services\SecurityAuditLogger;
 use App\Services\ServiceEmails;
 use Illuminate\Http\JsonResponse;
@@ -138,39 +139,46 @@ class ProviderController extends Controller
 
     public function categories(): JsonResponse
     {
-        return response()->json(['data' => DB::table('service_categories')->where('is_active', true)->orderBy('name')->get()]);
+        return response()->json(['data' => ReferenceCache::remember(ReferenceCache::CATEGORIES, 'active',
+            fn () => DB::table('service_categories')->where('is_active', true)->orderBy('name')->get()->all())]);
     }
 
     public function areaOptions(): JsonResponse
     {
-        $regions = DB::table('regions')->orderBy('name')->get();
-        $provinces = DB::table('provinces')->orderBy('name')->get()->groupBy('region_code');
-        $cities = DB::table('city_municipalities')->orderBy('name')->get()->groupBy('province_code');
-        $options = [];
-        foreach ($regions as $region) {
-            foreach ($provinces->get($region->code, collect()) as $province) {
-                $options[] = ['region' => $region->name, 'province' => $province->name,
-                    'cities' => $cities->get($province->code, collect())->pluck('name')->all()];
+        return response()->json(ReferenceCache::remember(ReferenceCache::LOCATIONS, 'area-options', function (): array {
+            $regions = DB::table('regions')->orderBy('name')->get();
+            $provinces = DB::table('provinces')->orderBy('name')->get()->groupBy('region_code');
+            $cities = DB::table('city_municipalities')->orderBy('name')->get()->groupBy('province_code');
+            $options = [];
+            foreach ($regions as $region) {
+                foreach ($provinces->get($region->code, collect()) as $province) {
+                    $options[] = ['region' => $region->name, 'province' => $province->name,
+                        'cities' => $cities->get($province->code, collect())->pluck('name')->all()];
+                }
+                $noProvince = DB::table('city_municipalities')->where('region_code', $region->code)->whereNull('province_code')->orderBy('name')->pluck('name')->all();
+                if ($noProvince) {
+                    $options[] = ['region' => $region->name, 'province' => '', 'cities' => $noProvince];
+                }
             }
-            $noProvince = DB::table('city_municipalities')->where('region_code', $region->code)->whereNull('province_code')->orderBy('name')->pluck('name')->all();
-            if ($noProvince) {
-                $options[] = ['region' => $region->name, 'province' => '', 'cities' => $noProvince];
-            }
-        }
 
-        return response()->json($options);
+            return $options;
+        }));
     }
 
     public function areaBarangays(Request $request): JsonResponse
     {
         $data = $request->validate(['region' => ['required', 'string', 'max:160'], 'province' => ['nullable', 'string', 'max:160'], 'city' => ['required', 'string', 'max:160']]);
-        $city = DB::table('city_municipalities as c')->join('regions as r', 'r.code', '=', 'c.region_code')
-            ->leftJoin('provinces as p', 'p.code', '=', 'c.province_code')
-            ->where('r.name', $data['region'])->where('p.name', filled($data['province'] ?? null) ? $data['province'] : null)
-            ->where('c.name', $data['city'])->value('c.code');
-        abort_unless($city, 404);
+        $key = 'area-barangays:'.sha1(json_encode([$data['region'], $data['province'] ?? null, $data['city']]));
 
-        return response()->json(DB::table('barangays')->where('city_municipality_code', $city)->orderBy('name')->pluck('name'));
+        return response()->json(ReferenceCache::remember(ReferenceCache::LOCATIONS, $key, function () use ($data): array {
+            $city = DB::table('city_municipalities as c')->join('regions as r', 'r.code', '=', 'c.region_code')
+                ->leftJoin('provinces as p', 'p.code', '=', 'c.province_code')
+                ->where('r.name', $data['region'])->where('p.name', filled($data['province'] ?? null) ? $data['province'] : null)
+                ->where('c.name', $data['city'])->value('c.code');
+            abort_unless($city, 404);
+
+            return DB::table('barangays')->where('city_municipality_code', $city)->orderBy('name')->pluck('name')->all();
+        }));
     }
 
     public function accepting(Request $request): JsonResponse
