@@ -243,6 +243,20 @@
 @media (max-width: 560px) { .provider-add-bar { grid-template-columns: minmax(0, 1fr); } .provider-add-bar label:nth-of-type(2) { grid-row: auto; } .provider-add-bar .provider-button { width: 100%; } }
 /* One card on its own (e.g. Quota & Access before the limit): a readable width, aligned with the page heading. */
 .provider-detail-grid.is-single { grid-template-columns: minmax(0, 720px); }
+/* Profile: "At a glance" ends on the same line as "Professional details"; the facts stay at the top and the
+   edit links sit at the bottom, so the extra height reads as planned space. */
+@media (min-width: 701px) {
+  .provider-profile-grid { align-items: stretch; }
+  .provider-profile-grid > .provider-detail-aside { grid-template-rows: minmax(0, 1fr); }
+  .provider-glance-panel { display: flex; flex-direction: column; }
+  .provider-glance-panel .provider-link-pair { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--pv-divider, #edf1f2); }
+}
+/* Request and job pages: the main card ends on the same line as the last card on the right.
+   The right-hand cards keep their own size if the main card is the taller one. */
+@media (min-width: 701px) {
+  .provider-match-grid { align-items: stretch; }
+  .provider-match-grid > .provider-detail-aside { align-content: start; }
+}
 /* Service Areas: the coverage card is exactly as tall as the Add card beside it (tops and bottoms line up).
    It never grows: when there are many towns, the list scrolls inside the card. */
 @media (min-width: 701px) {
