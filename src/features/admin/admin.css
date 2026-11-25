@@ -1917,7 +1917,8 @@
   color: var(--admin-blue);
   background: var(--admin-wash);
 }
-.admin-doc-list a {
+.admin-doc-list a,
+.admin-doc-open {
   min-height: 34px;
   flex: none;
   display: inline-flex;
@@ -1934,9 +1935,28 @@
     border-color 160ms,
     background-color 160ms;
 }
-.admin-doc-list a:hover {
+.admin-doc-list a:hover,
+.admin-doc-open:hover:not(:disabled) {
   border-color: var(--admin-blue);
   background: var(--admin-blue-tint);
+}
+.admin-doc-open {
+  background: #fff;
+  font-family: inherit;
+  cursor: pointer;
+}
+.admin-doc-open:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+.admin-doc-list li:has(.admin-doc-error) {
+  flex-wrap: wrap;
+}
+.admin-doc-list small.admin-doc-error {
+  flex-basis: 100%;
+  margin-top: 0;
+  color: var(--admin-red);
+  font-weight: 650;
 }
 .admin-modal-actions,
 .admin-detail-actions,

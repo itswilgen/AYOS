@@ -132,6 +132,28 @@ export async function apiRequest<TResponse>(
   return request<TResponse>(`${apiBase}${endpoint}`, { ...init, method });
 }
 
+/**
+ * Loads a private file (ID documents, dispute evidence) through the signed-in session, like any other API call.
+ * Never link to these addresses directly: a bare link in a new tab isn't recognised as the signed-in app.
+ */
+export async function apiFile(path: string): Promise<Blob> {
+  const endpoint = path.startsWith("/") ? path : `/${path}`;
+  const response = await fetch(`${apiBase}${endpoint}`, {
+    credentials: "include",
+    headers: { Accept: "application/json, */*" },
+  });
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => undefined);
+    throw new ApiError(
+      response.status >= 500
+        ? "We couldn’t open that file. Please try again."
+        : messageFrom(payload),
+      response.status,
+    );
+  }
+  return response.blob();
+}
+
 export function backendUrl(path: string): string {
   return `${backendOrigin}${path.startsWith("/") ? path : `/${path}`}`;
 }

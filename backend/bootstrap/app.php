@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api', 'middleware' => ['api', 'auth:sanctum', 'verified', 'account.active']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        // Signed-out API calls get a plain 401 (the API has no login page to send them to); anything else goes
+        // to the app's own login page. Without this, a document link opened in a new tab crashed with a 500.
+        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('api/*') ? null : rtrim((string) config('app.frontend_url'), '/').'/login');
         $middleware->api(prepend: [EnforcePlatformAvailability::class]);
         $middleware->web(append: [ThrottleSensitiveAuthRoutes::class, RequireMfaCodeToDisable::class]);
         $middleware->alias([

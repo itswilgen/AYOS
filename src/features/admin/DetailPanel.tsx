@@ -1,5 +1,4 @@
 import { FileText } from "lucide-react";
-import { backendUrl } from "../../lib/api/client";
 import {
   type RecordValue,
   asText,
@@ -8,6 +7,7 @@ import {
   humanize,
 } from "./admin-config";
 import { StatusPill } from "./AdminUI";
+import SecureFileLink from "./SecureFileLink";
 
 export default function DetailPanel({
   detail,
@@ -123,15 +123,10 @@ export default function DetailPanel({
               <li key={asText(item.id)}>
                 <FileText size={16} />
                 <span>{asText(item.original_name)}</span>
-                <a
-                  href={backendUrl(
-                    `/api/admin/disputes/${asText(dispute.id)}/evidence/${asText(item.id)}`,
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open securely
-                </a>
+                <SecureFileLink
+                  path={`/admin/disputes/${asText(dispute.id)}/evidence/${asText(item.id)}`}
+                  fileName={asText(item.original_name)}
+                />
               </li>
             ))}
           </ul>
@@ -251,15 +246,10 @@ export default function DetailPanel({
                   {asText(item.original_name)}
                   <small>{asText(item.mime_type)}</small>
                 </span>
-                <a
-                  href={backendUrl(
-                    `/api/admin/provider-applications/${asText(provider.id)}/documents/${asText(item.id)}`,
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open securely
-                </a>
+                <SecureFileLink
+                  path={`/admin/provider-applications/${asText(provider.id)}/documents/${asText(item.id)}`}
+                  fileName={asText(item.original_name)}
+                />
               </li>
             ))}
           </ul>
