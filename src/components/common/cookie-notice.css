@@ -1,0 +1,193 @@
+/* First-visit cookie notice: a full-width banner along the bottom of the screen on every size (phone, tablet,
+   desktop), over a dimmed page. Its content uses the header's wide gutter, so the text lines up with the logo
+   and the page's headline. Above every other layer in the app (the highest elsewhere is 100). */
+.cookie-notice-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  background: rgb(24 35 43 / 45%);
+}
+/* On the Privacy and Terms pages the page stays usable: no dimming, clicks pass through above the banner. */
+.cookie-notice-layer.is-reading {
+  background: transparent;
+  pointer-events: none;
+}
+.cookie-notice-layer.is-reading .cookie-notice {
+  pointer-events: auto;
+}
+
+.cookie-notice {
+  width: 100%;
+  padding: 28px 0 max(28px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--ayos-line);
+  background: var(--ayos-white);
+  box-shadow: 0 -12px 32px rgb(24 35 43 / 12%);
+  color: var(--ayos-ink);
+  font-family: var(--font-body);
+  animation: cookie-notice-rise var(--duration-medium) var(--ease-standard) both;
+}
+
+/* Text on the left, buttons on the right. */
+.cookie-notice-inner {
+  width: min(calc(100% - 2 * var(--gutter-wide)), var(--container-wide));
+  margin-inline: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px 48px;
+}
+
+.cookie-notice-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--ayos-orange);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.cookie-notice-eyebrow::before {
+  width: 24px;
+  height: 2px;
+  flex: none;
+  border-radius: 2px;
+  background: currentColor;
+  content: '';
+}
+
+.cookie-notice h2 {
+  margin: 10px 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.cookie-notice p:not(.cookie-notice-eyebrow) {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--ayos-text);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.cookie-notice-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px 20px;
+}
+.cookie-notice-actions button {
+  min-height: 48px;
+  padding: 0 32px;
+  border: 0;
+  border-radius: var(--radius-button);
+  background: var(--ayos-orange);
+  color: var(--ayos-white);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+.cookie-notice-actions button:hover {
+  background: var(--ayos-orange-hover);
+}
+.cookie-notice-actions button:active {
+  transform: scale(0.98);
+}
+.cookie-notice-actions a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ayos-sky-deep);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.cookie-notice-actions a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.cookie-notice-actions :is(button, a):focus-visible {
+  outline: 3px solid var(--ayos-sky);
+  outline-offset: 3px;
+}
+
+/* While the notice blocks the page, the page behind it doesn't scroll. */
+body.cookie-notice-open {
+  overflow: hidden;
+}
+/* While someone reads a policy page under the notice: room at the bottom so nothing stays hidden. */
+body.cookie-notice-reading {
+  padding-bottom: calc(var(--cookie-notice-space, 0px) + 24px);
+}
+
+/* Tablets and phones: the buttons move under the text, still on one full-width banner. */
+/* Same widths as the header (.nav-shell in global.css), step by step, so the text always lines up with the logo. */
+@media (max-width: 1100px) {
+  .cookie-notice-inner { width: min(calc(100% - 48px), var(--container)); }
+}
+@media (max-width: 850px) {
+  .cookie-notice-inner { width: min(calc(100% - 40px), var(--container)); }
+}
+@media (max-width: 600px) {
+  .cookie-notice-inner { width: calc(100% - 36px); }
+}
+@media (max-width: 380px) {
+  .cookie-notice-inner { width: calc(100% - 30px); }
+}
+@media (max-width: 860px) {
+  .cookie-notice-inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+/* Phones: a full-width button for the thumb, the policy link under it. */
+@media (max-width: 560px) {
+  .cookie-notice {
+    padding-top: 24px;
+  }
+  .cookie-notice h2 {
+    font-size: 1.5rem;
+  }
+  .cookie-notice-actions {
+    display: grid;
+    justify-items: center;
+  }
+  .cookie-notice-actions button {
+    width: 100%;
+  }
+}
+
+@keyframes cookie-notice-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cookie-notice-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cookie-notice {
+    animation-name: cookie-notice-fade;
+  }
+  .cookie-notice-actions button {
+    transition: none;
+  }
+}

@@ -6,6 +6,7 @@ import AuthenticatedLayout from './layouts/AuthenticatedLayout'
 import { isInstalledApp } from './lib/install/installPrompt'
 import RequireAuth from './components/auth/RequireAuth'
 import RequireAdmin from './components/auth/RequireAdmin'
+import CookieNotice from './components/common/CookieNotice'
 import * as ProviderPages from './features/provider/ProviderPages'
 import { apiRequest } from './lib/api/client'
 import { useAuth } from './lib/auth/useAuth'
@@ -55,7 +56,8 @@ function PlatformGate({ children }: { children: ReactNode }) {
 }
 
 export default function App() {
-  return <PlatformGate><Routes>
+  // The cookie notice sits outside the maintenance gate: it shows on every page, including that one.
+  return <><CookieNotice /><PlatformGate><Routes>
     <Route element={<PublicLayout />}>
       {/* The installed app is for using AYOS, not reading about it: it opens on login (signed-in people go on to Home). */}
       <Route path="/" element={isInstalledApp() ? <Navigate to="/login" replace /> : <Suspense fallback={routeFallback}><LandingPage /></Suspense>} />
@@ -114,5 +116,5 @@ export default function App() {
       <Route path="/admin/*" element={<Suspense fallback={routeFallback}><AdminPage /></Suspense>} />
     </Route>
     <Route path="*" element={<Navigate to="/" replace />} />
-  </Routes></PlatformGate>
+  </Routes></PlatformGate></>
 }
