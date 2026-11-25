@@ -67,7 +67,7 @@ export default function AnalyticsView({
           hint="Confirmed payments"
         />
       </div>
-      <div className="admin-dashboard-bottom">
+      <div className="admin-dashboard-bottom admin-analytics-bottom">
         <Panel title="Most requested services">
           {popular.length ? (
             <div className="admin-bars">

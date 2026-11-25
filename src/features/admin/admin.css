@@ -1321,7 +1321,8 @@
 .admin-settings-layout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
+  /* Cards side by side end on the same line; their fields stay at the top. */
+  align-items: stretch;
   gap: 16px;
 }
 .admin-settings-layout > .admin-panel:nth-child(3),
@@ -1330,6 +1331,7 @@
 }
 .admin-settings-layout .admin-panel {
   display: grid;
+  align-content: start;
   gap: 16px;
 }
 .admin-settings-layout .admin-panel-head {
@@ -1639,6 +1641,13 @@
 }
 .admin-analytics-summary .admin-metric {
   min-height: 132px;
+}
+/* The two cards below sit under the five metrics: the left one under cards 1-3, the right one under 4-5,
+   so the gaps line up. Only while the metrics are one row of five (above 1100px). */
+@media (min-width: 1101px) {
+  .admin-analytics-bottom { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .admin-analytics-bottom > :first-child { grid-column: span 3; }
+  .admin-analytics-bottom > :last-child { grid-column: span 2; }
 }
 .admin-bars {
   display: grid;
@@ -1956,7 +1965,8 @@
 .admin-account-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
-  align-items: start;
+  /* "Before you change it" ends on the same line as the password form. */
+  align-items: stretch;
   gap: 16px;
 }
 .admin-account-form {
@@ -2315,6 +2325,11 @@
   }
   .admin-analytics-summary {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  /* Tablets: the two lower cards stack full width, so their edges match the metric cards above
+     (side by side they squeezed "Recent activity" and "Most requested services" to about 170px). */
+  .admin-dashboard-bottom {
+    grid-template-columns: minmax(0, 1fr);
   }
   .admin-category-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
